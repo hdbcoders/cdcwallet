@@ -1,5 +1,6 @@
 package com.cdcvouchers.ui.list
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -59,6 +60,10 @@ fun VoucherRow(
     Box(modifier = modifier.fillMaxWidth()) {
         Surface(
             shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            tonalElevation = 1.dp,
+            shadowElevation = 1.dp,
             modifier = Modifier
                 .fillMaxWidth()
                 .combinedClickable(onClick = onClick, onLongClick = { onMenuExpandedChange(true) }),
