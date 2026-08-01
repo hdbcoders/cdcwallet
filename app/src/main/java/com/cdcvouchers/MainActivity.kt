@@ -130,6 +130,7 @@ private fun AppNavHost(
             AddVoucherScreen(
                 flow = flow,
                 initialUrl = entry.arguments?.getString("url"),
+                onBack = { navController.popBackStack() },
             )
         }
         composable(

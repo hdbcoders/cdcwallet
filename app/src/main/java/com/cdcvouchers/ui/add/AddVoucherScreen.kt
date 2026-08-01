@@ -5,11 +5,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,10 +43,12 @@ private sealed interface AddStatus {
  * suspend chain aborts, no row is inserted, and Package 2 tears down the hidden
  * WebView.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddVoucherScreen(
     flow: AddVoucherFlow,
     initialUrl: String? = null,
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var url by remember { mutableStateOf("") }
@@ -77,36 +86,46 @@ fun AddVoucherScreen(
     // composition, which aborts any in-flight add (03 §3.3): no row is
     // inserted from an abandoned fetch and the hidden WebView is torn down.
 
-    Column(
-        modifier = modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Text(
-            text = "Add a voucher link",
-            style = MaterialTheme.typography.headlineSmall,
-        )
-        OutlinedTextField(
-            value = url,
-            onValueChange = { url = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Paste voucher link") },
-            singleLine = true,
-            enabled = status !is AddStatus.Working,
-        )
-        Button(
-            onClick = { submit(url) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = url.isNotBlank() && status !is AddStatus.Working,
-        ) {
-            Text("Add")
-        }
-        when (val s = status) {
-            is AddStatus.Working -> CircularProgressIndicator()
-            is AddStatus.Message -> Text(
-                text = s.text,
-                color = if (s.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text("Add a voucher link") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
             )
-            is AddStatus.Idle -> {}
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            OutlinedTextField(
+                value = url,
+                onValueChange = { url = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Paste voucher link") },
+                singleLine = true,
+                enabled = status !is AddStatus.Working,
+            )
+            Button(
+                onClick = { submit(url) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = url.isNotBlank() && status !is AddStatus.Working,
+            ) {
+                Text("Add")
+            }
+            when (val s = status) {
+                is AddStatus.Working -> CircularProgressIndicator()
+                is AddStatus.Message -> Text(
+                    text = s.text,
+                    color = if (s.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                )
+                is AddStatus.Idle -> {}
+            }
         }
     }
 }
