@@ -166,19 +166,20 @@ internal fun installInjection(webView: WebView, forceFallback: Boolean): Injecti
         val handler = WebViewCompat.addDocumentStartJavaScript(webView, INJECTION_SCRIPT, setOf("*"))
         return InjectionPath.DocumentStart(handler)
     }
-    val existing = webView.webViewClient
-    webView.webViewClient = HtmlRewritingClient(existing)
+    // API 24–25 (or a stale WebView) fallback. WebView#getWebViewClient is
+    // API 26+, so the client is set fresh and never read back — the WebViews
+    // this engine drives are always app-created without a prior client.
+    webView.webViewClient = HtmlRewritingClient()
     return InjectionPath.HtmlRewrite
 }
 
 /**
  * Fallback injection: rewrites the main HTML document to embed the wrapper script
- * ahead of the page's own bundle. Delegates all other client behavior to the
- * previous client, and rewrites the delegate's own response when one is supplied.
+ * ahead of the page's own bundle. The document is re-fetched over the network
+ * because an intercepted response must be supplied in full; only the initial
+ * main-frame document is ever rewritten (a one-shot `rewrote` flag).
  */
-private class HtmlRewritingClient(
-    private val delegate: WebViewClient?,
-) : WebViewClient() {
+private class HtmlRewritingClient : WebViewClient() {
 
     private var rewrote = false
 
@@ -186,25 +187,14 @@ private class HtmlRewritingClient(
         view: WebView,
         request: WebResourceRequest,
     ): WebResourceResponse? {
-        val delegateResponse = delegate?.shouldInterceptRequest(view, request)
-        val mainDocument = request.isForMainFrame && !rewrote
-        if (mainDocument && delegateResponse != null && delegateResponse.data != null) {
-            val rewritten = rewriteHtml(delegateResponse.data, delegateResponse.encoding)
-            if (rewritten != null) {
-                rewrote = true
-                return rewritten
-            }
-            return delegateResponse
-        }
-        if (mainDocument && delegateResponse == null && isFetchable(request)) {
+        if (request.isForMainFrame && !rewrote && isFetchable(request)) {
             val response = fetchAndRewrite(request)
             if (response != null) {
                 rewrote = true
                 return response
             }
-            return null
         }
-        return delegateResponse
+        return null
     }
 
     private fun isFetchable(request: WebResourceRequest): Boolean {
@@ -252,32 +242,5 @@ private class HtmlRewritingClient(
             encoding ?: "UTF-8",
             ByteArrayInputStream(modified.toByteArray(Charsets.UTF_8)),
         )
-    }
-
-    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean =
-        delegate?.shouldOverrideUrlLoading(view, request) ?: false
-
-    override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
-        delegate?.onPageStarted(view, url, favicon)
-    }
-
-    override fun onPageFinished(view: WebView, url: String) {
-        delegate?.onPageFinished(view, url)
-    }
-
-    override fun onReceivedError(
-        view: WebView,
-        request: WebResourceRequest,
-        error: android.webkit.WebResourceError,
-    ) {
-        delegate?.onReceivedError(view, request, error)
-    }
-
-    override fun onReceivedHttpError(
-        view: WebView,
-        request: WebResourceRequest,
-        errorResponse: WebResourceResponse,
-    ) {
-        delegate?.onReceivedHttpError(view, request, errorResponse)
     }
 }

@@ -1,7 +1,10 @@
 package com.cdcvouchers.ui.settings
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -84,9 +87,38 @@ fun SettingsScreen(
     var passwordDialogFor by remember { mutableStateOf<PasswordDialogTarget?>(null) }
     var summaryPayload by remember { mutableStateOf<VoucherBackupPayload?>(null) }
     var pendingReplace by remember { mutableStateOf<VoucherBackupPayload?>(null) }
+    var pendingExportPassword by remember { mutableStateOf<String?>(null) }
 
     val activeCount by repository.observeActive().collectAsState(initial = emptyList())
     val archivedCount by repository.observeArchived().collectAsState(initial = emptyList())
+
+    fun runExport(password: String) {
+        exportDialogOpen = false
+        scope.launch {
+            val result = runCatching { backupFlow.export(context, password) }
+            snackbarHostState.showSnackbar(
+                if (result.isSuccess) "Backup saved to Downloads" else "Couldn't save the backup",
+            )
+        }
+    }
+
+    // API 24-28 write to the public Downloads directory directly (scoped
+    // storage starts at 29), which needs WRITE_EXTERNAL_STORAGE granted at
+    // runtime on API 23+ — request it before the first export on those
+    // versions; API 29+ uses MediaStore and needs nothing.
+    val exportPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        val password = pendingExportPassword ?: return@rememberLauncherForActivityResult
+        pendingExportPassword = null
+        if (granted) {
+            runExport(password)
+        } else {
+            scope.launch {
+                snackbarHostState.showSnackbar("Couldn't save the backup")
+            }
+        }
+    }
 
     val filePicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument(),
@@ -171,11 +203,15 @@ fun SettingsScreen(
             confirmLabel = "Export",
             onConfirm = { password ->
                 exportDialogOpen = false
-                scope.launch {
-                    val result = runCatching { backupFlow.export(context, password) }
-                    snackbarHostState.showSnackbar(
-                        if (result.isSuccess) "Backup saved to Downloads" else "Couldn't save the backup",
-                    )
+                val needsLegacyPermission =
+                    Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+                        context.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                        PackageManager.PERMISSION_GRANTED
+                if (needsLegacyPermission) {
+                    pendingExportPassword = password
+                    exportPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                } else {
+                    runExport(password)
                 }
             },
             onDismiss = { exportDialogOpen = false },

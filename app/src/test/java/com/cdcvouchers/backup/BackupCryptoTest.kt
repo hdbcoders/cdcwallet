@@ -89,4 +89,23 @@ class BackupCryptoTest {
     fun pbkdf2IterationCountIsOwasBaseline() {
         assertEquals(600_000, BackupCrypto.PBKDF2_ITERATIONS)
     }
+
+    @Test
+    fun pbkdf2Sha256MatchesStandardVector() {
+        // Published PBKDF2-HMAC-SHA256 vectors (password="password", salt="salt",
+        // 256-bit key). The pure-Kotlin derivation must match the standard byte
+        // for byte so backups stay interchangeable with SecretKeyFactory-based
+        // encryption on API 26+.
+        val expected1 = "120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b"
+        val expected4096 = "c5e478d59288c841aa530db6845c4c8d962893a001ce4e11a4963873aa98134a"
+        val salt = "salt".toByteArray(Charsets.UTF_8)
+
+        val hex1 = BackupCrypto.pbkdf2Sha256("password", salt, 1, 256).toHex()
+        val hex4096 = BackupCrypto.pbkdf2Sha256("password", salt, 4096, 256).toHex()
+
+        assertEquals(expected1, hex1)
+        assertEquals(expected4096, hex4096)
+    }
+
+    private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
 }

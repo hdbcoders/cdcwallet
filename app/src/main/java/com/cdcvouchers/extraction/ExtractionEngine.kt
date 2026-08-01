@@ -4,6 +4,7 @@ import android.content.Context
 import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
+import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -42,7 +43,10 @@ class ExtractionEngine(
             try {
                 extract(webView, url)
             } finally {
-                (injectionPath as? InjectionPath.DocumentStart)?.scriptHandler?.remove()
+                val handler = (injectionPath as? InjectionPath.DocumentStart)?.scriptHandler
+                if (handler != null && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                    handler.remove()
+                }
                 runCatching { webView.removeJavascriptInterface(BRIDGE_NAME) }
             }
         }

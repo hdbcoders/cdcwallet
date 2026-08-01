@@ -33,6 +33,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         compose = true
@@ -52,6 +53,14 @@ kotlin {
 }
 
 dependencies {
+    constraints {
+        // androidx.concurrent is an atomic group — all its artifacts must resolve
+        // to the same version. core 1.16.0 only requests 1.0.0 and profileinstaller
+        // 1.1.0, while the androidTest graph (test core/espresso) needs 1.2.0.
+        // Pinning the group avoids AGP's consistent-resolution lint lock conflict.
+        implementation("androidx.concurrent:concurrent-futures:1.2.0")
+        implementation("androidx.concurrent:concurrent-futures-ktx:1.2.0")
+    }
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
@@ -73,6 +82,8 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)

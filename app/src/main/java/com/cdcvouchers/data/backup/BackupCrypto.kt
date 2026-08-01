@@ -2,10 +2,9 @@ package com.cdcvouchers.data.backup
 
 import java.security.SecureRandom
 import javax.crypto.Cipher
+import javax.crypto.Mac
 import javax.crypto.SecretKey
-import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
@@ -62,9 +61,42 @@ object BackupCrypto {
         }
     }
 
-    private fun deriveKey(password: String, salt: ByteArray): SecretKey {
-        val spec = PBEKeySpec(password.toCharArray(), salt, PBKDF2_ITERATIONS, KEY_LENGTH_BITS)
-        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-        return SecretKeySpec(factory.generateSecret(spec).encoded, "AES")
+    private fun deriveKey(password: String, salt: ByteArray): SecretKey =
+        SecretKeySpec(pbkdf2Sha256(password, salt, PBKDF2_ITERATIONS, KEY_LENGTH_BITS), "AES")
+
+    /**
+     * PBKDF2-HMAC-SHA256 (RFC 2898) implemented directly over [Mac]. The
+     * framework provider SecretKeyFactory "PBKDF2WithHmacSHA256" only exists on
+     * API 26+, which would break backup export/import on API 24-25. Output is
+     * byte-identical to the standard derivation, so backups interoperate across
+     * Android versions (and with test vectors). HmacSHA256 is available since API 1.
+     */
+    internal fun pbkdf2Sha256(password: String, salt: ByteArray, iterations: Int, keyLengthBits: Int): ByteArray {
+        require(iterations > 0)
+        val prf = Mac.getInstance("HmacSHA256")
+        prf.init(SecretKeySpec(password.toByteArray(Charsets.UTF_8), "HmacSHA256"))
+        val hashLength = prf.macLength
+        val dkLength = keyLengthBits / 8
+        val blockCount = (dkLength + hashLength - 1) / hashLength
+        val derived = ByteArray(dkLength)
+        var derivedOffset = 0
+        for (block in 1..blockCount) {
+            val firstBlock = ByteArray(salt.size + 4)
+            salt.copyInto(firstBlock)
+            firstBlock[salt.size] = (block ushr 24).toByte()
+            firstBlock[salt.size + 1] = (block ushr 16).toByte()
+            firstBlock[salt.size + 2] = (block ushr 8).toByte()
+            firstBlock[salt.size + 3] = block.toByte()
+            var u = prf.doFinal(firstBlock)
+            val xor = u.copyOf()
+            repeat(iterations - 1) {
+                u = prf.doFinal(u)
+                for (i in xor.indices) xor[i] = (xor[i].toInt() xor u[i].toInt()).toByte()
+            }
+            val copyLength = minOf(hashLength, dkLength - derivedOffset)
+            xor.copyInto(derived, derivedOffset, 0, copyLength)
+            derivedOffset += copyLength
+        }
+        return derived
     }
 }
