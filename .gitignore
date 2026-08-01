@@ -1,0 +1,13 @@
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+.kotlin/
+build_log*.txt
+AGENTS.md
+docs/
+*.apk
+*.class
+captures/
+.DS_Store

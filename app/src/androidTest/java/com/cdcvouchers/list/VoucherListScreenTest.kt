@@ -1,0 +1,250 @@
+package com.cdcvouchers.list
+
+import android.content.Context
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.cdcvouchers.data.RoomVoucherRepository
+import com.cdcvouchers.data.db.AppDatabase
+import com.cdcvouchers.data.db.SqlCipherNative
+import com.cdcvouchers.data.model.CategoryBalance
+import com.cdcvouchers.data.model.ValidityStatus
+import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.ui.list.VoucherListScreen
+import kotlinx.coroutines.runBlocking
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.math.BigDecimal
+import java.time.Instant
+import java.time.LocalDate
+
+/**
+ * Main list screen (spec 04): sorting with UNVERIFIED pinned on top, badge
+ * rendering, aggregate summary, overflow ⋮ buttons, tap/long-press routing.
+ */
+@RunWith(AndroidJUnit4::class)
+class VoucherListScreenTest {
+
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    private val appContext: Context = ApplicationProvider.getApplicationContext()
+    private lateinit var database: AppDatabase
+
+    @Before
+    fun setUp() {
+        SqlCipherNative.load()
+        database = Room.inMemoryDatabaseBuilder(appContext, AppDatabase::class.java)
+            .openHelperFactory(SupportOpenHelperFactory("test-passphrase".toByteArray()))
+            .allowMainThreadQueries()
+            .build()
+    }
+
+    @After
+    fun tearDown() {
+        database.close()
+    }
+
+    private fun voucher(
+        id: String,
+        name: String,
+        status: ValidityStatus,
+        expiry: LocalDate?,
+        balances: List<CategoryBalance> = emptyList(),
+        lastRefreshError: String? = null,
+    ) = VoucherGroup(
+        id = id,
+        token = id,
+        url = "https://example.com/$id",
+        campaignName = name,
+        validityStatus = status,
+        expiryDate = expiry,
+        categoryBalances = balances,
+        dateAdded = Instant.now(),
+        lastRefreshedAt = null,
+        lastRefreshError = lastRefreshError,
+    )
+
+    @Test
+    fun listRendersSortedWithUnverifiedPinnedBadgesAndSummary() {
+        val repository = RoomVoucherRepository(database)
+        val today = LocalDate.now()
+        runBlocking {
+            repository.insert(
+                voucher(
+                    "a10", "Link Ten", ValidityStatus.ACTIVE, today.plusDays(10),
+                    listOf(
+                        CategoryBalance("heartland", BigDecimal("50")),
+                        CategoryBalance("supermarket", BigDecimal("25.5")),
+                    ),
+                ),
+            )
+            repository.insert(
+                voucher(
+                    "a40", "Link Forty", ValidityStatus.ACTIVE, today.plusDays(40),
+                    listOf(CategoryBalance("groceries", BigDecimal("10"))),
+                ),
+            )
+            repository.insert(
+                voucher("u1", "u.html", ValidityStatus.UNVERIFIED, null, lastRefreshError = "NETWORK_ERROR"),
+            )
+            repository.insert(
+                voucher(
+                    "ns", "Link Not Started", ValidityStatus.NOT_STARTED, today.plusDays(5),
+                    listOf(CategoryBalance("heartland", BigDecimal("5"))),
+                ),
+            )
+            repository.insert(
+                voucher(
+                    "ex", "Link Expired", ValidityStatus.EXPIRED, today.minusDays(2),
+                    listOf(CategoryBalance("merchants", BigDecimal("2"))),
+                ),
+            )
+        }
+
+        composeRule.setContent {
+            MaterialTheme {
+                VoucherListScreen(
+                    repository = repository,
+                    onAddClick = {},
+                    onOpenVoucher = {},
+                    onArchivedClick = {}, onSettingsClick = {},
+                )
+            }
+        }
+
+        // Spec 04 §4.1: UNVERIFIED pinned above everyone else; rest by soonest expiry.
+        assertTopToBottomOrder(
+            "u.html",
+            "Link Expired",
+            "Link Not Started",
+            "Link Ten",
+            "Link Forty",
+        )
+
+        // Spec 04 §4.2: all four badge states render distinctly.
+        composeRule.onNodeWithText("Couldn't verify, tap to check").assertIsDisplayed()
+        composeRule.onNodeWithText("Expired").assertIsDisplayed()
+        composeRule.onNodeWithText("Not started").assertIsDisplayed()
+        composeRule.onNodeWithText("Expires in 10 days").assertIsDisplayed()
+        composeRule.onNodeWithText("Expires in 40 days").assertIsDisplayed()
+
+        // Spec 04 §4.3: total excludes the UNVERIFIED entry from value and count.
+        composeRule.onNodeWithText("S$92.50 remaining across 4 links").assertIsDisplayed()
+        for (part in listOf(
+            "S$10.00 groceries",
+            "S$55.00 heartland",
+            "S$2.00 merchants",
+            "S$25.50 supermarket",
+        )) {
+            composeRule.onNodeWithText(part, substring = true).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun everyRowHasAccessibleOverflowButton() {
+        val repository = RoomVoucherRepository(database)
+        runBlocking {
+            repository.insert(
+                voucher("a10", "Link Ten", ValidityStatus.ACTIVE, LocalDate.now().plusDays(10)),
+            )
+            repository.insert(
+                voucher("u1", "u.html", ValidityStatus.UNVERIFIED, null, lastRefreshError = "NETWORK_ERROR"),
+            )
+        }
+
+        composeRule.setContent {
+            MaterialTheme {
+                VoucherListScreen(
+                    repository = repository,
+                    onAddClick = {},
+                    onOpenVoucher = {},
+                    onArchivedClick = {}, onSettingsClick = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("More options for Link Ten")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More options for u.html")
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun tapOpensVoucherAndLongPressOpensMenu() {
+        val repository = RoomVoucherRepository(database)
+        runBlocking {
+            repository.insert(
+                voucher("a10", "Link Ten", ValidityStatus.ACTIVE, LocalDate.now().plusDays(10)),
+            )
+            repository.insert(
+                voucher("a40", "Link Forty", ValidityStatus.ACTIVE, LocalDate.now().plusDays(40)),
+            )
+        }
+        var openedId: String? = null
+
+        composeRule.setContent {
+            MaterialTheme {
+                VoucherListScreen(
+                    repository = repository,
+                    onAddClick = {},
+                    onOpenVoucher = { openedId = it.id },
+                    onArchivedClick = {}, onSettingsClick = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Link Ten").performClick()
+        assertEquals("a10", openedId)
+
+        composeRule.onNodeWithText("Link Forty").performTouchInput { longClick() }
+        composeRule.onNodeWithText("Archive").assertIsDisplayed()
+        composeRule.onNodeWithText("Delete").assertIsDisplayed()
+    }
+
+    @Test
+    fun emptyListShowsPrompt() {
+        val repository = RoomVoucherRepository(database)
+        composeRule.setContent {
+            MaterialTheme {
+                VoucherListScreen(
+                    repository = repository,
+                    onAddClick = {},
+                    onOpenVoucher = {},
+                    onArchivedClick = {}, onSettingsClick = {},
+                )
+            }
+        }
+        composeRule.onNodeWithText("No voucher links yet — add one with the + button.")
+            .assertIsDisplayed()
+    }
+
+    private fun assertTopToBottomOrder(vararg texts: String) {
+        val positions = texts.map { text ->
+            composeRule.onNodeWithText(text).fetchSemanticsNode().boundsInRoot.top
+        }
+        positions.zipWithNext().forEachIndexed { index, (above, below) ->
+            assertTrue(
+                "'${texts[index]}' should render above '${texts[index + 1]}'",
+                above < below,
+            )
+        }
+    }
+}

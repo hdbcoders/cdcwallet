@@ -1,0 +1,16 @@
+package com.cdcvouchers.data.db
+
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.cdcvouchers.data.model.VoucherGroup
+
+@Database(
+    entities = [VoucherGroup::class],
+    version = 1,
+    exportSchema = false,
+)
+@TypeConverters(VoucherConverters::class)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun voucherDao(): VoucherDao
+}
