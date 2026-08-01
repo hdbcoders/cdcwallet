@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- RedeemSG serves via Let's Encrypt ISRG Root X2, which Android's
+         platform trust store only carries on API 29+. Min SDK is 24, so the
+         root is added as an additional trust anchor for API 24-28. -->
+    <base-config>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/isrg_root_x2" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
