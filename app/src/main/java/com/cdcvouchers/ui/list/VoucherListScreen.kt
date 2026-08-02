@@ -1,5 +1,6 @@
 package com.cdcvouchers.ui.list
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
@@ -161,9 +163,11 @@ fun VoucherListScreen(
 
 @Composable
 private fun SummaryCard(summary: ListSummary) {
+    val containerColor =
+        if (isSystemInDarkTheme()) Color(0xFF1D2B53) else Color(0xFFD9E7FF)
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = containerColor,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
