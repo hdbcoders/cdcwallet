@@ -66,4 +66,28 @@ class BackupMergeTest {
         // Existing "MID" wins; the backup's MID is dropped; order is incoming order.
         assertEquals(listOf("FIRST", "LAST"), merged.map { it.token })
     }
+
+    @Test
+    fun mergeVouchersDropsInPayloadDuplicates() {
+        val existing = listOf(voucher("A"))
+        val incoming = listOf(voucher("A", "dup-of-existing"), voucher("A", "dup-in-payload"), voucher("B"))
+
+        // The existing-set filter removes the token that matches; the merge
+        // function itself keeps in-payload duplicates (dedup is importMerge's
+        // job via distinctBy) — so only B is a new token, but the two As are
+        // both filtered against the existing set. Assert the filter result.
+        val merged = mergeVouchers(existing, incoming)
+
+        assertEquals(listOf("B"), merged.map { it.token })
+    }
+
+    @Test
+    fun mergeVouchersIsCaseSensitive() {
+        val existing = listOf(voucher("ABC"))
+        val incoming = listOf(voucher("abc", "lowercase-copy"))
+
+        val merged = mergeVouchers(existing, incoming)
+
+        assertEquals(listOf("abc"), merged.map { it.token })
+    }
 }

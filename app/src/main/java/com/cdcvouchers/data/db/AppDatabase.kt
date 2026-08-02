@@ -8,7 +8,7 @@ import com.cdcvouchers.data.model.VoucherGroup
 @Database(
     entities = [VoucherGroup::class],
     version = 1,
-    exportSchema = false,
+    exportSchema = true,
 )
 @TypeConverters(VoucherConverters::class)
 abstract class AppDatabase : RoomDatabase() {

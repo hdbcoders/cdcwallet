@@ -20,17 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.cdcvouchers.ui.theme.AmberBadgeDark
+import com.cdcvouchers.ui.theme.AmberBadgeLight
+import com.cdcvouchers.ui.theme.GreenBadgeDark
+import com.cdcvouchers.ui.theme.GreenBadgeLight
 import com.cdcvouchers.ui.theme.LocalAppIsDark
-
-private val AmberContainerLight = Color(0xFFFFE0B2)
-private val AmberContentLight = Color(0xFF8D4E00)
-private val AmberContainerDark = Color(0xFF4B3100)
-private val AmberContentDark = Color(0xFFFFD180)
-
-private val GreenContainerLight = Color(0xFFC8E6C9)
-private val GreenContentLight = Color(0xFF1B5E20)
-private val GreenContainerDark = Color(0xFF1E3B22)
-private val GreenContentDark = Color(0xFFA5D6A7)
 
 /**
  * Spec 04 §4.2 badge. Distinct per state: label text (announced by TalkBack),
@@ -50,15 +44,15 @@ fun VoucherBadge(state: BadgeState, modifier: Modifier = Modifier) {
                 icon = Icons.Default.Warning
             }
             Urgency.SOON -> {
-                val dark = LocalAppIsDark.current
-                containerColor = if (dark) AmberContainerDark else AmberContainerLight
-                contentColor = if (dark) AmberContentDark else AmberContentLight
+                val palette = if (LocalAppIsDark.current) AmberBadgeDark else AmberBadgeLight
+                containerColor = palette.container
+                contentColor = palette.content
                 icon = Icons.Default.Warning
             }
             Urgency.FINE -> {
-                val dark = LocalAppIsDark.current
-                containerColor = if (dark) GreenContainerDark else GreenContainerLight
-                contentColor = if (dark) GreenContentDark else GreenContentLight
+                val palette = if (LocalAppIsDark.current) GreenBadgeDark else GreenBadgeLight
+                containerColor = palette.container
+                contentColor = palette.content
                 icon = Icons.Default.CheckCircle
             }
         }

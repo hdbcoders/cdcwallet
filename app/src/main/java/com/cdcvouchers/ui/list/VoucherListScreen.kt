@@ -32,26 +32,25 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.ui.theme.LocalAppIsDark
-import kotlinx.coroutines.launch
+import com.cdcvouchers.ui.theme.SummaryCardContainerLight
+import kotlinx.coroutines.flow.collect
 
 /**
  * Main voucher list (spec 04, 05). Owns the aggregate summary and the
  * Archive/Delete overflow menu (long-press and ⋮ both open it, via the shared
  * VoucherRow); the Archived screen is reachable from the persistent app-bar
- * entry.
+ * entry. State and DB calls live in [VoucherListViewModel].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,14 +62,25 @@ fun VoucherListScreen(
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val vouchers by repository.observeActive().collectAsState(initial = emptyList())
-    val archivedCount by repository.observeArchived().collectAsState(initial = emptyList())
+    val vm: VoucherListViewModel = viewModel(
+        initializer = { VoucherListViewModel(repository) },
+    )
+    val vouchers by vm.vouchers.collectAsState()
+    val archivedCount by vm.archivedCount.collectAsState()
     val sorted = remember(vouchers) { sortActive(vouchers) }
     val summary = remember(sorted) { summarizeActive(sorted) }
-    val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    var menuFor by remember { mutableStateOf<String?>(null) }
-    var pendingDelete by remember { mutableStateOf<VoucherGroup?>(null) }
+
+    LaunchedEffect(Unit) {
+        vm.events.collect { event ->
+            when (event) {
+                is ListEvent.ArchivedUndo -> {
+                    val result = snackbarHostState.showSnackbar("Archived", actionLabel = "Undo")
+                    if (result == SnackbarResult.ActionPerformed) vm.restore(event.voucherId)
+                }
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -79,7 +89,7 @@ fun VoucherListScreen(
                 title = { Text("Voucher Links") },
                 actions = {
                     TextButton(onClick = onArchivedClick) {
-                        Text("Archived (${archivedCount.size})")
+                        Text("Archived ($archivedCount)")
                     }
                     IconButton(onClick = onSettingsClick) {
                         Icon(
@@ -116,33 +126,24 @@ fun VoucherListScreen(
                 items(sorted, key = { it.id }) { voucher ->
                     VoucherRow(
                         voucher = voucher,
-                        menuExpanded = menuFor == voucher.id,
+                        menuExpanded = vm.menuForId == voucher.id,
                         onClick = { onOpenVoucher(voucher) },
                         onMenuExpandedChange = { open ->
-                            menuFor = if (open) voucher.id else null
+                            vm.setMenu(if (open) voucher.id else null)
                         },
                     ) {
                         DropdownMenuItem(
                             text = { Text("Archive") },
                             onClick = {
-                                menuFor = null
-                                scope.launch {
-                                    repository.archive(voucher.id)
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = "Archived",
-                                        actionLabel = "Undo",
-                                    )
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        repository.restore(voucher.id)
-                                    }
-                                }
+                                vm.setMenu(null)
+                                vm.archive(voucher)
                             },
                         )
                         DropdownMenuItem(
                             text = { Text("Delete") },
                             onClick = {
-                                menuFor = null
-                                pendingDelete = voucher
+                                vm.setMenu(null)
+                                vm.requestDelete(voucher)
                             },
                         )
                     }
@@ -151,13 +152,13 @@ fun VoucherListScreen(
         }
     }
 
-    pendingDelete?.let { voucher ->
+    vm.pendingDelete?.let { voucher ->
         DeleteVoucherDialog(
             onConfirm = {
-                pendingDelete = null
-                scope.launch { repository.delete(voucher.id) }
+                vm.dismissDelete()
+                vm.delete(voucher.id)
             },
-            onDismiss = { pendingDelete = null },
+            onDismiss = { vm.dismissDelete() },
         )
     }
 }
@@ -168,7 +169,7 @@ private fun SummaryCard(summary: ListSummary) {
     val containerColor = if (dark) {
         MaterialTheme.colorScheme.surfaceContainerHigh
     } else {
-        Color(0xFFD9E7FF)
+        SummaryCardContainerLight
     }
     val chipColor = if (dark) {
         MaterialTheme.colorScheme.surfaceVariant

@@ -5,7 +5,6 @@ import android.net.Uri
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherBackupPayload
 import com.cdcvouchers.data.model.VoucherGroup
-import com.cdcvouchers.data.token.VoucherToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -43,28 +42,33 @@ class BackupFlow(
      */
     suspend fun importMerge(payload: VoucherBackupPayload): Int {
         val existing = repository.findAll()
-        var imported = 0
-        for (candidate in mergeVouchers(existing, payload.vouchers)) {
-            if (repository.insert(candidate)) imported++
-        }
-        return imported
+        // distinctBy uses case-sensitive token equality — identical to
+        // VoucherToken.isDuplicate, so in-payload duplicates can never trip the
+        // unique index inside bulkInsert (01 §1.4 semantics preserved).
+        val merged = mergeVouchers(existing, payload.vouchers).distinctBy { it.token }
+        if (merged.isEmpty()) return 0
+        repository.bulkInsert(merged)
+        return merged.size
     }
 
     /** Replace mode (spec 06 §6.3) — the most destructive operation in the app. */
     suspend fun importReplace(payload: VoucherBackupPayload) {
-        repository.replaceAll(payload.vouchers)
+        repository.replaceAll(payload.vouchers.distinctBy { it.token })
     }
 }
 
 /**
- * Pure merge computation, kept testable. Duplicate detection delegates to the
- * single canonical implementation `VoucherToken.isDuplicate` (case-sensitive,
- * spec 01 §1.4 / 06 §6.3) — do not add another token comparison here.
+ * Pure merge computation, kept testable. Duplicate detection is exact
+ * case-sensitive token equality (01 §1.4 / 06 §6.3) — the same semantics as
+ * `VoucherToken.isDuplicate` — do not add another token comparison here.
+ * O(n+m): the existing token set is built once.
  */
 fun mergeVouchers(
     existing: List<VoucherGroup>,
     incoming: List<VoucherGroup>,
-): List<VoucherGroup> =
-    incoming.filter { candidate ->
-        existing.none { VoucherToken.isDuplicate(candidate.token, it.token) }
+): List<VoucherGroup> {
+    val existingTokens = existing.mapTo(HashSet()) { it.token }
+    return incoming.filter { candidate ->
+        !existingTokens.contains(candidate.token)
     }
+}

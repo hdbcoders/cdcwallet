@@ -52,6 +52,10 @@ kotlin {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     constraints {
         // androidx.concurrent is an atomic group — all its artifacts must resolve

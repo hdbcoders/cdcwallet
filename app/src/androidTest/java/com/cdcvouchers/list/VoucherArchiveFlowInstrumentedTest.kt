@@ -312,7 +312,7 @@ class VoucherArchiveFlowInstrumentedTest {
         composeRule.setContent {
             MaterialTheme {
                 VoucherWebViewScreen(
-                    voucher = slow,
+                    voucherId = slow.id,
                     repository = repository,
                     extractionEngine = ExtractionEngine(),
                     onBack = {},

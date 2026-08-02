@@ -26,6 +26,11 @@ import kotlinx.coroutines.withTimeout
  *
  * Failures report clearly (PARSE_ERROR / NETWORK_ERROR / TIMEOUT) and never
  * throw; cancellation tears down the hidden WebView and orphans nothing.
+ *
+ * All teardown (script handler removal + bridge removal) happens inside
+ * `extract()`'s `finally` — owned per-call, never shared state. The engine is
+ * an app-wide singleton used by both the add flow and the detail screen, and
+ * two overlapping extractions must never touch each other's handlers.
  */
 class ExtractionEngine(
     private val forceFallbackInjection: Boolean = false,
@@ -45,18 +50,25 @@ class ExtractionEngine(
 
     suspend fun extractFromVisibleWebView(webView: WebView, url: String): ExtractionResult =
         withContext(Dispatchers.Main) {
-            try {
-                extract(webView, url, browserLike = true)
-            } finally {
-                val handler = (injectionPath as? InjectionPath.DocumentStart)?.scriptHandler
-                if (handler != null && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-                    handler.remove()
-                }
-                runCatching { webView.removeJavascriptInterface(BRIDGE_NAME) }
-            }
+            extract(webView, url, browserLike = true)
         }
 
-    private var injectionPath: InjectionPath = InjectionPath.HtmlRewrite
+    /**
+     * Rotation rehydrate: a recreated visible WebView is re-driven without
+     * re-extracting. Injection is (re)installed because the viewport-fix script
+     * must run on every page load — without it, affected WebView builds render
+     * the SPA blank after rotation (02 §2.4). The capture wrapper is inert
+     * without a bridge installed (it checks window.RedeemBridge and no-ops).
+     * The document-start handler is intentionally NOT removed: it must live for
+     * the page lifetime. HtmlRewrite fallback gets a fresh client per WebView.
+     */
+    suspend fun rehydrateVisibleWebView(webView: WebView, url: String) {
+        withContext(Dispatchers.Main) {
+            configureSession(webView, browserLike = true)
+            installInjection(webView, forceFallbackInjection)
+            webView.loadUrl(url)
+        }
+    }
 
     private suspend fun extract(webView: WebView, url: String, browserLike: Boolean): ExtractionResult {
         configureSession(webView, browserLike = browserLike)
@@ -80,12 +92,19 @@ class ExtractionEngine(
             },
         )
         webView.addJavascriptInterface(bridge, BRIDGE_NAME)
-        injectionPath = installInjection(webView, forceFallbackInjection)
+        val path = installInjection(webView, forceFallbackInjection)
         webView.loadUrl(url)
         return try {
             withTimeout(EXTRACTION_TIMEOUT_MS) { deferred.await() }
         } catch (e: TimeoutCancellationException) {
             ExtractionResult.Failure(ExtractionResult.FailureReason.TIMEOUT)
+        } finally {
+            (path as? InjectionPath.DocumentStart)?.let { p ->
+                if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                    p.scriptHandler.remove()
+                }
+            }
+            runCatching { webView.removeJavascriptInterface(BRIDGE_NAME) }
         }
     }
 

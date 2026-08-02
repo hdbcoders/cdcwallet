@@ -33,6 +33,8 @@ private class FakeRepository : VoucherRepository {
 
     override fun observeActive(): Flow<List<VoucherGroup>> = flowOf(rows.filterNot { it.isArchived })
     override fun observeArchived(): Flow<List<VoucherGroup>> = flowOf(rows.filter { it.isArchived })
+    override fun observeActiveCount(): Flow<Int> = flowOf(rows.count { !it.isArchived })
+    override fun observeArchivedCount(): Flow<Int> = flowOf(rows.count { it.isArchived })
 
     override suspend fun insert(voucher: VoucherGroup): Boolean {
         insertCalls.incrementAndGet()

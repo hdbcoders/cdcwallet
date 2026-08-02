@@ -9,7 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
@@ -20,7 +19,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.cdcvouchers.addflow.AddVoucherFlow
-import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.ui.add.AddVoucherScreen
 import com.cdcvouchers.ui.detail.VoucherWebViewScreen
 import com.cdcvouchers.ui.list.ArchivedVoucherScreen
@@ -142,24 +140,12 @@ private fun AppNavHost(
             route = "detail/{voucherId}",
             arguments = listOf(navArgument("voucherId") { type = NavType.StringType }),
         ) { entry ->
-            val voucherId = entry.arguments?.getString("voucherId").orEmpty()
-            // `null` = first emission still pending; only pop once the state is
-            // loaded AND the row is really missing — the initial empty frame
-            // must never pop the route (live-walkthrough catch).
-            val vouchers: List<VoucherGroup>? by container.repository.observeActive()
-                .collectAsState(initial = null)
-            val loaded = vouchers
-            when {
-                loaded == null -> {}
-                loaded.firstOrNull { it.id == voucherId } == null ->
-                    LaunchedEffect(Unit) { navController.popBackStack() }
-                else -> VoucherWebViewScreen(
-                    voucher = loaded.first { it.id == voucherId },
-                    repository = container.repository,
-                    extractionEngine = container.extractionEngine,
-                    onBack = { navController.popBackStack() },
-                )
-            }
+            VoucherWebViewScreen(
+                voucherId = entry.arguments?.getString("voucherId").orEmpty(),
+                repository = container.repository,
+                extractionEngine = container.extractionEngine,
+                onBack = { navController.popBackStack() },
+            )
         }
     }
 }

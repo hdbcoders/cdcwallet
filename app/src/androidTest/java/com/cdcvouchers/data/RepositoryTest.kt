@@ -225,6 +225,31 @@ class RepositoryTest {
         assertTrue(found.categoryBalances.isEmpty())
     }
 
+    @Test
+    fun countFlowsTrackArchival() = runTest {
+        repository.insert(voucher("Active"))
+        repository.insert(voucher("Archived", archived = true))
+
+        var activeCount = repository.observeActiveCount().first()
+        var archivedCount = repository.observeArchivedCount().first()
+        assertEquals(1, activeCount)
+        assertEquals(1, archivedCount)
+
+        val active = repository.findByToken("Active")!!
+        repository.archive(active.id)
+
+        activeCount = repository.observeActiveCount().first()
+        archivedCount = repository.observeArchivedCount().first()
+        assertEquals(0, activeCount)
+        assertEquals(2, archivedCount)
+    }
+
+    @Test
+    fun countFlowsEmitInitialValues() = runTest {
+        assertEquals(0, repository.observeActiveCount().first())
+        assertEquals(0, repository.observeArchivedCount().first())
+    }
+
     private fun runTest(block: suspend () -> Unit) {
         kotlinx.coroutines.test.runTest { block() }
     }

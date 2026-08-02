@@ -1,6 +1,8 @@
 package com.cdcvouchers.backup
 
+import android.Manifest
 import android.content.Context
+import android.os.Build
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -12,6 +14,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.cdcvouchers.data.RoomVoucherRepository
 import com.cdcvouchers.data.backup.BackupException
 import com.cdcvouchers.data.backup.BackupFlow
@@ -23,6 +26,7 @@ import com.cdcvouchers.data.model.ValidityStatus
 import com.cdcvouchers.data.model.VoucherBackupPayload
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.ui.settings.SettingsScreen
+import com.cdcvouchers.ui.theme.ThemeModeStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -107,6 +111,7 @@ class VoucherBackupFlowInstrumentedTest {
                 SettingsScreen(
                     backupFlow = flow,
                     repository = repository,
+                    themeModeStore = ThemeModeStore(appContext),
                     onBack = {},
                     backupBytesProvider = bytesProvider,
                 )
@@ -121,8 +126,32 @@ class VoucherBackupFlowInstrumentedTest {
         composeRule.onNodeWithText("Import").performClick()
     }
 
+    /** Decrypt runs on Dispatchers.IO (P1 item 3) — wait for the async result
+     *  (summary dialog or error snackbar) before asserting on it. */
+    private fun waitUntilNodeAppears(text: String, timeoutMillis: Long = 10_000) {
+        composeRule.waitUntil(timeoutMillis) {
+            composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun summaryText(payload: VoucherBackupPayload): String {
+        val date = payload.createdAt.atZone(ZoneId.systemDefault())
+            .toLocalDate().format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH))
+        val archived = payload.vouchers.count { it.isArchived }
+        return "Backup from $date · ${payload.vouchers.size} vouchers ($archived archived). Import this backup?"
+    }
+
     @Test
     fun exportWritesGenuinelyEncryptedFileToDownloads() {
+        // API 24-28 write to the public Downloads dir, which needs the runtime
+        // permission the SettingsScreen normally requests. This test drives
+        // BackupFlow directly, so grant it like a user would.
+        if (Build.VERSION.SDK_INT < 29) {
+            InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(
+                appContext.packageName,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        }
         val repository = RoomVoucherRepository(database)
         runBlocking {
             repository.insert(voucher("TokenOne", "CDC Vouchers 2026"))
@@ -132,7 +161,9 @@ class VoucherBackupFlowInstrumentedTest {
 
         val uri = runBlocking { flow.export(appContext, "backup-passphrase") }
 
-        assertTrue(uri.toString().contains("downloads", ignoreCase = true))
+        // API 29+ returns content://media/external/downloads/...; API 24-28
+        // return file:///storage/emulated/0/Download/... — both contain "download".
+        assertTrue(uri.toString().contains("download", ignoreCase = true))
         val bytes = appContext.contentResolver.openInputStream(uri)!!.readBytes()
         assertTrue("file must not be empty", bytes.isNotEmpty())
         // Genuinely encrypted: no plaintext payload field survives.
@@ -162,6 +193,7 @@ class VoucherBackupFlowInstrumentedTest {
 
         // Wrong password.
         importWithPassword("wrong-password")
+        waitUntilNodeAppears(BackupException.GENERIC_MESSAGE)
         composeRule.onNodeWithText(BackupException.GENERIC_MESSAGE).assertIsDisplayed()
         composeRule.waitUntil(6_000) {
             composeRule.onAllNodesWithText(BackupException.GENERIC_MESSAGE)
@@ -171,6 +203,7 @@ class VoucherBackupFlowInstrumentedTest {
         // Corrupted file, correct password — must show the identical message.
         currentBytes = validBytes.copyOf().also { it[it.size - 1] = it[it.size - 1].xor(0x01) }
         importWithPassword("backup-passphrase")
+        waitUntilNodeAppears(BackupException.GENERIC_MESSAGE)
         composeRule.onNodeWithText(BackupException.GENERIC_MESSAGE).assertIsDisplayed()
     }
 
@@ -185,12 +218,8 @@ class VoucherBackupFlowInstrumentedTest {
 
         settingsContent(repository, bytesProvider = { bytes })
         importWithPassword("backup-passphrase")
-
-        val date = payload.createdAt.atZone(ZoneId.systemDefault())
-            .toLocalDate().format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH))
-        composeRule.onNodeWithText(
-            "Backup from $date · 2 vouchers (1 archived). Import this backup?",
-        ).assertIsDisplayed()
+        waitUntilNodeAppears(summaryText(payload))
+        composeRule.onNodeWithText(summaryText(payload)).assertIsDisplayed()
 
         // Summary shown before anything is committed.
         runBlocking {
@@ -211,14 +240,18 @@ class VoucherBackupFlowInstrumentedTest {
         runBlocking { repository.insert(voucher("ABC", "existing")) }
         // Incoming has the exact duplicate AND a case-only variant ("abc" is
         // NOT a duplicate per the canonical case-sensitive comparison).
-        val bytes = encryptedPayload(
-            "backup-passphrase",
-            voucher("ABC", "duplicate"),
-            voucher("abc", "case-variant"),
+        val payload = VoucherBackupPayload(
+            createdAt = Instant.now(),
+            vouchers = listOf(
+                voucher("ABC", "duplicate"),
+                voucher("abc", "case-variant"),
+            ),
         )
+        val bytes = service.encryptPayload(payload, "backup-passphrase")
 
         settingsContent(repository, bytesProvider = { bytes })
         importWithPassword("backup-passphrase")
+        waitUntilNodeAppears(summaryText(payload))
         composeRule.onNodeWithText("Import").performClick()
 
         runBlocking {
@@ -244,14 +277,18 @@ class VoucherBackupFlowInstrumentedTest {
     fun replaceModeIsConfirmationGatedWithExactCopy() {
         val repository = RoomVoucherRepository(database)
         runBlocking { repository.insert(voucher("KeepMe", "keep")) }
-        val bytes = encryptedPayload(
-            "backup-passphrase",
-            voucher("FromBackup1", "b1"),
-            voucher("FromBackup2", "b2", archived = true),
+        val payload = VoucherBackupPayload(
+            createdAt = Instant.now(),
+            vouchers = listOf(
+                voucher("FromBackup1", "b1"),
+                voucher("FromBackup2", "b2", archived = true),
+            ),
         )
+        val bytes = service.encryptPayload(payload, "backup-passphrase")
 
         settingsContent(repository, bytesProvider = { bytes })
         importWithPassword("backup-passphrase")
+        waitUntilNodeAppears(summaryText(payload))
         composeRule.onNodeWithText("Replace existing data").performClick()
         composeRule.onNodeWithText("Import").performClick()
 
@@ -271,6 +308,7 @@ class VoucherBackupFlowInstrumentedTest {
         composeRule.onNodeWithText("Import backup").performClick()
         composeRule.onNodeWithTag("backup_password").performTextInput("backup-passphrase")
         composeRule.onNodeWithText("Import").performClick()
+        waitUntilNodeAppears(summaryText(payload))
         composeRule.onNodeWithText("Replace existing data").performClick()
         composeRule.onNodeWithText("Import").performClick()
         composeRule.onNodeWithText("Replace").performClick()

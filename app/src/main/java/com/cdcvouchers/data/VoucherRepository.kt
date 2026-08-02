@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.Flow
 interface VoucherRepository {
     fun observeActive(): Flow<List<VoucherGroup>>
     fun observeArchived(): Flow<List<VoucherGroup>>
+    fun observeActiveCount(): Flow<Int>
+    fun observeArchivedCount(): Flow<Int>
 
     /** @return false if a row with the same token already exists (defensive backstop). */
     suspend fun insert(voucher: VoucherGroup): Boolean
@@ -41,6 +43,10 @@ class RoomVoucherRepository(
     override fun observeActive(): Flow<List<VoucherGroup>> = dao.observeActive()
 
     override fun observeArchived(): Flow<List<VoucherGroup>> = dao.observeArchived()
+
+    override fun observeActiveCount(): Flow<Int> = dao.observeActiveCount()
+
+    override fun observeArchivedCount(): Flow<Int> = dao.observeArchivedCount()
 
     override suspend fun insert(voucher: VoucherGroup): Boolean = try {
         dao.insert(voucher)

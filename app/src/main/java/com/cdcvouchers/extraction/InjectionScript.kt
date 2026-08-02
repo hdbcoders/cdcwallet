@@ -18,14 +18,8 @@ internal const val BRIDGE_NAME = "RedeemBridge"
  * matching the voucher-groups endpoint, extracts ONLY the whitelisted fields
  * (spec 02 §2.6) and delivers them to the native bridge. Nothing else from the
  * response is ever read or passed out of the page.
- *
- * A second block fixes a broken viewport-height bug on some WebView builds:
- * `100vh` resolves to 0 while `innerHeight` is correct, so the SPA's screen
- * container collapses to 0 height and the whole view renders blank. The fix
- * re-pins the container height in pixels via an !important stylesheet (safe
- * from React re-renders). No-op on healthy viewports.
  */
-internal const val INJECTION_SCRIPT =
+internal const val CAPTURE_SCRIPT =
     """
     (function () {
       var pathPattern = /\/vouchers\/groups\//;
@@ -150,7 +144,17 @@ internal const val INJECTION_SCRIPT =
         return origSend.apply(this, arguments);
       };
     })();
+    """
 
+/**
+ * FRAGILE WORKAROUND (do not extend): some WebView builds resolve `100vh`
+ * to 0, collapsing the SPA's fixed shell. This re-pins the container height
+ * in px. `.css-14jkxbw` is a RedeemSG React build artifact that WILL change;
+ * the heuristic fallback below is what actually survives rebuilds. Removable
+ * once the underlying 100vh bug is fixed.
+ */
+internal const val VIEWPORT_FIX_SCRIPT =
+    """
     (function () {
       var FIX_ID = 'cdcv-viewport-fix';
       function measured() {
@@ -248,6 +252,9 @@ internal const val INJECTION_SCRIPT =
       boot();
     })();
     """
+
+/** Capture wrapper + viewport fix (see notes on each). */
+internal val INJECTION_SCRIPT: String = CAPTURE_SCRIPT + "\n" + VIEWPORT_FIX_SCRIPT
 
 internal val INJECTION_SCRIPT_TAG: String = "<script>$INJECTION_SCRIPT</script>"
 

@@ -56,6 +56,12 @@ interface VoucherDao {
     @Query("SELECT * FROM voucher_groups WHERE isArchived = 1")
     fun observeArchived(): Flow<List<VoucherGroup>>
 
+    @Query("SELECT COUNT(*) FROM voucher_groups WHERE isArchived = 0")
+    fun observeActiveCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM voucher_groups WHERE isArchived = 1")
+    fun observeArchivedCount(): Flow<Int>
+
     @Query("SELECT * FROM voucher_groups WHERE token = :token LIMIT 1")
     suspend fun findByToken(token: String): VoucherGroup?
 

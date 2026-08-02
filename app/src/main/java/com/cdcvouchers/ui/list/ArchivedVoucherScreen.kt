@@ -19,20 +19,16 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcvouchers.data.VoucherRepository
-import com.cdcvouchers.data.model.VoucherGroup
-import kotlinx.coroutines.launch
 
 /**
  * Archived screen (spec 05 §5.4): same row layout and overflow pattern as the
  * main list, with Restore/Delete instead of Archive/Delete. Delete shares the
  * one confirmation dialog; empty state is a plain message, not a blank screen.
+ * State and DB calls live in [ArchivedVoucherViewModel].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,11 +37,10 @@ fun ArchivedVoucherScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val archived by repository.observeArchived().collectAsState(initial = emptyList())
-    val sorted = remember(archived) { sortActive(archived) }
-    val scope = rememberCoroutineScope()
-    var menuFor by remember { mutableStateOf<String?>(null) }
-    var pendingDelete by remember { mutableStateOf<VoucherGroup?>(null) }
+    val vm: ArchivedVoucherViewModel = viewModel(
+        initializer = { ArchivedVoucherViewModel(repository) },
+    )
+    val sorted by vm.vouchers.collectAsState()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -75,24 +70,24 @@ fun ArchivedVoucherScreen(
                 items(sorted, key = { it.id }) { voucher ->
                     VoucherRow(
                         voucher = voucher,
-                        menuExpanded = menuFor == voucher.id,
+                        menuExpanded = vm.menuForId == voucher.id,
                         onClick = {},
                         onMenuExpandedChange = { open ->
-                            menuFor = if (open) voucher.id else null
+                            vm.setMenu(if (open) voucher.id else null)
                         },
                     ) {
                         DropdownMenuItem(
                             text = { Text("Restore") },
                             onClick = {
-                                menuFor = null
-                                scope.launch { repository.restore(voucher.id) }
+                                vm.setMenu(null)
+                                vm.restore(voucher.id)
                             },
                         )
                         DropdownMenuItem(
                             text = { Text("Delete") },
                             onClick = {
-                                menuFor = null
-                                pendingDelete = voucher
+                                vm.setMenu(null)
+                                vm.requestDelete(voucher)
                             },
                         )
                     }
@@ -101,13 +96,13 @@ fun ArchivedVoucherScreen(
         }
     }
 
-    pendingDelete?.let { voucher ->
+    vm.pendingDelete?.let { voucher ->
         DeleteVoucherDialog(
             onConfirm = {
-                pendingDelete = null
-                scope.launch { repository.delete(voucher.id) }
+                vm.dismissDelete()
+                vm.delete(voucher.id)
             },
-            onDismiss = { pendingDelete = null },
+            onDismiss = { vm.dismissDelete() },
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.cdcvouchers.addflow
 
+import com.cdcvouchers.data.token.VoucherToken
 import java.net.URI
 
 /**
@@ -20,8 +21,8 @@ class VoucherLinkValidator(
         val uri = runCatching { URI(trimmed) }.getOrNull() ?: return false
         if (uri.scheme != null && uri.scheme != "http" && uri.scheme != "https") return false
         if (!uri.host.equals(allowedHost, ignoreCase = true)) return false
-        val path = uri.path ?: return false
-        val lastSegment = path.trim('/').substringAfterLast('/')
-        return lastSegment.isNotBlank()
+        // Token segment extraction is the canonical contract (01 §1.4) — never
+        // reimplemented here (00 §0.3.2).
+        return VoucherToken.tokenFromUrl(trimmed) != null
     }
 }

@@ -63,4 +63,23 @@ class VoucherLinkValidatorTest {
     fun whitespaceSurroundingInputIsIgnored() {
         assertTrue(validator.isPlausibleVoucherLink("  https://voucher.redeem.gov.sg/ABC123  "))
     }
+
+    @Test
+    fun queryParamsAndFragmentAreStrippedByCanonicalTokenFunction() {
+        assertTrue(
+            validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/TokenABC?a=1#frag"),
+        )
+    }
+
+    @Test
+    fun trailingSlashUrlIsValidViaCanonicalTokenFunction() {
+        assertTrue(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/TokenABC/"))
+    }
+
+    @Test
+    fun hostCaseVariantsAcceptedButWrongHostAndEmptySegmentRejected() {
+        assertTrue(validator.isPlausibleVoucherLink("https://Voucher.Redeem.Gov.Sg/TokenABC"))
+        assertFalse(validator.isPlausibleVoucherLink("https://wronghost.redeem.gov.sg/TokenABC"))
+        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/"))
+    }
 }

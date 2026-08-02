@@ -1,6 +1,7 @@
 package com.cdcvouchers.ui.detail
 
 import android.content.Context
+import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.compose.foundation.layout.Column
@@ -20,20 +21,18 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcvouchers.data.VoucherRepository
-import com.cdcvouchers.data.model.VoucherGroup
-import com.cdcvouchers.data.model.VoucherRefreshData
 import com.cdcvouchers.extraction.ExtractionEngine
-import com.cdcvouchers.extraction.ExtractionResult
-import kotlinx.coroutines.launch
-import java.time.Instant
 
 /**
  * Tap-to-open-and-refresh (spec 04 §4.4, call site C2 of 02 §2.4). The WebView
@@ -43,25 +42,34 @@ import java.time.Instant
  * `lastRefreshError` and a non-blocking banner appears — the WebView stays
  * usable either way.
  *
- * The extraction is triggered from the AndroidView `update` callback (which
- * runs in the current snapshot with the freshly created view in hand) rather
- * than a LaunchedEffect polling snapshot state, which can observe stale values
- * until a frame advances.
+ * All state lives in [DetailViewModel], which survives rotation: a recreated
+ * WebView rehydrates the page (viewport fix re-applied, no re-extraction).
+ * The WebView itself is destroyed on dispose to avoid native resource leaks.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VoucherWebViewScreen(
-    voucher: VoucherGroup,
+    voucherId: String,
     repository: VoucherRepository,
     extractionEngine: ExtractionEngine,
     onBack: () -> Unit,
     webViewFactory: (Context) -> WebView = { WebView(it) },
     modifier: Modifier = Modifier,
 ) {
-    val scope = rememberCoroutineScope()
+    val vm: DetailViewModel = viewModel(
+        key = "detail-$voucherId",
+        initializer = { DetailViewModel(repository, extractionEngine, voucherId) },
+    )
     val snackbarHostState = remember { SnackbarHostState() }
-    var refreshStarted by remember { mutableStateOf(false) }
-    var pageProgress by remember { mutableStateOf(100) }
+    val state by vm.uiState.collectAsState()
+    var webViewRef by remember { mutableStateOf<WebView?>(null) }
+
+    val voucher = state.voucher
+    if (!state.isLoaded) return
+    if (voucher == null) {
+        LaunchedEffect(Unit) { onBack() }
+        return
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -78,9 +86,9 @@ fun VoucherWebViewScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (pageProgress < 100) {
+            if (vm.pageProgress < 100) {
                 LinearProgressIndicator(
-                    progress = { pageProgress / 100f },
+                    progress = { vm.pageProgress / 100f },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -89,43 +97,33 @@ fun VoucherWebViewScreen(
                     webViewFactory(context).also { webView ->
                         webView.webChromeClient = object : WebChromeClient() {
                             override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                                pageProgress = newProgress
+                                vm.onPageProgressChanged(newProgress)
                             }
                         }
+                        webViewRef = webView
                     }
                 },
-            update = { view ->
-                if (!refreshStarted) {
-                    refreshStarted = true
-                    scope.launch {
-                        when (val result = extractionEngine.extractFromVisibleWebView(view, voucher.url)) {
-                            is ExtractionResult.Success -> repository.updateFromRefresh(
-                                voucher.id,
-                                VoucherRefreshData(
-                                    campaignName = result.campaignName,
-                                    validityStatus = result.validityStatus,
-                                    expiryDate = result.expiryDate,
-                                    categoryBalances = result.categoryBalances,
-                                    lastRefreshedAt = Instant.now(),
-                                ),
-                            )
-                            is ExtractionResult.Failure -> {
-                                repository.recordRefreshFailure(voucher.id, result.reason.name)
-                                val message = when (result.reason) {
-                                    ExtractionResult.FailureReason.PARSE_ERROR ->
-                                        "Website data failed to parse"
-                                    ExtractionResult.FailureReason.NETWORK_ERROR,
-                                    ExtractionResult.FailureReason.TIMEOUT ->
-                                        "Unable to load website"
-                                }
-                                snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Long)
-                            }
-                        }
-                    }
-                }
-            },
-            modifier = Modifier.weight(1f).fillMaxWidth(),
+                update = { view -> vm.onNewWebViewReady(view, voucher.url) },
+                modifier = Modifier.weight(1f).fillMaxWidth(),
             )
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            val view = webViewRef
+            if (view != null) {
+                runCatching { view.stopLoading() }
+                runCatching { (view.parent as? ViewGroup)?.removeView(view) }
+                runCatching { view.destroy() }
+            }
+        }
+    }
+
+    LaunchedEffect(vm.refreshMessage) {
+        vm.refreshMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Long)
+            vm.consumeRefreshMessage()
         }
     }
 }

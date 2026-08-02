@@ -111,7 +111,7 @@ class VoucherWebViewScreenTest {
             composeRule.setContent {
                 MaterialTheme {
                     VoucherWebViewScreen(
-                        voucher = unverified,
+                        voucherId = unverified.id,
                         repository = repository,
                         extractionEngine = ExtractionEngine(),
                         onBack = {},
@@ -165,7 +165,7 @@ class VoucherWebViewScreenTest {
             composeRule.setContent {
                 MaterialTheme {
                     VoucherWebViewScreen(
-                        voucher = cached,
+                        voucherId = cached.id,
                         repository = repository,
                         extractionEngine = ExtractionEngine(),
                         onBack = {},
