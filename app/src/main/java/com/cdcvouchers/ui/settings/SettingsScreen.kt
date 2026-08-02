@@ -57,6 +57,8 @@ import com.cdcvouchers.data.backup.BackupException
 import com.cdcvouchers.data.backup.BackupFileStore
 import com.cdcvouchers.data.backup.BackupFlow
 import com.cdcvouchers.data.model.VoucherBackupPayload
+import com.cdcvouchers.ui.theme.ThemeMode
+import com.cdcvouchers.ui.theme.ThemeModeStore
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -74,6 +76,7 @@ import java.util.Locale
 fun SettingsScreen(
     backupFlow: BackupFlow,
     repository: VoucherRepository,
+    themeModeStore: ThemeModeStore,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     backupBytesProvider: (() -> ByteArray?)? = null,
@@ -168,6 +171,30 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            Text(
+                text = "Appearance",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            ModeOption(
+                label = "Follow system",
+                selected = themeModeStore.mode == ThemeMode.SYSTEM,
+                onClick = { themeModeStore.setThemeMode(ThemeMode.SYSTEM) },
+            )
+            ModeOption(
+                label = "Light",
+                selected = themeModeStore.mode == ThemeMode.LIGHT,
+                onClick = { themeModeStore.setThemeMode(ThemeMode.LIGHT) },
+            )
+            ModeOption(
+                label = "Dark",
+                selected = themeModeStore.mode == ThemeMode.DARK,
+                onClick = { themeModeStore.setThemeMode(ThemeMode.DARK) },
+            )
+            Text(
+                text = "How the app looks. Follow system matches your phone's setting.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Text(
                 text = "Backup",
                 style = MaterialTheme.typography.titleMedium,

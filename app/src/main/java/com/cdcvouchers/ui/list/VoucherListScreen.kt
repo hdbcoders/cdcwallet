@@ -1,6 +1,6 @@
 package com.cdcvouchers.ui.list
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.ui.theme.LocalAppIsDark
 import kotlinx.coroutines.launch
 
 /**
@@ -163,11 +164,26 @@ fun VoucherListScreen(
 
 @Composable
 private fun SummaryCard(summary: ListSummary) {
-    val containerColor =
-        if (isSystemInDarkTheme()) Color(0xFF1D2B53) else Color(0xFFD9E7FF)
+    val dark = LocalAppIsDark.current
+    val containerColor = if (dark) {
+        MaterialTheme.colorScheme.surfaceContainerHigh
+    } else {
+        Color(0xFFD9E7FF)
+    }
+    val chipColor = if (dark) {
+        MaterialTheme.colorScheme.surfaceVariant
+    } else {
+        MaterialTheme.colorScheme.secondaryContainer
+    }
+    val chipContentColor = if (dark) {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    } else {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    }
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = containerColor,
+        border = if (dark) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
@@ -177,8 +193,8 @@ private fun SummaryCard(summary: ListSummary) {
         ) {
             Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                color = chipColor,
+                contentColor = chipContentColor,
                 modifier = Modifier.size(40.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {

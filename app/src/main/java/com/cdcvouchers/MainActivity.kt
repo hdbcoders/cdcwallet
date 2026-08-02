@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +26,7 @@ import com.cdcvouchers.ui.detail.VoucherWebViewScreen
 import com.cdcvouchers.ui.list.ArchivedVoucherScreen
 import com.cdcvouchers.ui.list.VoucherListScreen
 import com.cdcvouchers.ui.settings.SettingsScreen
+import com.cdcvouchers.ui.theme.AppTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val sharedUrl = intent?.getStringExtra(Intent.EXTRA_TEXT)
         setContent {
-            MaterialTheme {
+            AppTheme(container.themeModeStore.mode) {
                 val navController = rememberNavController()
                 DisposableEffect(navController) {
                     navControllerRef = navController
@@ -114,6 +114,7 @@ private fun AppNavHost(
             SettingsScreen(
                 backupFlow = container.backupFlow,
                 repository = container.repository,
+                themeModeStore = container.themeModeStore,
                 onBack = { navController.popBackStack() },
             )
         }

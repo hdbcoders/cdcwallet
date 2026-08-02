@@ -20,9 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.cdcvouchers.ui.theme.LocalAppIsDark
 
-private val AmberContainer = Color(0xFFFFE0B2)
-private val AmberContent = Color(0xFF8D4E00)
+private val AmberContainerLight = Color(0xFFFFE0B2)
+private val AmberContentLight = Color(0xFF8D4E00)
+private val AmberContainerDark = Color(0xFF4B3100)
+private val AmberContentDark = Color(0xFFFFD180)
 
 /**
  * Spec 04 §4.2 badge. Distinct per state: label text (announced by TalkBack),
@@ -42,8 +45,9 @@ fun VoucherBadge(state: BadgeState, modifier: Modifier = Modifier) {
                 icon = Icons.Default.Warning
             }
             Urgency.SOON -> {
-                containerColor = AmberContainer
-                contentColor = AmberContent
+                val dark = LocalAppIsDark.current
+                containerColor = if (dark) AmberContainerDark else AmberContainerLight
+                contentColor = if (dark) AmberContentDark else AmberContentLight
                 icon = Icons.Default.Warning
             }
             Urgency.FINE -> {
