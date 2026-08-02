@@ -18,6 +18,12 @@ internal const val BRIDGE_NAME = "RedeemBridge"
  * matching the voucher-groups endpoint, extracts ONLY the whitelisted fields
  * (spec 02 §2.6) and delivers them to the native bridge. Nothing else from the
  * response is ever read or passed out of the page.
+ *
+ * A second block fixes a broken viewport-height bug on some WebView builds:
+ * `100vh` resolves to 0 while `innerHeight` is correct, so the SPA's screen
+ * container collapses to 0 height and the whole view renders blank. The fix
+ * re-pins the container height in pixels via an !important stylesheet (safe
+ * from React re-renders). No-op on healthy viewports.
  */
 internal const val INJECTION_SCRIPT =
     """
@@ -143,6 +149,103 @@ internal const val INJECTION_SCRIPT =
         });
         return origSend.apply(this, arguments);
       };
+    })();
+
+    (function () {
+      var FIX_ID = 'cdcv-viewport-fix';
+      function measured() {
+        var ih = window.innerHeight;
+        if (!(ih > 200)) return null;
+        var root = document.getElementById('root');
+        var shell = null;
+        if (root) {
+          var descendants = root.getElementsByTagName('div');
+          for (var i = 0; i < descendants.length; i++) {
+            var el = descendants[i];
+            if (getComputedStyle(el).position !== 'fixed') continue;
+            var r = el.getBoundingClientRect();
+            if (r.height > ih * 0.5) { shell = el; break; }
+          }
+        }
+        if (!shell) return null;
+        var parent = shell.parentElement;
+        if (!parent) return null;
+        var top = shell.getBoundingClientRect().top;
+        var masthead = 0;
+        var container = null;
+        var siblings = parent.children;
+        for (var j = 0; j < siblings.length; j++) {
+          var c = siblings[j];
+          if (c === shell) continue;
+          var cs = getComputedStyle(c);
+          var hid = cs.overflow === 'hidden' || cs.overflowY === 'hidden' || cs.overflowX === 'hidden';
+          var cr = c.getBoundingClientRect();
+          if (!container && hid && cr.height < ih) { container = c; }
+          else if (!container) { masthead += cr.height; }
+        }
+        if (!container) return null;
+        var desired = Math.round(ih - top - masthead);
+        return desired > 100 ? desired : null;
+      }
+      function apply() {
+        var now = Date.now();
+        if (now - lastApply < 500) return;
+        lastApply = now;
+        var desired = measured();
+        if (desired === null) return;
+        var styleEl = document.getElementById(FIX_ID);
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = FIX_ID;
+          var head = document.head || document.documentElement;
+          head.appendChild(styleEl);
+        }
+        var container = document.querySelector('.css-14jkxbw');
+        var cls = container
+          ? '.css-14jkxbw'
+          : (function () {
+              var root = document.getElementById('root');
+              if (!root) return '';
+              var divs = root.getElementsByTagName('div');
+              for (var i = 0; i < divs.length; i++) {
+                var st = getComputedStyle(divs[i]);
+                if (st.position !== 'fixed') continue;
+                var r = divs[i].getBoundingClientRect();
+                if (r.height <= window.innerHeight * 0.5) continue;
+                var parent = divs[i].parentElement;
+                if (!parent) continue;
+                for (var j = 0; j < parent.children.length; j++) {
+                  var c = parent.children[j];
+                  if (c === divs[i]) continue;
+                  var cs = getComputedStyle(c);
+                  if (cs.overflow === 'hidden' || cs.overflowY === 'hidden' || cs.overflowX === 'hidden') {
+                    var first = (c.className || '').toString().split(' ')[0];
+                    return first ? '.' + first : '';
+                  }
+                }
+              }
+              return '';
+            })();
+        if (!cls) return;
+        styleEl.textContent = cls + '{height:' + desired + 'px !important;min-height:' + desired + 'px !important}';
+      }
+      function boot() {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', apply);
+        } else { apply(); }
+        window.addEventListener('resize', apply);
+        setTimeout(apply, 1500);
+        setTimeout(apply, 4000);
+        setTimeout(apply, 9000);
+        setTimeout(apply, 20000);
+        setTimeout(apply, 40000);
+        if (document.documentElement) {
+          new MutationObserver(function () { apply(); })
+            .observe(document.documentElement, { childList: true, subtree: true });
+        }
+      }
+      var lastApply = 0;
+      boot();
     })();
     """
 

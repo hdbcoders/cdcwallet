@@ -2,6 +2,7 @@ package com.cdcvouchers
 
 import android.app.Application
 import android.content.Context
+import android.webkit.WebView
 import androidx.room.Room
 import com.cdcvouchers.data.RoomVoucherRepository
 import com.cdcvouchers.data.VoucherRepository
@@ -19,6 +20,11 @@ class VoucherApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Debug-only: allow CDP inspection of the WebViews (chrome://inspect).
+        // Release builds never enable this.
+        if (BuildConfig.DEBUG) {
+            WebView.setWebContentsDebuggingEnabled(true)
+        }
         container = AppContainer(this)
     }
 }

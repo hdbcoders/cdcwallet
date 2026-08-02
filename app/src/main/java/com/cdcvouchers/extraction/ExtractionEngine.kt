@@ -14,11 +14,16 @@ import kotlinx.coroutines.withTimeout
 /**
  * The single extraction implementation, used by exactly two call sites
  * (spec 02 §2.4):
- *  - extractForAdd: one-time hidden WebView at add time (Package 3)
+ *  - extractForAdd: one-time hidden WebView at add time (Package 3) — fully
+ *    fresh: cache and cookies wiped.
  *  - extractFromVisibleWebView: the visible WebView the user already opened
- *    (Package 4) — never a second WebView.
+ *    (Package 4) — browser-like: HTTP cache and cookies persist across opens
+ *    (spec 02 §2.4 revision 2026-08-02). Churning fresh sessions per open
+ *    tripped the operator's rate limiting on api-cdc.redeem.gov.sg, leaving
+ *    the makeup view blank for minutes; one persistent session behaves like a
+ *    normal returning browser and avoids it. Balance payloads still come from
+ *    live API responses, so extraction is unaffected.
  *
- * Every extraction is a fresh session: no persisted cookies/cache carried over.
  * Failures report clearly (PARSE_ERROR / NETWORK_ERROR / TIMEOUT) and never
  * throw; cancellation tears down the hidden WebView and orphans nothing.
  */
@@ -31,7 +36,7 @@ class ExtractionEngine(
         withContext(Dispatchers.Main) {
             val webView = hiddenWebViewFactory?.invoke(context) ?: createHiddenWebView(context)
             try {
-                extract(webView, url)
+                extract(webView, url, browserLike = false)
             } finally {
                 runCatching { webView.stopLoading() }
                 runCatching { webView.destroy() }
@@ -41,7 +46,7 @@ class ExtractionEngine(
     suspend fun extractFromVisibleWebView(webView: WebView, url: String): ExtractionResult =
         withContext(Dispatchers.Main) {
             try {
-                extract(webView, url)
+                extract(webView, url, browserLike = true)
             } finally {
                 val handler = (injectionPath as? InjectionPath.DocumentStart)?.scriptHandler
                 if (handler != null && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
@@ -53,8 +58,8 @@ class ExtractionEngine(
 
     private var injectionPath: InjectionPath = InjectionPath.HtmlRewrite
 
-    private suspend fun extract(webView: WebView, url: String): ExtractionResult {
-        configureFreshSession(webView)
+    private suspend fun extract(webView: WebView, url: String, browserLike: Boolean): ExtractionResult {
+        configureSession(webView, browserLike = browserLike)
         val deferred = CompletableDeferred<ExtractionResult>()
         val bridge = RedeemBridge(
             onDataCallback = { payloadJson ->
@@ -86,12 +91,23 @@ class ExtractionEngine(
 
     private fun createHiddenWebView(context: Context): WebView = WebView(context)
 
-    private fun configureFreshSession(webView: WebView) {
+    private fun configureSession(webView: WebView, browserLike: Boolean) {
         with(webView.settings) {
             javaScriptEnabled = true
             domStorageEnabled = true
-            cacheMode = WebSettings.LOAD_NO_CACHE
+            // Browser-like visible loads reuse the on-disk HTTP cache so repeat
+            // opens skip re-downloading the content-hashed bundle (spec 02 §2.4
+            // revision). Add-time loads stay LOAD_NO_CACHE.
+            cacheMode = if (browserLike) WebSettings.LOAD_DEFAULT else WebSettings.LOAD_NO_CACHE
         }
+        if (browserLike) {
+            // The visible WebView keeps one persistent session (cookies + cache)
+            // like a normal browser. Creating a fresh anonymous session per open
+            // tripped the operator's rate limiting and hung the makeup view.
+            return
+        }
+        // Add-time validation fetch: fully fresh — no cookies, no cache carried
+        // over, since this one-shot hidden load has no prior session anyway.
         CookieManager.getInstance().removeAllCookies(null)
         CookieManager.getInstance().flush()
         runCatching { webView.clearCache(false) }

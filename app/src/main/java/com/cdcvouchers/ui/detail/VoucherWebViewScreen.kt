@@ -1,14 +1,18 @@
 package com.cdcvouchers.ui.detail
 
 import android.content.Context
+import android.webkit.WebChromeClient
 import android.webkit.WebView
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -57,6 +61,7 @@ fun VoucherWebViewScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     var refreshStarted by remember { mutableStateOf(false) }
+    var pageProgress by remember { mutableStateOf(100) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -72,8 +77,23 @@ fun VoucherWebViewScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        AndroidView(
-            factory = { context -> webViewFactory(context) },
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (pageProgress < 100) {
+                LinearProgressIndicator(
+                    progress = { pageProgress / 100f },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            AndroidView(
+                factory = { context ->
+                    webViewFactory(context).also { webView ->
+                        webView.webChromeClient = object : WebChromeClient() {
+                            override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                                pageProgress = newProgress
+                            }
+                        }
+                    }
+                },
             update = { view ->
                 if (!refreshStarted) {
                     refreshStarted = true
@@ -104,7 +124,8 @@ fun VoucherWebViewScreen(
                     }
                 }
             },
-            modifier = Modifier.fillMaxSize().padding(padding),
-        )
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            )
+        }
     }
 }
