@@ -4,6 +4,7 @@ import android.content.Context
 import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +36,14 @@ import kotlinx.coroutines.withTimeout
 class ExtractionEngine(
     private val forceFallbackInjection: Boolean = false,
     private val hiddenWebViewFactory: ((Context) -> WebView)? = null,
+    /**
+     * API 24–25 have no WebView#getWebViewClient getter, so on those versions
+     * a pre-existing client (e.g. an asset-loader client under test) cannot be
+     * read back for chaining in the HtmlRewrite fallback. Production never
+     * sets a client before injection, so this is null in production and used
+     * only by tests that must keep their interception working.
+     */
+    private val fallbackInjectionDelegate: WebViewClient? = null,
 ) : VoucherExtractor {
 
     override suspend fun extractForAdd(context: Context, url: String): ExtractionResult =
@@ -65,7 +74,7 @@ class ExtractionEngine(
     suspend fun rehydrateVisibleWebView(webView: WebView, url: String) {
         withContext(Dispatchers.Main) {
             configureSession(webView, browserLike = true)
-            installInjection(webView, forceFallbackInjection)
+            installInjection(webView, forceFallbackInjection, fallbackInjectionDelegate)
             webView.loadUrl(url)
         }
     }
@@ -92,7 +101,7 @@ class ExtractionEngine(
             },
         )
         webView.addJavascriptInterface(bridge, BRIDGE_NAME)
-        val path = installInjection(webView, forceFallbackInjection)
+        val path = installInjection(webView, forceFallbackInjection, fallbackInjectionDelegate)
         webView.loadUrl(url)
         return try {
             withTimeout(EXTRACTION_TIMEOUT_MS) { deferred.await() }

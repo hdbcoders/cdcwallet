@@ -1,6 +1,5 @@
 package com.cdcvouchers.backup
 
-import android.Manifest
 import android.content.Context
 import android.os.Build
 import androidx.compose.material3.MaterialTheme
@@ -145,11 +144,15 @@ class VoucherBackupFlowInstrumentedTest {
     fun exportWritesGenuinelyEncryptedFileToDownloads() {
         // API 24-28 write to the public Downloads dir, which needs the runtime
         // permission the SettingsScreen normally requests. This test drives
-        // BackupFlow directly, so grant it like a user would.
-        if (Build.VERSION.SDK_INT < 29) {
-            InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(
-                appContext.packageName,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
+        // BackupFlow directly, so grant it like a user would. On API 24-27 the
+        // grant must go through the shell (UiAutomation#grantRuntimePermission
+        // is API 28+); on API 28 the permission state must already exist when
+        // the instrumentation process starts, otherwise the sdcard_rw GID is
+        // never applied to the running process and writes get EACCES — CI
+        // grants the permission with `pm grant` before am instrument.
+        if (Build.VERSION.SDK_INT in 24..27) {
+            InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(
+                "pm grant ${appContext.packageName} android.permission.WRITE_EXTERNAL_STORAGE",
             )
         }
         val repository = RoomVoucherRepository(database)

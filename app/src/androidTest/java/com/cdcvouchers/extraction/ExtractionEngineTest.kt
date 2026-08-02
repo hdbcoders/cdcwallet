@@ -55,15 +55,15 @@ class ExtractionEngineTest {
             .build()
     }
 
+    private fun assetLoaderClient(): WebViewClient = object : WebViewClient() {
+        override fun shouldInterceptRequest(
+            view: WebView,
+            request: WebResourceRequest,
+        ): WebResourceResponse? = assetLoader.shouldInterceptRequest(request.url)
+    }
+
     private fun webViewWithAssetLoader(): WebView =
-        WebView(context).apply {
-            webViewClient = object : WebViewClient() {
-                override fun shouldInterceptRequest(
-                    view: WebView,
-                    request: WebResourceRequest,
-                ): WebResourceResponse? = assetLoader.shouldInterceptRequest(request.url)
-            }
-        }
+        WebView(context).apply { webViewClient = assetLoaderClient() }
 
     @Test
     fun hiddenWebViewExtractsWhitelistedData() = runTest {
@@ -121,9 +121,13 @@ class ExtractionEngineTest {
 
     @Test
     fun forcedHtmlRewriteFallbackStillCatchesFirstFetch() = runTest {
+        // API 24–25 cannot read the pre-existing client back (no getter), so
+        // the delegate is supplied explicitly; on API 26+ it is read from the
+        // WebView and this parameter is ignored.
         val engine = ExtractionEngine(
             forceFallbackInjection = true,
             hiddenWebViewFactory = { webViewWithAssetLoader() },
+            fallbackInjectionDelegate = assetLoaderClient(),
         )
         val result = engine.extractForAdd(context, testPageUrl)
         assertTrue("expected Success via fallback, got $result", result is ExtractionResult.Success)

@@ -1,5 +1,6 @@
 package com.cdcvouchers.extraction
 
+import android.os.Build
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -268,7 +269,11 @@ internal sealed interface InjectionPath {
  * primary path is addDocumentStartJavaScript; fallback is HTML rewriting via
  * shouldInterceptRequest, which works on every supported WebView version.
  */
-internal fun installInjection(webView: WebView, forceFallback: Boolean): InjectionPath {
+internal fun installInjection(
+    webView: WebView,
+    forceFallback: Boolean,
+    fallbackInjectionDelegate: WebViewClient? = null,
+): InjectionPath {
     if (!forceFallback && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
         // "*" = any http(s) origin; an empty set would restrict the script to
         // non-http(s) documents only (about:blank, data:), where the real page
@@ -276,10 +281,17 @@ internal fun installInjection(webView: WebView, forceFallback: Boolean): Injecti
         val handler = WebViewCompat.addDocumentStartJavaScript(webView, INJECTION_SCRIPT, setOf("*"))
         return InjectionPath.DocumentStart(handler)
     }
-    // API 24–25 (or a stale WebView) fallback. WebView#getWebViewClient is
-    // API 26+, so the client is set fresh and never read back — the WebViews
-    // this engine drives are always app-created without a prior client.
-    webView.webViewClient = HtmlRewritingClient()
+    // API 24–25 (or a stale WebView) fallback. On API 26+ the prior client
+    // (e.g. an asset-loader client under test) is read back and chained as the
+    // delegate so its interception keeps working; on API 24–25 there is no
+    // getter, so the caller supplies it explicitly — production never sets a
+    // client before this point, so this matters only for tests.
+    val delegate = if (Build.VERSION.SDK_INT >= 26) {
+        webView.webViewClient
+    } else {
+        fallbackInjectionDelegate
+    }
+    webView.webViewClient = HtmlRewritingClient(delegate)
     return InjectionPath.HtmlRewrite
 }
 
@@ -289,7 +301,9 @@ internal fun installInjection(webView: WebView, forceFallback: Boolean): Injecti
  * because an intercepted response must be supplied in full; only the initial
  * main-frame document is ever rewritten (a one-shot `rewrote` flag).
  */
-private class HtmlRewritingClient : WebViewClient() {
+private class HtmlRewritingClient(
+    private val delegate: WebViewClient?,
+) : WebViewClient() {
 
     private var rewrote = false
 
@@ -297,14 +311,25 @@ private class HtmlRewritingClient : WebViewClient() {
         view: WebView,
         request: WebResourceRequest,
     ): WebResourceResponse? {
-        if (request.isForMainFrame && !rewrote && isFetchable(request)) {
+        val delegateResponse = delegate?.shouldInterceptRequest(view, request)
+        val mainDocument = request.isForMainFrame && !rewrote
+        if (mainDocument && delegateResponse != null && delegateResponse.data != null) {
+            val rewritten = rewriteHtml(delegateResponse.data, delegateResponse.encoding)
+            if (rewritten != null) {
+                rewrote = true
+                return rewritten
+            }
+            return delegateResponse
+        }
+        if (mainDocument && delegateResponse == null && isFetchable(request)) {
             val response = fetchAndRewrite(request)
             if (response != null) {
                 rewrote = true
                 return response
             }
+            return null
         }
-        return null
+        return delegateResponse
     }
 
     private fun isFetchable(request: WebResourceRequest): Boolean {
@@ -352,5 +377,32 @@ private class HtmlRewritingClient : WebViewClient() {
             encoding ?: "UTF-8",
             ByteArrayInputStream(modified.toByteArray(Charsets.UTF_8)),
         )
+    }
+
+    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean =
+        delegate?.shouldOverrideUrlLoading(view, request) ?: false
+
+    override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+        delegate?.onPageStarted(view, url, favicon)
+    }
+
+    override fun onPageFinished(view: WebView, url: String) {
+        delegate?.onPageFinished(view, url)
+    }
+
+    override fun onReceivedError(
+        view: WebView,
+        request: WebResourceRequest,
+        error: android.webkit.WebResourceError,
+    ) {
+        delegate?.onReceivedError(view, request, error)
+    }
+
+    override fun onReceivedHttpError(
+        view: WebView,
+        request: WebResourceRequest,
+        errorResponse: WebResourceResponse,
+    ) {
+        delegate?.onReceivedHttpError(view, request, errorResponse)
     }
 }
