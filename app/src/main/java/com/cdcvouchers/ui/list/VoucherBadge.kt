@@ -27,6 +27,11 @@ private val AmberContentLight = Color(0xFF8D4E00)
 private val AmberContainerDark = Color(0xFF4B3100)
 private val AmberContentDark = Color(0xFFFFD180)
 
+private val GreenContainerLight = Color(0xFFC8E6C9)
+private val GreenContentLight = Color(0xFF1B5E20)
+private val GreenContainerDark = Color(0xFF1E3B22)
+private val GreenContentDark = Color(0xFFA5D6A7)
+
 /**
  * Spec 04 §4.2 badge. Distinct per state: label text (announced by TalkBack),
  * color, and icon — never color alone, for colorblind users. UNVERIFIED is
@@ -51,8 +56,9 @@ fun VoucherBadge(state: BadgeState, modifier: Modifier = Modifier) {
                 icon = Icons.Default.Warning
             }
             Urgency.FINE -> {
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                val dark = LocalAppIsDark.current
+                containerColor = if (dark) GreenContainerDark else GreenContainerLight
+                contentColor = if (dark) GreenContentDark else GreenContentLight
                 icon = Icons.Default.CheckCircle
             }
         }
