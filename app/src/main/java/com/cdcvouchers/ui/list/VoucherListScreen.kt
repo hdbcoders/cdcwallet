@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -171,16 +170,6 @@ private fun SummaryCard(summary: ListSummary) {
     } else {
         SummaryCardContainerLight
     }
-    val chipColor = if (dark) {
-        MaterialTheme.colorScheme.surfaceVariant
-    } else {
-        MaterialTheme.colorScheme.secondaryContainer
-    }
-    val chipContentColor = if (dark) {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    } else {
-        MaterialTheme.colorScheme.onSecondaryContainer
-    }
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = containerColor,
@@ -189,35 +178,21 @@ private fun SummaryCard(summary: ListSummary) {
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                shape = CircleShape,
-                color = chipColor,
-                contentColor = chipContentColor,
-                modifier = Modifier.size(40.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text("S$", style = MaterialTheme.typography.labelLarge)
-                }
-            }
             Column(
-                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    text = "Summary",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = summaryHeadline(summary),
+                    style = MaterialTheme.typography.titleLarge,
                 )
-                Text(summaryHeadline(summary), style = MaterialTheme.typography.titleMedium)
                 if (summary.categoryTotals.isNotEmpty()) {
                     Text(
                         text = summary.categoryTotals.joinToString(" · ") {
                             "${formatSgd(it.remainingValue)} ${it.category}"
                         },
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
