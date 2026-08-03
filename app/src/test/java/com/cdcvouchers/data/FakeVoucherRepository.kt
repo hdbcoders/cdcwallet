@@ -30,6 +30,9 @@ class FakeVoucherRepository : VoucherRepository {
     override fun observeArchivedCount(): Flow<Int> =
         _vouchers.map { list -> list.count { it.isArchived } }
 
+    override fun observeById(id: String): Flow<VoucherGroup?> =
+        _vouchers.map { list -> list.firstOrNull { it.id == id } }
+
     override suspend fun insert(voucher: VoucherGroup): Boolean {
         val rows = _vouchers.value
         if (rows.any { it.token == voucher.token }) return false

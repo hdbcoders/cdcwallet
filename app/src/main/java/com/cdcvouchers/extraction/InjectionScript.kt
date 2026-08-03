@@ -254,8 +254,56 @@ internal const val VIEWPORT_FIX_SCRIPT =
     })();
     """
 
+/**
+ * Modal height fix: the page's Chakra modal sizes itself with `vh` units
+ * (`.chakra-modal__overlay` uses 100vw/100vh, the content uses max-height:vh),
+ * but in Android WebView the `vh` unit can resolve to 0 (a WebView quirk —
+ * `vw` works, `vh` doesn't), so the History modal renders at 0 height: the
+ * data is in the DOM but nothing paints. For `position:fixed` elements,
+ * `%`-based heights resolve against the viewport instead of the broken `vh`,
+ * so we inject explicit `%` heights on the stable Chakra modal classes. Runs
+ * on DOMContentLoaded and re-applies on open, since Chakra mounts the modal
+ * lazily when the user taps "History".
+ */
+internal const val MODAL_HEIGHT_FIX_SCRIPT =
+    """
+    (function () {
+      var FIX_ID = 'cdcv-modal-height-fix';
+      var RULES =
+        '.chakra-modal__overlay{height:100% !important}' +
+        '.chakra-modal__content-container{height:100% !important}' +
+        '.chakra-modal__content{max-height:85% !important;height:auto !important}' +
+        '.chakra-modal__header{flex:0 0 auto}' +
+        '.chakra-modal__body{overflow-y:auto;flex:1 1 auto;min-height:0}';
+      function apply() {
+        if (!document.querySelector('.chakra-modal__overlay')) return;
+        var styleEl = document.getElementById(FIX_ID);
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = FIX_ID;
+          styleEl.textContent = RULES;
+          (document.head || document.documentElement).appendChild(styleEl);
+        }
+      }
+      function boot() {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', apply);
+        } else { apply(); }
+        window.addEventListener('resize', apply);
+        setTimeout(apply, 1500);
+        setTimeout(apply, 4000);
+        if (document.documentElement) {
+          new MutationObserver(function () { apply(); })
+            .observe(document.documentElement, { childList: true, subtree: true });
+        }
+      }
+      boot();
+    })();
+    """
+
 /** Capture wrapper + viewport fix (see notes on each). */
-internal val INJECTION_SCRIPT: String = CAPTURE_SCRIPT + "\n" + VIEWPORT_FIX_SCRIPT
+internal val INJECTION_SCRIPT: String =
+    CAPTURE_SCRIPT + "\n" + VIEWPORT_FIX_SCRIPT + "\n" + MODAL_HEIGHT_FIX_SCRIPT
 
 internal val INJECTION_SCRIPT_TAG: String = "<script>$INJECTION_SCRIPT</script>"
 

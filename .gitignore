@@ -13,3 +13,4 @@ captures/
 .DS_Store
 
 .reasonix/
+tmp/
