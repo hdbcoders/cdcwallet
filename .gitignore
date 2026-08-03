@@ -11,3 +11,5 @@ docs/
 *.class
 captures/
 .DS_Store
+
+.reasonix/
