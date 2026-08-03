@@ -42,40 +42,44 @@ import com.cdcvouchers.extraction.ExtractionEngine
  * `lastRefreshError` and a non-blocking banner appears — the WebView stays
  * usable either way.
  *
- * All state lives in [DetailViewModel], which survives rotation: a recreated
- * WebView rehydrates the page (viewport fix re-applied, no re-extraction).
- * The WebView itself is destroyed on dispose to avoid native resource leaks.
+ * The WebView is the engine's **long-lived instance** (02 §2.4 revision
+ * 2026-08-03): this screen acquires it on entry and detaches it on exit —
+ * it never creates or destroys it. Every tap still reloads the URL (fresh
+ * data, per 02 §2.7), so a re-tap of the same voucher is a reload. State
+ * lives in [DetailViewModel], which survives rotation: re-attaching the same
+ * instance after rotation must not re-extract or reload, which the VM's
+ * `refreshStarted` guard ensures. A `WebChromeClient` for progress reporting
+ * is fine here; the engine owns the `WebViewClient` slot.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VoucherWebViewScreen(
     voucherId: String,
+    voucherUrl: String,
     repository: VoucherRepository,
     extractionEngine: ExtractionEngine,
     onBack: () -> Unit,
-    webViewFactory: (Context) -> WebView = { WebView(it) },
+    webViewFactory: (Context) -> WebView = { extractionEngine.acquireVisibleWebView(it) },
     modifier: Modifier = Modifier,
 ) {
     val vm: DetailViewModel = viewModel(
         key = "detail-$voucherId",
-        initializer = { DetailViewModel(repository, extractionEngine, voucherId) },
+        initializer = { DetailViewModel(repository, extractionEngine, voucherId, voucherUrl) },
     )
     val snackbarHostState = remember { SnackbarHostState() }
     val state by vm.uiState.collectAsState()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
     val voucher = state.voucher
-    if (!state.isLoaded) return
-    if (voucher == null) {
+    if (state.isLoaded && voucher == null) {
         LaunchedEffect(Unit) { onBack() }
-        return
     }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(voucher.campaignName) },
+                title = { Text(voucher?.campaignName.orEmpty()) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -103,7 +107,7 @@ fun VoucherWebViewScreen(
                         webViewRef = webView
                     }
                 },
-                update = { view -> vm.onNewWebViewReady(view, voucher.url) },
+                update = { view -> vm.onNewWebViewReady(view) },
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             )
         }
@@ -111,11 +115,13 @@ fun VoucherWebViewScreen(
 
     DisposableEffect(Unit) {
         onDispose {
+            // Detach only — the engine owns the instance for the whole app
+            // session (02 §2.4 revision 2026-08-03). No stopLoading: a load
+            // started by a tap may complete after the user leaves, and
+            // rotation must not kill an in-flight load.
             val view = webViewRef
             if (view != null) {
-                runCatching { view.stopLoading() }
                 runCatching { (view.parent as? ViewGroup)?.removeView(view) }
-                runCatching { view.destroy() }
             }
         }
     }

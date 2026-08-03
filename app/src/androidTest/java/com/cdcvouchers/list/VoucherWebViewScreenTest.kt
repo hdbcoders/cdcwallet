@@ -79,15 +79,22 @@ class VoucherWebViewScreenTest {
         database.close()
     }
 
+    private fun assetLoaderClient(): WebViewClient = object : WebViewClient() {
+        override fun shouldInterceptRequest(
+            view: WebView,
+            request: WebResourceRequest,
+        ): WebResourceResponse? = assetLoader.shouldInterceptRequest(request.url)
+    }
+
     private fun assetWebView(context: Context): WebView =
-        WebView(context).apply {
-            webViewClient = object : WebViewClient() {
-                override fun shouldInterceptRequest(
-                    view: WebView,
-                    request: WebResourceRequest,
-                ): WebResourceResponse? = assetLoader.shouldInterceptRequest(request.url)
-            }
-        }
+        WebView(context).apply { webViewClient = assetLoaderClient() }
+
+    /** The screen extracts through the engine's visible path; the epoch-gate
+     *  client wraps the view's existing client on API 26+, and on API 24–25
+     *  (no getter) it falls back to the engine's explicit delegate. */
+    private fun extractionEngine(): ExtractionEngine = ExtractionEngine(
+        fallbackInjectionDelegate = assetLoaderClient(),
+    )
 
     @Test
     fun unverifiedRowTransitionsToRealStatusOnTapRefresh() {
@@ -112,8 +119,9 @@ class VoucherWebViewScreenTest {
                 MaterialTheme {
                     VoucherWebViewScreen(
                         voucherId = unverified.id,
+                        voucherUrl = url,
                         repository = repository,
-                        extractionEngine = ExtractionEngine(),
+                        extractionEngine = extractionEngine(),
                         onBack = {},
                         webViewFactory = ::assetWebView,
                     )
@@ -166,8 +174,9 @@ class VoucherWebViewScreenTest {
                 MaterialTheme {
                     VoucherWebViewScreen(
                         voucherId = cached.id,
+                        voucherUrl = url,
                         repository = repository,
-                        extractionEngine = ExtractionEngine(),
+                        extractionEngine = extractionEngine(),
                         onBack = {},
                         webViewFactory = ::assetWebView,
                     )

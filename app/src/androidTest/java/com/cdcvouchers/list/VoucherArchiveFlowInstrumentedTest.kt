@@ -313,6 +313,7 @@ class VoucherArchiveFlowInstrumentedTest {
             MaterialTheme {
                 VoucherWebViewScreen(
                     voucherId = slow.id,
+                    voucherUrl = url,
                     repository = repository,
                     extractionEngine = ExtractionEngine(),
                     onBack = {},

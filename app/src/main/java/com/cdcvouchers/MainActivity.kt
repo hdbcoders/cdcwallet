@@ -101,7 +101,9 @@ private fun AppNavHost(
             VoucherListScreen(
                 repository = container.repository,
                 onAddClick = { navController.navigate("add") },
-                onOpenVoucher = { voucher -> navController.navigate("detail/${voucher.id}") },
+                onOpenVoucher = { voucher ->
+                    navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
+                },
                 onArchivedClick = { navController.navigate("archived") },
                 onSettingsClick = { navController.navigate("settings") },
             )
@@ -137,11 +139,19 @@ private fun AppNavHost(
             )
         }
         composable(
-            route = "detail/{voucherId}",
-            arguments = listOf(navArgument("voucherId") { type = NavType.StringType }),
+            route = "detail/{voucherId}?url={url}",
+            arguments = listOf(
+                navArgument("voucherId") { type = NavType.StringType },
+                navArgument("url") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
         ) { entry ->
             VoucherWebViewScreen(
                 voucherId = entry.arguments?.getString("voucherId").orEmpty(),
+                voucherUrl = entry.arguments?.getString("url").orEmpty(),
                 repository = container.repository,
                 extractionEngine = container.extractionEngine,
                 onBack = { navController.popBackStack() },

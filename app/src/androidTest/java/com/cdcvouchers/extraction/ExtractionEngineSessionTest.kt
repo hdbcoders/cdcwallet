@@ -57,15 +57,29 @@ class ExtractionEngineSessionTest {
             }
         }
 
+    private fun assetLoaderClient(): WebViewClient = object : WebViewClient() {
+        override fun shouldInterceptRequest(
+            view: WebView,
+            request: WebResourceRequest,
+        ): WebResourceResponse? = assetLoader.shouldInterceptRequest(request.url)
+    }
+
     @Test
     fun concurrentHiddenAndVisibleExtractionsOnSameEngineBothSucceed() = runTest {
-        val engine = ExtractionEngine(hiddenWebViewFactory = { webViewWithAssetLoader() })
+        // The visible WebView comes from the engine itself (the long-lived
+        // instance per 02 §2.4 revision 2026-08-03); the asset loader is
+        // chained as the epoch notifier's delegate so it works on API 24-25
+        // too, where a pre-existing client cannot be read back.
+        val engine = ExtractionEngine(
+            hiddenWebViewFactory = { webViewWithAssetLoader() },
+            fallbackInjectionDelegate = assetLoaderClient(),
+        )
         var hidden: ExtractionResult? = null
         var visible: ExtractionResult? = null
         coroutineScope {
             launch { hidden = engine.extractForAdd(context, testPageUrl) }
             launch {
-                val visibleWebView = withContext(Dispatchers.Main) { webViewWithAssetLoader() }
+                val visibleWebView = withContext(Dispatchers.Main) { engine.acquireVisibleWebView(context) }
                 visible = engine.extractFromVisibleWebView(visibleWebView, testPageUrl)
             }
         }

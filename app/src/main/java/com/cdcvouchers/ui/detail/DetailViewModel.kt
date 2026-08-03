@@ -27,6 +27,7 @@ class DetailViewModel(
     private val repository: VoucherRepository,
     private val extractionEngine: ExtractionEngine,
     private val voucherId: String,
+    private val voucherUrl: String,
 ) : ViewModel() {
 
     /** `isLoaded` goes true after the first DB emission, distinguishing
@@ -35,7 +36,9 @@ class DetailViewModel(
         .map { list -> DetailUiState(isLoaded = true, voucher = list.firstOrNull { it.id == voucherId }) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetailUiState())
 
-    /** Survives rotation, so a recreated WebView never triggers a second extraction. */
+    /** The WebView is the engine's long-lived instance (02 §2.4 revision
+     *  2026-08-03): a fresh screen entry extracts exactly once; rotation only
+     *  re-attaches the same instance, which must never re-extract or reload. */
     var refreshStarted by mutableStateOf(false)
         private set
     var pageProgress by mutableStateOf(100)
@@ -45,16 +48,15 @@ class DetailViewModel(
 
     fun onPageProgressChanged(progress: Int) { pageProgress = progress }
 
-    fun onNewWebViewReady(webView: WebView, url: String) {
+    fun onNewWebViewReady(webView: WebView) {
         if (refreshStarted) {
-            // Rotation re-created the view after extraction: rehydrate the page
-            // without re-extracting (viewport fix re-applied via the engine).
-            viewModelScope.launch { extractionEngine.rehydrateVisibleWebView(webView, url) }
+            // Rotation re-attached the persistent WebView: the page and any
+            // in-flight load survived, so there is nothing to do.
             return
         }
         refreshStarted = true
         viewModelScope.launch {
-            when (val result = extractionEngine.extractFromVisibleWebView(webView, url)) {
+            when (val result = extractionEngine.extractFromVisibleWebView(webView, voucherUrl)) {
                 is ExtractionResult.Success -> repository.updateFromRefresh(
                     voucherId,
                     VoucherRefreshData(
