@@ -1,5 +1,10 @@
 package com.cdcvouchers.ui.list
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +48,7 @@ import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.ui.theme.LocalAppIsDark
 import com.cdcvouchers.ui.theme.SummaryCardContainerLight
+import com.cdcvouchers.ui.theme.rememberReduceMotion
 import kotlinx.coroutines.flow.collect
 
 /**
@@ -66,6 +72,7 @@ fun VoucherListScreen(
     )
     val vouchers by vm.vouchers.collectAsState()
     val archivedCount by vm.archivedCount.collectAsState()
+    val reduceMotion = rememberReduceMotion()
     val sorted = remember(vouchers) { sortActive(vouchers) }
     val summary = remember(sorted) { summarizeActive(sorted) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -100,8 +107,18 @@ fun VoucherListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddClick) {
-                Icon(Icons.Default.Add, contentDescription = "Add voucher")
+            AnimatedVisibility(
+                // Entrance only: scale+fade the FAB in when the screen appears.
+                visible = true,
+                enter = if (reduceMotion) {
+                    EnterTransition.None
+                } else {
+                    scaleIn(tween(220), initialScale = 0.85f) + fadeIn(tween(220))
+                },
+            ) {
+                FloatingActionButton(onClick = onAddClick) {
+                    Icon(Icons.Default.Add, contentDescription = "Add voucher")
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -129,6 +146,16 @@ fun VoucherListScreen(
                         onClick = { onOpenVoucher(voucher) },
                         onMenuExpandedChange = { open ->
                             vm.setMenu(if (open) voucher.id else null)
+                        },
+                        modifier = if (reduceMotion) {
+                            // System reduce-motion: disable item animations entirely.
+                            Modifier.animateItem(
+                                fadeInSpec = null,
+                                placementSpec = null,
+                                fadeOutSpec = null,
+                            )
+                        } else {
+                            Modifier.animateItem()
                         },
                     ) {
                         DropdownMenuItem(

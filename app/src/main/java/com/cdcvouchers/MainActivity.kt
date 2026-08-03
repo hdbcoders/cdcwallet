@@ -6,6 +6,15 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +34,7 @@ import com.cdcvouchers.ui.list.ArchivedVoucherScreen
 import com.cdcvouchers.ui.list.VoucherListScreen
 import com.cdcvouchers.ui.settings.SettingsScreen
 import com.cdcvouchers.ui.theme.AppTheme
+import com.cdcvouchers.ui.theme.rememberReduceMotion
 
 class MainActivity : ComponentActivity() {
 
@@ -96,6 +106,8 @@ private fun AppNavHost(
         }
     }
 
+    val reduceMotion = rememberReduceMotion()
+
     NavHost(navController = navController, startDestination = "list") {
         composable("list") {
             VoucherListScreen(
@@ -108,13 +120,25 @@ private fun AppNavHost(
                 onSettingsClick = { navController.navigate("settings") },
             )
         }
-        composable("archived") {
+        composable(
+            route = "archived",
+            enterTransition = { layerEnter(reduceMotion) },
+            exitTransition = { layerExit(reduceMotion) },
+            popEnterTransition = { layerPopEnter(reduceMotion) },
+            popExitTransition = { layerPopExit(reduceMotion) },
+        ) {
             ArchivedVoucherScreen(
                 repository = container.repository,
                 onBack = { navController.popBackStack() },
             )
         }
-        composable("settings") {
+        composable(
+            route = "settings",
+            enterTransition = { layerEnter(reduceMotion) },
+            exitTransition = { layerExit(reduceMotion) },
+            popEnterTransition = { layerPopEnter(reduceMotion) },
+            popExitTransition = { layerPopExit(reduceMotion) },
+        ) {
             SettingsScreen(
                 backupFlow = container.backupFlow,
                 repository = container.repository,
@@ -131,6 +155,10 @@ private fun AppNavHost(
                     defaultValue = null
                 },
             ),
+            enterTransition = { drillInEnter(reduceMotion) },
+            exitTransition = { drillInExit(reduceMotion) },
+            popEnterTransition = { drillInPopEnter(reduceMotion) },
+            popExitTransition = { drillInPopExit(reduceMotion) },
         ) { entry ->
             AddVoucherScreen(
                 flow = flow,
@@ -148,6 +176,10 @@ private fun AppNavHost(
                     defaultValue = null
                 },
             ),
+            enterTransition = { drillInEnter(reduceMotion) },
+            exitTransition = { drillInExit(reduceMotion) },
+            popEnterTransition = { drillInPopEnter(reduceMotion) },
+            popExitTransition = { drillInPopExit(reduceMotion) },
         ) { entry ->
             VoucherWebViewScreen(
                 voucherId = entry.arguments?.getString("voucherId").orEmpty(),
@@ -159,3 +191,49 @@ private fun AppNavHost(
         }
     }
 }
+
+/** Navigation motion duration — short enough to feel snappy, long enough to read. */
+private const val NAV_TRANSITION_MS = 280
+
+/**
+ * Drill-in motion for push/pop navigation (list → detail / add): the incoming
+ * screen slides in from the right, the outgoing one slides out to the left.
+ * Reverse for pop. All specs collapse to [EnterTransition.None] /
+ * [ExitTransition.None] when the user has system reduce-motion enabled.
+ */
+private fun drillInEnter(reduceMotion: Boolean): EnterTransition =
+    if (reduceMotion) EnterTransition.None
+    else slideInHorizontally(tween(NAV_TRANSITION_MS)) { it } + fadeIn(tween(NAV_TRANSITION_MS))
+
+private fun drillInExit(reduceMotion: Boolean): ExitTransition =
+    if (reduceMotion) ExitTransition.None
+    else slideOutHorizontally(tween(NAV_TRANSITION_MS)) { -it / 3 } + fadeOut(tween(NAV_TRANSITION_MS))
+
+private fun drillInPopEnter(reduceMotion: Boolean): EnterTransition =
+    if (reduceMotion) EnterTransition.None
+    else slideInHorizontally(tween(NAV_TRANSITION_MS)) { -it / 3 } + fadeIn(tween(NAV_TRANSITION_MS))
+
+private fun drillInPopExit(reduceMotion: Boolean): ExitTransition =
+    if (reduceMotion) ExitTransition.None
+    else slideOutHorizontally(tween(NAV_TRANSITION_MS)) { it } + fadeOut(tween(NAV_TRANSITION_MS))
+
+/**
+ * Layer motion for modal-ish screens (archived / settings): the incoming
+ * screen slides up from the bottom like a sheet; pop slides it back down.
+ * Collapses to no motion under system reduce-motion.
+ */
+private fun layerEnter(reduceMotion: Boolean): EnterTransition =
+    if (reduceMotion) EnterTransition.None
+    else slideInVertically(tween(NAV_TRANSITION_MS)) { it } + fadeIn(tween(NAV_TRANSITION_MS))
+
+private fun layerExit(reduceMotion: Boolean): ExitTransition =
+    if (reduceMotion) ExitTransition.None
+    else slideOutVertically(tween(NAV_TRANSITION_MS)) { it / 3 } + fadeOut(tween(NAV_TRANSITION_MS))
+
+private fun layerPopEnter(reduceMotion: Boolean): EnterTransition =
+    if (reduceMotion) EnterTransition.None
+    else slideInVertically(tween(NAV_TRANSITION_MS)) { it / 3 } + fadeIn(tween(NAV_TRANSITION_MS))
+
+private fun layerPopExit(reduceMotion: Boolean): ExitTransition =
+    if (reduceMotion) ExitTransition.None
+    else slideOutVertically(tween(NAV_TRANSITION_MS)) { it } + fadeOut(tween(NAV_TRANSITION_MS))

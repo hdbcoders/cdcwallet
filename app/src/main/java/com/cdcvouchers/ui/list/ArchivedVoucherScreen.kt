@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcvouchers.data.VoucherRepository
+import com.cdcvouchers.ui.theme.rememberReduceMotion
 
 /**
  * Archived screen (spec 05 §5.4): same row layout and overflow pattern as the
@@ -41,6 +42,7 @@ fun ArchivedVoucherScreen(
         initializer = { ArchivedVoucherViewModel(repository) },
     )
     val sorted by vm.vouchers.collectAsState()
+    val reduceMotion = rememberReduceMotion()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -74,6 +76,16 @@ fun ArchivedVoucherScreen(
                         onClick = {},
                         onMenuExpandedChange = { open ->
                             vm.setMenu(if (open) voucher.id else null)
+                        },
+                        modifier = if (reduceMotion) {
+                            // System reduce-motion: disable item animations entirely.
+                            Modifier.animateItem(
+                                fadeInSpec = null,
+                                placementSpec = null,
+                                fadeOutSpec = null,
+                            )
+                        } else {
+                            Modifier.animateItem()
                         },
                     ) {
                         DropdownMenuItem(
