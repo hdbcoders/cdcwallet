@@ -31,6 +31,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -46,8 +47,8 @@ import java.time.LocalDate
  * the single entry point to the same menu, single-tap archive with Undo
  * snackbar, confirmation-gated delete with the exact shared dialog (Cancel
  * default-focused), the persistent Archived entry point with its own
- * Restore/Delete menu, and delete racing an in-flight tap-refresh (02 §2.7) —
- * the row must not be resurrected.
+ * Restore/Delete menu, archived rows remaining tappable (05 §5.4), and delete
+ * racing an in-flight tap-refresh (02 §2.7) — the row must not be resurrected.
  */
 @RunWith(AndroidJUnit4::class)
 class VoucherArchiveFlowInstrumentedTest {
@@ -126,10 +127,17 @@ class VoucherArchiveFlowInstrumentedTest {
         composeRule.waitForIdle()
     }
 
-    private fun archivedContent(repository: RoomVoucherRepository) {
+    private fun archivedContent(
+        repository: RoomVoucherRepository,
+        onOpenVoucher: (VoucherGroup) -> Unit = {},
+    ) {
         composeRule.setContent {
             MaterialTheme {
-                ArchivedVoucherScreen(repository = repository, onBack = {})
+                ArchivedVoucherScreen(
+                    repository = repository,
+                    onOpenVoucher = onOpenVoucher,
+                    onBack = {},
+                )
             }
         }
         composeRule.waitForIdle()
@@ -244,6 +252,23 @@ class VoucherArchiveFlowInstrumentedTest {
         composeRule.onNodeWithText("Link One").assertDoesNotExist()
         composeRule.onNodeWithText("No voucher links yet — add one with the + button.")
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun archivedScreenTapOpensVoucher() {
+        val repository = RoomVoucherRepository(database)
+        runBlocking {
+            repository.insert(voucher("arch1", "Archived One"))
+            repository.archive("arch1")
+        }
+        var openedId: String? = null
+        archivedContent(repository) { openedId = it.id }
+
+        // Spec 05 §5.4: archiving must not disable the row's tap — it opens
+        // the real page in-app exactly like a main-list tap.
+        composeRule.onNodeWithText("Archived One").performClick()
+        composeRule.waitForIdle()
+        assertEquals("arch1", openedId)
     }
 
     @Test

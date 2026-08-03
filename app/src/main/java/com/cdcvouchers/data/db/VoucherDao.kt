@@ -65,6 +65,12 @@ interface VoucherDao {
     @Query("SELECT * FROM voucher_groups WHERE token = :token LIMIT 1")
     suspend fun findByToken(token: String): VoucherGroup?
 
+    /** Single row by id, archived or not — used by the detail screen so a tap
+     *  on an archived voucher can still open it (spec 05 §5.4). Emits null when
+     *  no row matches. */
+    @Query("SELECT * FROM voucher_groups WHERE id = :id LIMIT 1")
+    fun observeById(id: String): Flow<VoucherGroup?>
+
     /** All rows, archived or not — used by backup export and import merge (Package 6). */
     @Query("SELECT * FROM voucher_groups")
     suspend fun findAll(): List<VoucherGroup>

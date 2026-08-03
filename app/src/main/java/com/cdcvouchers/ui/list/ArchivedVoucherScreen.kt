@@ -23,18 +23,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcvouchers.data.VoucherRepository
+import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.ui.theme.rememberReduceMotion
 
 /**
  * Archived screen (spec 05 §5.4): same row layout and overflow pattern as the
- * main list, with Restore/Delete instead of Archive/Delete. Delete shares the
- * one confirmation dialog; empty state is a plain message, not a blank screen.
- * State and DB calls live in [ArchivedVoucherViewModel].
+ * main list, with Restore/Delete instead of Archive/Delete, and tap-to-open
+ * retained — tapping an archived row opens the real URL in-app exactly like a
+ * main-list tap (04 §4.4, 02 §2.7). Delete shares the one confirmation
+ * dialog; empty state is a plain message, not a blank screen. State and DB
+ * calls live in [ArchivedVoucherViewModel].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArchivedVoucherScreen(
     repository: VoucherRepository,
+    onOpenVoucher: (VoucherGroup) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -73,7 +77,7 @@ fun ArchivedVoucherScreen(
                     VoucherRow(
                         voucher = voucher,
                         menuExpanded = vm.menuForId == voucher.id,
-                        onClick = {},
+                        onClick = { onOpenVoucher(voucher) },
                         onMenuExpandedChange = { open ->
                             vm.setMenu(if (open) voucher.id else null)
                         },

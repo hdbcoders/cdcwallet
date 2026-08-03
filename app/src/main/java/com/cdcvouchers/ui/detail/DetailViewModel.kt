@@ -31,9 +31,11 @@ class DetailViewModel(
 ) : ViewModel() {
 
     /** `isLoaded` goes true after the first DB emission, distinguishing
-     *  "still loading" from "row missing" (replaces the nullable sentinel in MainActivity). */
-    val uiState: StateFlow<DetailUiState> = repository.observeActive()
-        .map { list -> DetailUiState(isLoaded = true, voucher = list.firstOrNull { it.id == voucherId }) }
+     *  "still loading" from "row missing" (replaces the nullable sentinel in MainActivity).
+     *  Observes by id with no archived filter (spec 05 §5.4): a tap on an archived
+     *  voucher must open its detail screen just like a main-list tap. */
+    val uiState: StateFlow<DetailUiState> = repository.observeById(voucherId)
+        .map { voucher -> DetailUiState(isLoaded = true, voucher = voucher) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetailUiState())
 
     /** The WebView is the engine's long-lived instance (02 §2.4 revision

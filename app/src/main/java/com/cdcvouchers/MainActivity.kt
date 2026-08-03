@@ -129,6 +129,9 @@ private fun AppNavHost(
         ) {
             ArchivedVoucherScreen(
                 repository = container.repository,
+                onOpenVoucher = { voucher ->
+                    navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
+                },
                 onBack = { navController.popBackStack() },
             )
         }

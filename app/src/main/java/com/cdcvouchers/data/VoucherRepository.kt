@@ -17,6 +17,10 @@ interface VoucherRepository {
     fun observeActiveCount(): Flow<Int>
     fun observeArchivedCount(): Flow<Int>
 
+    /** Single row by id, archived or not — detail screen needs it so tapping an
+     *  archived voucher still opens it (spec 05 §5.4). Null when no row. */
+    fun observeById(id: String): Flow<VoucherGroup?>
+
     /** @return false if a row with the same token already exists (defensive backstop). */
     suspend fun insert(voucher: VoucherGroup): Boolean
 
@@ -47,6 +51,8 @@ class RoomVoucherRepository(
     override fun observeActiveCount(): Flow<Int> = dao.observeActiveCount()
 
     override fun observeArchivedCount(): Flow<Int> = dao.observeArchivedCount()
+
+    override fun observeById(id: String): Flow<VoucherGroup?> = dao.observeById(id)
 
     override suspend fun insert(voucher: VoucherGroup): Boolean = try {
         dao.insert(voucher)

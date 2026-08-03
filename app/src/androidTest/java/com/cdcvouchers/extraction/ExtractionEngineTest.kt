@@ -7,6 +7,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.webkit.WebViewAssetLoader
 import com.cdcvouchers.data.model.ValidityStatus
 import kotlinx.coroutines.CancellationException
@@ -46,7 +47,11 @@ class ExtractionEngineTest {
 
     @Before
     fun setUp() {
-        WebView.setWebContentsDebuggingEnabled(true)
+        // Must run on the main thread — WebView versions ≤ ~100 enforce this;
+        // newer ones tolerate it either way. Same pattern as VoucherApp.
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            WebView.setWebContentsDebuggingEnabled(true)
+        }
         context = ApplicationProvider.getApplicationContext()
         val testContext = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context
         assetLoader = WebViewAssetLoader.Builder()
