@@ -78,11 +78,19 @@ fun VoucherRow(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f),
                     )
-                    IconButton(onClick = { onMenuExpandedChange(true) }) {
-                        Icon(
-                            Icons.Default.MoreVert,
-                            contentDescription = "More options for ${voucher.campaignName}",
-                        )
+                    Box {
+                        IconButton(onClick = { onMenuExpandedChange(true) }) {
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = "More options for ${voucher.campaignName}",
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { onMenuExpandedChange(false) },
+                        ) {
+                            menuContent()
+                        }
                     }
                 }
                 Row(
@@ -102,9 +110,6 @@ fun VoucherRow(
                     Text(it, style = MaterialTheme.typography.bodyMedium)
                 }
             }
-        }
-        DropdownMenu(expanded = menuExpanded, onDismissRequest = { onMenuExpandedChange(false) }) {
-            menuContent()
         }
     }
 }
