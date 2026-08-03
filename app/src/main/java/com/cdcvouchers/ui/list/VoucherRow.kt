@@ -1,8 +1,7 @@
 package com.cdcvouchers.ui.list
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,10 +30,9 @@ import java.util.Locale
 /**
  * Row layout shared by the main list and the archived screen (spec 04 / 05).
  * Renders the visible ⋮ overflow button and the same overflow menu (whose
- * contents are supplied by the caller, Package 5's concern) and wires
- * long-press to the same menu — two paths to the same actions.
+ * contents are supplied by the caller, Package 5's concern). Tap on the row
+ * body is [onClick]; the overflow menu is opened only via the ⋮ button.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VoucherRow(
     voucher: VoucherGroup,
@@ -66,7 +64,7 @@ fun VoucherRow(
             shadowElevation = 1.dp,
             modifier = Modifier
                 .fillMaxWidth()
-                .combinedClickable(onClick = onClick, onLongClick = { onMenuExpandedChange(true) }),
+                .clickable(onClick = onClick),
         ) {
             Column(
                 modifier = Modifier.padding(12.dp),

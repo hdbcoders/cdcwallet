@@ -4,12 +4,10 @@ import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTouchInput
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -35,7 +33,8 @@ import java.time.LocalDate
 
 /**
  * Main list screen (spec 04): sorting with UNVERIFIED pinned on top, badge
- * rendering, aggregate summary, overflow ⋮ buttons, tap/long-press routing.
+ * rendering, aggregate summary, overflow ⋮ buttons, tap routing and the
+ * overflow menu.
  */
 @RunWith(AndroidJUnit4::class)
 class VoucherListScreenTest {
@@ -188,7 +187,7 @@ class VoucherListScreenTest {
     }
 
     @Test
-    fun tapOpensVoucherAndLongPressOpensMenu() {
+    fun tapOpensVoucherAndOverflowButtonOpensMenu() {
         val repository = RoomVoucherRepository(database)
         runBlocking {
             repository.insert(
@@ -214,7 +213,9 @@ class VoucherListScreenTest {
         composeRule.onNodeWithText("Link Ten").performClick()
         assertEquals("a10", openedId)
 
-        composeRule.onNodeWithText("Link Forty").performTouchInput { longClick() }
+        composeRule.onNodeWithContentDescription("More options for Link Forty")
+            .performScrollTo()
+            .performClick()
         composeRule.onNodeWithText("Archive").assertIsDisplayed()
         composeRule.onNodeWithText("Delete").assertIsDisplayed()
     }

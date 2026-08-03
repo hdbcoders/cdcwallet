@@ -47,7 +47,7 @@ import kotlinx.coroutines.flow.collect
 
 /**
  * Main voucher list (spec 04, 05). Owns the aggregate summary and the
- * Archive/Delete overflow menu (long-press and ⋮ both open it, via the shared
+ * Archive/Delete overflow menu (opened via the ⋮ button in the shared
  * VoucherRow); the Archived screen is reachable from the persistent app-bar
  * entry. State and DB calls live in [VoucherListViewModel].
  */
