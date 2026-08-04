@@ -13,4 +13,5 @@ captures/
 .DS_Store
 
 .reasonix/
+reasonix.toml
 tmp/
