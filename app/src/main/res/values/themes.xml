@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Base app theme — the post-splash theme. -->
     <style name="Theme.CDCVouchers" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Splash theme used by the activity. On API 31+ this is the OS splash
+         (via core-splashscreen, see values-v31); below that it is just the
+         base theme and the Compose splash handles branding. -->
+    <style name="Theme.CDCVouchers.Starting" parent="Theme.CDCVouchers" />
 </resources>

@@ -8,8 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -24,6 +26,15 @@ class VoucherListViewModel(
 
     val vouchers: StateFlow<List<VoucherGroup>> = repository.observeActive()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * True once the repository's active-voucher flow has emitted its first
+     * (real) value — distinguishes "DB still loading/decrypting" (splash shown)
+     * from "DB is empty" (empty list is a valid loaded state).
+     */
+    val isLoaded: StateFlow<Boolean> = repository.observeActive()
+        .map { true }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val archivedCount: StateFlow<Int> = repository.observeArchivedCount()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)

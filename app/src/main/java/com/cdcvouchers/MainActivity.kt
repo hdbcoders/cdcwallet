@@ -3,10 +3,12 @@ package com.cdcvouchers
 import android.content.Intent
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
@@ -22,9 +24,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -33,10 +38,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import com.cdcvouchers.addflow.AddVoucherFlow
 import com.cdcvouchers.ui.add.AddVoucherScreen
 import com.cdcvouchers.ui.detail.VoucherWebViewScreen
 import com.cdcvouchers.ui.list.ArchivedVoucherScreen
+import com.cdcvouchers.ui.list.SplashScreen
 import com.cdcvouchers.ui.list.VoucherListScreen
 import com.cdcvouchers.ui.settings.SettingsScreen
 import com.cdcvouchers.ui.theme.AppTheme
@@ -67,6 +78,18 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // API 31+: install the OS splash and keep it on screen until the
+        // list's first DB read completes — the user never lands on an empty
+        // list, and the splash doubles as the load mask (no Compose splash
+        // needed on this path).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val ready = java.util.concurrent.atomic.AtomicBoolean(false)
+            installSplashScreen().setKeepOnScreenCondition { !ready.get() }
+            lifecycleScope.launch {
+                container.repository.observeActive().first()
+                ready.set(true)
+            }
+        }
         super.onCreate(savedInstanceState)
         // §0.4 security bar: keep the app out of screenshots/recents previews.
         // Debug builds only — release builds always set FLAG_SECURE. Relaxed in
@@ -130,15 +153,52 @@ private fun AppNavHost(
         modifier = Modifier.background(MaterialTheme.colorScheme.background),
     ) {
         composable("list") {
-            VoucherListScreen(
-                repository = container.repository,
-                onAddClick = { navController.navigate("add") },
-                onOpenVoucher = { voucher ->
-                    navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
-                },
-                onArchivedClick = { navController.navigate("archived") },
-                onSettingsClick = { navController.navigate("settings") },
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // API 31+: the OS system splash (kept on screen by
+                // setKeepOnScreenCondition until the first DB read) masks the
+                // load — render the list directly, never an empty list.
+                VoucherListScreen(
+                    repository = container.repository,
+                    onAddClick = { navController.navigate("add") },
+                    onOpenVoucher = { voucher ->
+                        navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
+                    },
+                    onArchivedClick = { navController.navigate("archived") },
+                    onSettingsClick = { navController.navigate("settings") },
+                )
+            } else {
+                // API < 31: no system splash, so the Compose splash masks the
+                // load — hold the logo until the first DB read completes,
+                // then crossfade into the list (same theme background — no
+                // flash at the seam). Uses the repository flow directly (no
+                // ViewModel) — the screen below owns its own ViewModel.
+                val loaded by container.repository.observeActive()
+                    .map { true }
+                    .collectAsState(initial = false)
+                val minHoldElapsed by produceState(initialValue = false) {
+                    delay(SPLASH_MIN_MS)
+                    value = true
+                }
+                Crossfade(
+                    targetState = loaded && minHoldElapsed,
+                    animationSpec = tween(220),
+                    label = "splash-to-list",
+                ) { ready ->
+                    if (ready) {
+                        VoucherListScreen(
+                            repository = container.repository,
+                            onAddClick = { navController.navigate("add") },
+                            onOpenVoucher = { voucher ->
+                                navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
+                            },
+                            onArchivedClick = { navController.navigate("archived") },
+                            onSettingsClick = { navController.navigate("settings") },
+                        )
+                    } else {
+                        SplashScreen()
+                    }
+                }
+            }
         }
         composable(
             route = "archived",
@@ -217,6 +277,13 @@ private fun AppNavHost(
 
 /** Navigation motion duration — short enough to feel snappy, long enough to read. */
 private const val NAV_TRANSITION_MS = 280
+
+/**
+ * Minimum splash hold before the list appears, so the splash logo is actually
+ * visible: on API 31+ the OS system-splash window covers cold startup
+ * (~1.4s), so without this floor the Compose splash is never revealed.
+ */
+private const val SPLASH_MIN_MS = 1_500L
 
 /**
  * Drill-in motion for push/pop navigation (list → detail / add): the incoming

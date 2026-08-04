@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API 31+ splash: the OS draws the app logo over the themed background
+         and holds it until setKeepOnScreenCondition releases it (the list's
+         first DB read). postSplashScreenTheme hands off to the real theme. -->
+    <style name="Theme.CDCVouchers.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#F8F0F8</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo_circle</item>
+        <item name="postSplashScreenTheme">@style/Theme.CDCVouchers</item>
+    </style>
+</resources>
