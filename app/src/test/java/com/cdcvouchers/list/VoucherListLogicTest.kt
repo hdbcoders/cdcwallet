@@ -206,7 +206,7 @@ class VoucherListLogicTest {
     @Test
     fun headlineUsesLinkCountGrammarAndFormatting() {
         assertEquals(
-            "S$90.50 remaining across 1 link",
+            "$90.50 remaining across 1 link",
             summaryHeadline(
                 summarizeActive(
                     listOf(
@@ -224,13 +224,13 @@ class VoucherListLogicTest {
         val single = summarizeActive(
             listOf(voucher("a", ValidityStatus.ACTIVE, null, listOf(CategoryBalance("x", BigDecimal("1"))))),
         )
-        assertEquals("S$1.00 remaining across 1 link", summaryHeadline(single))
+        assertEquals("$1.00 remaining across 1 link", summaryHeadline(single))
     }
 
     @Test
     fun formatSgdPinsTwoDecimals() {
-        assertEquals("S$50.00", formatSgd(BigDecimal("50")))
-        assertEquals("S$25.50", formatSgd(BigDecimal("25.5")))
-        assertEquals("S$0.00", formatSgd(BigDecimal.ZERO))
+        assertEquals("$50.00", formatSgd(BigDecimal("50")))
+        assertEquals("$25.50", formatSgd(BigDecimal("25.5")))
+        assertEquals("$0.00", formatSgd(BigDecimal.ZERO))
     }
 }
