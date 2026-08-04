@@ -36,8 +36,14 @@ internal object VoucherPayloadParser {
         }
 
         val balances = payload.vouchers
-            .filter { it.state == "unused" && !it.type.isNullOrBlank() }
-            .groupBy { it.type!! }
+            .filter { it.state == "unused" }
+            .groupBy { voucher ->
+                // Climate/undifferentiated vouchers carry no `type` — bucket
+                // them under the campaign's first word (e.g. "Climate" from
+                // "Climate Vouchers ($100)") so their value still counts
+                // (spec 02 §2.2: `type` is nullable for non-CDC schemes).
+                voucher.type?.takeIf { it.isNotBlank() } ?: name.substringBefore(' ').ifBlank { name }
+            }
             .map { (category, vouchers) -> CategoryBalance(category, sumValues(vouchers)) }
 
         return ExtractionResult.Success(

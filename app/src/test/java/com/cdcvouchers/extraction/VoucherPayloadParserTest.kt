@@ -141,15 +141,21 @@ class VoucherPayloadParserTest {
     }
 
     @Test
-    fun `malformed voucher rows are skipped not fatal`() {
+    fun `blank type vouchers bucket under campaign name`() {
         val json = payloadJson(vouchers = """[
             {"id":"v1","state":"unused","voucher_value":10,"type":"heartland"},
             {"id":"v2","state":"unused"},
             {"state":"unused","voucher_value":5}
         ]""")
         val result = VoucherPayloadParser.parse(json)
+        // v1 keeps its type; v3 (blank type, value 5) falls back to the
+        // campaign's first word ("CDC" from "CDC Vouchers 2026"). v2 (no
+        // value) contributes nothing.
         assertEquals(
-            listOf(com.cdcvouchers.data.model.CategoryBalance("heartland", BigDecimal("10"))),
+            listOf(
+                com.cdcvouchers.data.model.CategoryBalance("heartland", BigDecimal("10")),
+                com.cdcvouchers.data.model.CategoryBalance("CDC", BigDecimal("5")),
+            ),
             result?.categoryBalances,
         )
     }
