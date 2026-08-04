@@ -14,3 +14,5 @@ captures/
 
 .reasonix/
 tmp/
+.env
+reasonix.toml
