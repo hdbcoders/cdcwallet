@@ -1,6 +1,7 @@
 package com.cdcvouchers
 
 import android.content.Intent
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
@@ -15,10 +16,15 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -75,6 +81,16 @@ class MainActivity : ComponentActivity() {
         val sharedUrl = intent?.getStringExtra(Intent.EXTRA_TEXT)
         setContent {
             AppTheme(container.themeModeStore.mode) {
+                // Keep the Android window background in sync with the effective
+                // Compose theme. The XML theme's white window background would
+                // otherwise flash through during pop transitions (both screens
+                // are mid-fade, so neither covers the window) — and in dark
+                // mode it would flash white on a dark surface.
+                val window = this@MainActivity.window
+                val bg = MaterialTheme.colorScheme.background
+                SideEffect {
+                    window.setBackgroundDrawable(ColorDrawable(bg.toArgb()))
+                }
                 val navController = rememberNavController()
                 DisposableEffect(navController) {
                     navControllerRef = navController
@@ -108,7 +124,11 @@ private fun AppNavHost(
 
     val reduceMotion = rememberReduceMotion()
 
-    NavHost(navController = navController, startDestination = "list") {
+    NavHost(
+        navController = navController,
+        startDestination = "list",
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+    ) {
         composable("list") {
             VoucherListScreen(
                 repository = container.repository,
