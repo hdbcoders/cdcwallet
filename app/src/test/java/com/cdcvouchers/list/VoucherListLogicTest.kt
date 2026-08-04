@@ -103,7 +103,15 @@ class VoucherListLogicTest {
     @Test
     fun activeUrgencyBoundaries() {
         fun days(n: Long) =
-            badgeState(voucher("a", ValidityStatus.ACTIVE, today.plusDays(n)), today)
+            badgeState(
+                voucher(
+                    "a",
+                    ValidityStatus.ACTIVE,
+                    today.plusDays(n),
+                    listOf(CategoryBalance("heartland", BigDecimal("5"))),
+                ),
+                today,
+            )
 
         assertEquals(Urgency.URGENT, (days(0) as com.cdcvouchers.ui.list.BadgeState.Active).urgency)
         assertEquals(Urgency.URGENT, (days(6) as com.cdcvouchers.ui.list.BadgeState.Active).urgency)
@@ -114,25 +122,57 @@ class VoucherListLogicTest {
 
     @Test
     fun activeBadgeAnnouncesDaysRemaining() {
-        val state = badgeState(voucher("a", ValidityStatus.ACTIVE, today.plusDays(12)), today)
+        val state = badgeState(
+            voucher(
+                "a",
+                ValidityStatus.ACTIVE,
+                today.plusDays(12),
+                listOf(CategoryBalance("heartland", BigDecimal("5"))),
+            ),
+            today,
+        )
         assertEquals("Expires in 12 days", badgeLabel(state))
     }
 
     @Test
     fun activeWithoutExpiryDateIsFineAndLabeled() {
-        val state = badgeState(voucher("a", ValidityStatus.ACTIVE, null), today)
-            as com.cdcvouchers.ui.list.BadgeState.Active
+        val state = badgeState(
+            voucher(
+                "a",
+                ValidityStatus.ACTIVE,
+                null,
+                listOf(CategoryBalance("heartland", BigDecimal("5"))),
+            ),
+            today,
+        ) as com.cdcvouchers.ui.list.BadgeState.Active
         assertEquals(Urgency.FINE, state.urgency)
         assertEquals("No expiry date", badgeLabel(state))
     }
 
     @Test
-    fun allFourTalkBackStringsCovered() {
+    fun allFiveTalkBackStringsCovered() {
         val states = listOf(
             badgeState(voucher("u", ValidityStatus.UNVERIFIED), today),
             badgeState(voucher("n", ValidityStatus.NOT_STARTED, today.plusDays(1)), today),
             badgeState(voucher("e", ValidityStatus.EXPIRED), today),
-            badgeState(voucher("a", ValidityStatus.ACTIVE, today.plusDays(5)), today),
+            badgeState(
+                voucher(
+                    "a",
+                    ValidityStatus.ACTIVE,
+                    today.plusDays(5),
+                    listOf(CategoryBalance("heartland", BigDecimal("5"))),
+                ),
+                today,
+            ),
+            badgeState(
+                voucher(
+                    "z",
+                    ValidityStatus.ACTIVE,
+                    today.plusDays(5),
+                    listOf(CategoryBalance("heartland", BigDecimal.ZERO)),
+                ),
+                today,
+            ),
         )
         assertEquals(
             listOf(
@@ -140,8 +180,98 @@ class VoucherListLogicTest {
                 "Not started",
                 "Expired",
                 "Expires in 5 days",
+                "No more balance",
             ),
             states.map(::badgeLabel),
+        )
+    }
+
+    @Test
+    fun activeWithZeroBalanceGetsNoBalanceBadge() {
+        // Explicit zero entries sum to zero.
+        val zero = badgeState(
+            voucher(
+                "z",
+                ValidityStatus.ACTIVE,
+                today.plusDays(149),
+                listOf(
+                    CategoryBalance("heartland", BigDecimal.ZERO),
+                    CategoryBalance("supermarket", BigDecimal.ZERO),
+                ),
+            ),
+            today,
+        )
+        assertEquals(
+            com.cdcvouchers.ui.list.BadgeState.NoBalance,
+            zero,
+        )
+        assertEquals("No more balance", badgeLabel(zero))
+
+        // Empty categoryBalances (nothing unused) also means zero balance.
+        val empty = badgeState(voucher("e2", ValidityStatus.ACTIVE, today.plusDays(149)), today)
+        assertEquals(
+            com.cdcvouchers.ui.list.BadgeState.NoBalance,
+            empty,
+        )
+    }
+
+    @Test
+    fun activeWithPositiveBalanceKeepsExpiryUrgency() {
+        val state = badgeState(
+            voucher(
+                "a",
+                ValidityStatus.ACTIVE,
+                today.plusDays(149),
+                listOf(CategoryBalance("heartland", BigDecimal("5"))),
+            ),
+            today,
+        )
+        assertEquals(Urgency.FINE, (state as com.cdcvouchers.ui.list.BadgeState.Active).urgency)
+        assertEquals("Expires in 149 days", badgeLabel(state))
+    }
+
+    @Test
+    fun activePastDateWithZeroBalanceStillReadsAsExpired() {
+        val state = badgeState(
+            voucher(
+                "p",
+                ValidityStatus.ACTIVE,
+                today.minusDays(1),
+                listOf(CategoryBalance("heartland", BigDecimal.ZERO)),
+            ),
+            today,
+        )
+        assertEquals("Expired", badgeLabel(state))
+    }
+
+    @Test
+    fun nonActiveStatesIgnoreZeroBalance() {
+        assertEquals(
+            "Not started",
+            badgeLabel(badgeState(
+                voucher("n", ValidityStatus.NOT_STARTED, today.plusDays(2)),
+                today,
+            )),
+        )
+        assertEquals(
+            "Expired",
+            badgeLabel(badgeState(
+                voucher("e", ValidityStatus.EXPIRED, today.minusDays(1)),
+                today,
+            )),
+        )
+        assertEquals(
+            "Couldn't verify, tap to check",
+            badgeLabel(badgeState(voucher("u", ValidityStatus.UNVERIFIED), today)),
+        )
+    }
+
+    @Test
+    fun activeWithoutExpiryAndZeroBalanceIsNoBalance() {
+        val state = badgeState(voucher("nz", ValidityStatus.ACTIVE, null), today)
+        assertEquals(
+            com.cdcvouchers.ui.list.BadgeState.NoBalance,
+            state,
         )
     }
 

@@ -61,6 +61,12 @@ fun VoucherBadge(state: BadgeState, modifier: Modifier = Modifier) {
             contentColor = MaterialTheme.colorScheme.onErrorContainer
             icon = Icons.Default.Warning
         }
+        BadgeState.NoBalance -> {
+            // Same red + warning treatment as Expired (spec 04 §4.2).
+            containerColor = MaterialTheme.colorScheme.errorContainer
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
+            icon = Icons.Default.Warning
+        }
         BadgeState.NotStarted -> {
             containerColor = MaterialTheme.colorScheme.surfaceVariant
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant

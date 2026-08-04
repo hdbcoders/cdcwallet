@@ -20,6 +20,12 @@ sealed interface BadgeState {
     data object NotStarted : BadgeState
     data object Expired : BadgeState
 
+    /**
+     * ACTIVE entry whose remaining value is zero — nothing left to spend.
+     * Rendered red with the same warning icon as Expired.
+     */
+    data object NoBalance : BadgeState
+
     /** ACTIVE entries only; daysRemaining is null when the API omitted an end date. */
     data class Active(val daysRemaining: Long?, val urgency: Urgency) : BadgeState
 }
@@ -50,11 +56,21 @@ fun badgeState(voucher: VoucherGroup, today: LocalDate = LocalDate.now()): Badge
         ValidityStatus.ACTIVE -> {
             val expiry = voucher.expiryDate
             if (expiry == null) {
-                BadgeState.Active(daysRemaining = null, urgency = Urgency.FINE)
+                // A spent voucher is terminal regardless of a missing end
+                // date; only fall through to urgency when value remains.
+                if (totalRemaining(voucher) == BigDecimal.ZERO) {
+                    BadgeState.NoBalance
+                } else {
+                    BadgeState.Active(daysRemaining = null, urgency = Urgency.FINE)
+                }
             } else {
                 val days = ChronoUnit.DAYS.between(today, expiry)
                 if (days < 0) {
                     BadgeState.Expired
+                } else if (totalRemaining(voucher) == BigDecimal.ZERO) {
+                    // Nothing left to spend — urgency to spend before expiry
+                    // is moot; the real page reports the balance as zero.
+                    BadgeState.NoBalance
                 } else {
                     val urgency = when {
                         days < 7 -> Urgency.URGENT
@@ -68,6 +84,13 @@ fun badgeState(voucher: VoucherGroup, today: LocalDate = LocalDate.now()): Badge
     }
 
 /**
+ * Sum of unused-only remaining value (spec 04 §4.3 semantics): zero (or
+ * empty — nothing unused) means the voucher has no balance left.
+ */
+private fun totalRemaining(voucher: VoucherGroup): BigDecimal =
+    voucher.categoryBalances.fold(BigDecimal.ZERO) { acc, b -> acc + b.remainingValue }
+
+/**
  * Spec 04 §4.2 accessibility: exactly one of four strings per badge — no
  * fall-through (UNVERIFIED must never announce blank/default). The badge
  * renders this same string, so what is on screen is what TalkBack announces.
@@ -76,6 +99,7 @@ fun badgeLabel(state: BadgeState): String = when (state) {
     is BadgeState.Active ->
         state.daysRemaining?.let { "Expires in $it days" } ?: "No expiry date"
     BadgeState.Expired -> "Expired"
+    BadgeState.NoBalance -> "No more balance"
     BadgeState.NotStarted -> "Not started"
     BadgeState.Unverified -> "Couldn't verify, tap to check"
 }
