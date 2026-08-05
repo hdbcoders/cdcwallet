@@ -66,9 +66,10 @@ class DetailViewModel(
             onResult = { result ->
                 if (result is ExtractionResult.Failure) {
                     refreshMessage = when (result.reason) {
-                        ExtractionResult.FailureReason.PARSE_ERROR -> "Website data failed to parse"
-                        ExtractionResult.FailureReason.NETWORK_ERROR,
-                        ExtractionResult.FailureReason.TIMEOUT -> "Unable to load website"
+                        // Spec 02 §2.7: timeout is treated as a parse error.
+                        ExtractionResult.FailureReason.PARSE_ERROR,
+                        ExtractionResult.FailureReason.TIMEOUT -> "Website data failed to parse"
+                        ExtractionResult.FailureReason.NETWORK_ERROR -> "Unable to load website"
                     }
                 }
             },

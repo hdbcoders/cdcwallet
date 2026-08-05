@@ -77,7 +77,17 @@ class ExtractionCoordinator(
                     lastRefreshedAt = Instant.now(),
                 ),
             )
-            is ExtractionResult.Failure -> repository.recordRefreshFailure(voucherId, result.reason.name)
+            is ExtractionResult.Failure -> repository.recordRefreshFailure(
+                voucherId,
+                // Spec 02 §2.7: a 10s timeout with no interception is treated
+                // as a parse error (the page yielded no parseable data), so it
+                // is recorded under the same classification.
+                if (result.reason == ExtractionResult.FailureReason.TIMEOUT) {
+                    ExtractionResult.FailureReason.PARSE_ERROR.name
+                } else {
+                    result.reason.name
+                },
+            )
         }
     }
 }
