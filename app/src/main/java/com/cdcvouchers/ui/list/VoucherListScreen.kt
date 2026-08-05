@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -53,7 +54,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -68,6 +71,7 @@ import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.ui.theme.LocalAppIsDark
 import com.cdcvouchers.ui.theme.SummaryCardContainerLight
 import com.cdcvouchers.ui.theme.rememberReduceMotion
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 
 /**
@@ -86,6 +90,8 @@ fun VoucherListScreen(
     onArchivedClick: () -> Unit,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
+    highlightVoucherId: String? = null,
+    onHighlightConsumed: () -> Unit = {},
 ) {
     val vm: VoucherListViewModel = viewModel(
         initializer = { VoucherListViewModel(repository, extractionCoordinator) },
@@ -96,6 +102,25 @@ fun VoucherListScreen(
     val sorted = remember(vouchers) { sortActive(vouchers) }
     val summary = remember(sorted) { summarizeActive(sorted) }
     val snackbarHostState = remember { SnackbarHostState() }
+    // Scroll + flash the row requested by a duplicate-add (spec 03 §3.2 step 2).
+    val listState = rememberLazyListState()
+    var highlightedId by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(highlightVoucherId, sorted) {
+        val target = highlightVoucherId ?: return@LaunchedEffect
+        val index = sorted.indexOfFirst { it.id == target }
+        if (index >= 0) {
+            highlightedId = target
+            listState.animateScrollToItem(index)
+            onHighlightConsumed()
+            // Brief flash, then clear the highlight.
+            delay(1800)
+            highlightedId = null
+        } else {
+            // Row not present (e.g. archived) — nothing to highlight.
+            onHighlightConsumed()
+        }
+    }
 
     LaunchedEffect(Unit) {
         vm.events.collect { event ->
@@ -167,6 +192,7 @@ fun VoucherListScreen(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -183,6 +209,7 @@ fun VoucherListScreen(
                         VoucherRow(
                             voucher = voucher,
                             menuExpanded = vm.menuForId == voucher.id,
+                            isHighlighted = voucher.id == highlightedId,
                             onClick = { onOpenVoucher(voucher) },
                             onMenuExpandedChange = { open ->
                                 vm.setMenu(if (open) voucher.id else null)

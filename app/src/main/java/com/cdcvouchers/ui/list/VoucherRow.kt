@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.ui.theme.BadgeColors
@@ -61,6 +62,7 @@ fun VoucherRow(
     onClick: () -> Unit,
     onMenuExpandedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    isHighlighted: Boolean = false,
     menuContent: @Composable ColumnScope.() -> Unit,
 ) {
     val badge = badgeState(voucher)
@@ -74,12 +76,27 @@ fun VoucherRow(
     Box(modifier = modifier.fillMaxWidth()) {
         Surface(
             shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            // Duplicate-add highlight (spec 03 §3.2): flash a subtle primary tint.
+            color = if (isHighlighted) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            },
+            border = BorderStroke(
+                1.dp,
+                if (isHighlighted) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.outlineVariant
+                },
+            ),
             tonalElevation = 1.dp,
             shadowElevation = 1.dp,
             modifier = Modifier
                 .fillMaxWidth()
+                .then(
+                    if (isHighlighted) Modifier.testTag("highlighted-${voucher.id}") else Modifier,
+                )
                 .clickable(onClick = onClick),
         ) {
             Column(

@@ -16,6 +16,15 @@ sealed interface AddUiStatus {
     data class Message(val text: String, val isError: Boolean) : AddUiStatus
 }
 
+/**
+ * Set once when the submitted link duplicates an existing entry (spec 03 §3.2
+ * step 2). The screen surfaces this to navigation so the app can return to the
+ * list and scroll/highlight the existing voucher.
+ */
+sealed interface AddUiEvent {
+    data class Duplicate(val voucherId: String) : AddUiEvent
+}
+
 class AddVoucherViewModel(
     private val flow: AddVoucherFlow,
     private val appContext: Context,
@@ -24,6 +33,8 @@ class AddVoucherViewModel(
     var url by mutableStateOf("")
         private set
     var status by mutableStateOf<AddUiStatus>(AddUiStatus.Idle)
+        private set
+    var duplicateEvent by mutableStateOf<AddUiEvent?>(null)
         private set
 
     private var autoSubmitted = false
@@ -39,6 +50,9 @@ class AddVoucherViewModel(
 
     fun onUrlChange(value: String) { url = value }
 
+    /** Clear the duplicate event after navigation has consumed it. */
+    fun consumeDuplicate() { duplicateEvent = null }
+
     fun submit() {
         if (status is AddUiStatus.Working) return
         status = AddUiStatus.Working
@@ -46,8 +60,10 @@ class AddVoucherViewModel(
             status = when (val result = flow.add(appContext, url)) {
                 is AddVoucherResult.InvalidFormat ->
                     AddUiStatus.Message("This doesn't look like a RedeemSG voucher link.", isError = true)
-                is AddVoucherResult.Duplicate ->
+                is AddVoucherResult.Duplicate -> {
+                    duplicateEvent = AddUiEvent.Duplicate(result.existing.id)
                     AddUiStatus.Message("This link is already in your list.", isError = false)
+                }
                 is AddVoucherResult.Added ->
                     AddUiStatus.Message("Added — ${result.voucher.campaignName}", isError = false)
                 is AddVoucherResult.AddedUnverified ->
