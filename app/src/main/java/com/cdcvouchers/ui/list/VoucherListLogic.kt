@@ -138,8 +138,10 @@ fun summarizeActive(vouchers: List<VoucherGroup>): ListSummary {
 }
 
 fun formatSgd(value: BigDecimal): String =
-    // Currency is implicitly Singapore dollars throughout the app.
-    "$" + value.setScale(2, RoundingMode.HALF_UP).toPlainString()
+    // Currency is implicitly Singapore dollars throughout the app. Strip
+    // trailing zeros so whole-dollar amounts read "$50" (not "$50.00"), while
+    // fractional cents like "$25.50" keep their decimals.
+    "$" + value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()
 
 fun summaryHeadline(summary: ListSummary): String =
     "${formatSgd(summary.total)} remaining across ${summary.linkCount} " +

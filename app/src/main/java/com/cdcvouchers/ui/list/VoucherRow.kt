@@ -52,7 +52,7 @@ import java.util.Locale
  * Card layout (reference redesign): title row → badge + expiry → divider →
  * footer. The footer is either a row of colored category chips with an amount
  * each (voucher has remaining balance) or a red call-out box with a wallet
- * icon and "$0.00 remaining" (voucher fully redeemed).
+ * icon and "$0 remaining" (voucher fully redeemed).
  */
 @Composable
 fun VoucherRow(
@@ -164,7 +164,7 @@ private fun BalanceChips(voucher: VoucherGroup, modifier: Modifier = Modifier) {
                 )
             }
             Column(
-                horizontalAlignment = Alignment.Start,
+                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 CategoryChip(balance.category, chipPalette(balance.category))
@@ -254,7 +254,7 @@ private fun NoBalanceFooter() {
             Spacer(Modifier.width(10.dp))
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "\$0.00 remaining",
+                    text = "${formatSgd(BigDecimal.ZERO)} remaining",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                 )

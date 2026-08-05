@@ -148,12 +148,12 @@ class VoucherListScreenTest {
         composeRule.onNodeWithText("10 days left").assertIsDisplayed()
 
         // Spec 04 §4.3: total excludes the UNVERIFIED entry from value and count.
-        composeRule.onNodeWithText("$92.50 remaining across 4 links").assertIsDisplayed()
+        composeRule.onNodeWithText("$92.5 remaining across 4 links").assertIsDisplayed()
         for (part in listOf(
-            "$10.00 groceries",
-            "$55.00 heartland",
-            "$2.00 merchants",
-            "$25.50 supermarket",
+            "$10 groceries",
+            "$55 heartland",
+            "$2 merchants",
+            "$25.5 supermarket",
         )) {
             composeRule.onNodeWithText(part, substring = true).assertIsDisplayed()
         }
