@@ -26,7 +26,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -147,6 +150,12 @@ private fun AppNavHost(
 
     val reduceMotion = rememberReduceMotion()
 
+    // One-shot: does the list's first DB load still need masking? Scoped here
+    // (above the NavHost) so it survives back navigation and rotation but
+    // resets on a true process death — the splash masks only the initial
+    // load, never a return to the list (the back-arrow bug).
+    var listLoadedOnce by rememberSaveable { mutableStateOf(false) }
+
     NavHost(
         navController = navController,
         startDestination = "list",
@@ -168,10 +177,12 @@ private fun AppNavHost(
                 )
             } else {
                 // API < 31: no system splash, so the Compose splash masks the
-                // load — hold the logo until the first DB read completes,
-                // then crossfade into the list (same theme background — no
-                // flash at the seam). Uses the repository flow directly (no
-                // ViewModel) — the screen below owns its own ViewModel.
+                // initial load — hold the logo until the first DB read
+                // completes, then crossfade into the list. Uses the
+                // repository flow directly (no ViewModel) — the screen below
+                // owns its own ViewModel. `listLoadedOnce` (rememberSaveable
+                // at AppNavHost scope) latches true after the initial load so
+                // returning to the list via back never re-shows the splash.
                 val loaded by container.repository.observeActive()
                     .map { true }
                     .collectAsState(initial = false)
@@ -179,8 +190,11 @@ private fun AppNavHost(
                     delay(SPLASH_MIN_MS)
                     value = true
                 }
+                LaunchedEffect(loaded, minHoldElapsed) {
+                    if (loaded && minHoldElapsed) listLoadedOnce = true
+                }
                 Crossfade(
-                    targetState = loaded && minHoldElapsed,
+                    targetState = listLoadedOnce,
                     animationSpec = tween(220),
                     label = "splash-to-list",
                 ) { ready ->
