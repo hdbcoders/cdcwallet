@@ -3,6 +3,7 @@ package com.cdcvouchers.ui.theme
 import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -12,6 +13,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import com.cdcvouchers.R
 
 /** User-facing theme choice; SYSTEM is the default and matches today's behavior. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
@@ -63,9 +67,42 @@ fun AppTheme(mode: ThemeMode, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalAppIsDark provides dark) {
         MaterialTheme(
             colorScheme = if (dark) darkColorScheme() else MistyBlueLightScheme,
+            typography = AppTypography,
             content = content,
         )
     }
+}
+
+/** Roboto Flex, the app's typeface — clean, neutral, civic (see design notes). */
+private val AppFontFamily = FontFamily(
+    androidx.compose.ui.text.font.Font(
+        R.font.roboto_flex,
+        weight = FontWeight.Normal,
+    ),
+)
+
+/**
+ * App-wide typography based on Inter. Starts from the Material3 defaults and
+ * swaps every role's font family to Inter, keeping all sizes/weights.
+ */
+private val AppTypography: Typography = with(Typography()) {
+    Typography(
+        displayLarge = displayLarge.copy(fontFamily = AppFontFamily),
+        displayMedium = displayMedium.copy(fontFamily = AppFontFamily),
+        displaySmall = displaySmall.copy(fontFamily = AppFontFamily),
+        headlineLarge = headlineLarge.copy(fontFamily = AppFontFamily),
+        headlineMedium = headlineMedium.copy(fontFamily = AppFontFamily),
+        headlineSmall = headlineSmall.copy(fontFamily = AppFontFamily),
+        titleLarge = titleLarge.copy(fontFamily = AppFontFamily),
+        titleMedium = titleMedium.copy(fontFamily = AppFontFamily),
+        titleSmall = titleSmall.copy(fontFamily = AppFontFamily),
+        bodyLarge = bodyLarge.copy(fontFamily = AppFontFamily),
+        bodyMedium = bodyMedium.copy(fontFamily = AppFontFamily),
+        bodySmall = bodySmall.copy(fontFamily = AppFontFamily),
+        labelLarge = labelLarge.copy(fontFamily = AppFontFamily),
+        labelMedium = labelMedium.copy(fontFamily = AppFontFamily),
+        labelSmall = labelSmall.copy(fontFamily = AppFontFamily),
+    )
 }
 
 /**

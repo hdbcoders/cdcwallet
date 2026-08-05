@@ -91,7 +91,7 @@ fun VoucherRow(
                 ) {
                     Text(
                         text = voucher.campaignName,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.weight(1f),
                     )
                     Box {
