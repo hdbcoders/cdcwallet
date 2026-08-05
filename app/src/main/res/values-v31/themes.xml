@@ -4,7 +4,7 @@
          and holds it until setKeepOnScreenCondition releases it (the list's
          first DB read). postSplashScreenTheme hands off to the real theme. -->
     <style name="Theme.CDCVouchers.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#F8F0F8</item>
+        <item name="windowSplashScreenBackground">#F6F9FB</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo_circle</item>
         <item name="postSplashScreenTheme">@style/Theme.CDCVouchers</item>
     </style>
