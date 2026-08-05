@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:name=".DebugVoucherApp"
+        tools:replace="android:name">
+
+        <!-- Dev tooling broadcasts (SEED_DEV_DATA / CLEAR_DEV_DATA) are handled
+             by SeedDevDataReceiver, registered dynamically in DebugVoucherApp:
+             manifest-declared receivers are silently dropped by the API 36
+             background-broadcast policy. The receiver is active whenever the
+             app process is running. -->
+    </application>
+
+</manifest>

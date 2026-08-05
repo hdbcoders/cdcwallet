@@ -14,7 +14,7 @@ import com.cdcvouchers.extraction.ExtractionEngine
 import com.cdcvouchers.ui.theme.ThemeModeStore
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
-class VoucherApp : Application() {
+open class VoucherApp : Application() {
     lateinit var container: AppContainer
         private set
 
