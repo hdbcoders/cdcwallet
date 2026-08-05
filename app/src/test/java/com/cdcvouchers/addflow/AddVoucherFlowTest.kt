@@ -61,8 +61,9 @@ private class FakeRepository : VoucherRepository {
         rows.addAll(vouchers)
     }
 
-    override suspend fun bulkInsert(vouchers: List<VoucherGroup>) {
+    override suspend fun bulkInsert(vouchers: List<VoucherGroup>): Int {
         rows.addAll(vouchers)
+        return vouchers.size
     }
 }
 

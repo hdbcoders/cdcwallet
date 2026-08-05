@@ -9,7 +9,12 @@ import java.net.URI
  */
 object VoucherToken {
 
-    /** Strip query parameters and fragment (host + path only). */
+    /**
+     * Strip query parameters and fragment (host + path only, per 01 §1.4).
+     * The fragment is intentionally dropped too: it is never sent to the
+     * server, so two URLs differing only in a fragment identify the same
+     * voucher and must compare as equal.
+     */
     fun normalize(url: String): String =
         url.substringBefore('?').substringBefore('#')
 

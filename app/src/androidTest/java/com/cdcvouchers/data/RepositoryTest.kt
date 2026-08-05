@@ -210,6 +210,16 @@ class RepositoryTest {
     }
 
     @Test
+    fun bulkInsertSkipsDuplicateTokensWithoutThrowing() = runTest {
+        repository.insert(voucher("TokenA"))
+        // A duplicate token must not crash bulkInsert; it returns the count
+        // of rows actually inserted (same backstop semantics as insert).
+        val inserted = repository.bulkInsert(listOf(voucher("TokenA"), voucher("TokenB")))
+        assertEquals(1, inserted)
+        assertEquals(listOf("TokenA", "TokenB"), repository.findAll().map { it.token }.sorted())
+    }
+
+    @Test
     fun unverifiedRowRoundTrips() = runTest {
         val unverified = voucher("TokUnv", status = ValidityStatus.UNVERIFIED).copy(
             campaignName = "TokUnv",

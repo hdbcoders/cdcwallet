@@ -88,7 +88,8 @@ class FakeVoucherRepository : VoucherRepository {
         _vouchers.value = vouchers
     }
 
-    override suspend fun bulkInsert(vouchers: List<VoucherGroup>) {
+    override suspend fun bulkInsert(vouchers: List<VoucherGroup>): Int {
         _vouchers.value = _vouchers.value + vouchers
+        return vouchers.size
     }
 }

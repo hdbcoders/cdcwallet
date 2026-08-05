@@ -24,6 +24,12 @@ interface VoucherRepository {
     /** @return false if a row with the same token already exists (defensive backstop). */
     suspend fun insert(voucher: VoucherGroup): Boolean
 
+    /**
+     * Insert many rows, skipping any whose token already exists (defensive
+     * backstop, same semantics as [insert]). Returns the number inserted.
+     */
+    suspend fun bulkInsert(vouchers: List<VoucherGroup>): Int
+
     /** Safe no-op if the row no longer exists (spec 02 §2.7). */
     suspend fun updateFromRefresh(id: String, data: VoucherRefreshData)
 
@@ -36,7 +42,6 @@ interface VoucherRepository {
     suspend fun findByToken(token: String): VoucherGroup?
     suspend fun findAll(): List<VoucherGroup>
     suspend fun replaceAll(vouchers: List<VoucherGroup>)
-    suspend fun bulkInsert(vouchers: List<VoucherGroup>)
 }
 
 class RoomVoucherRepository(
@@ -100,9 +105,26 @@ class RoomVoucherRepository(
         }
     }
 
-    override suspend fun bulkInsert(vouchers: List<VoucherGroup>) {
-        database.withTransaction {
-            if (vouchers.isNotEmpty()) dao.insertAll(vouchers)
+    override suspend fun bulkInsert(vouchers: List<VoucherGroup>): Int {
+        if (vouchers.isEmpty()) return 0
+        return try {
+            database.withTransaction {
+                dao.insertAll(vouchers)
+            }
+            vouchers.size
+        } catch (e: android.database.sqlite.SQLiteConstraintException) {
+            // Defensive backstop (same semantics as insert): a duplicate token
+            // must not crash a bulk import. Room rolls back the aborted batch
+            // transaction, so fall back to per-row inserts in fresh
+            // transactions — valid rows still land; duplicates are skipped.
+            vouchers.count { voucher ->
+                try {
+                    database.withTransaction { dao.insert(voucher) }
+                    true
+                } catch (e2: android.database.sqlite.SQLiteConstraintException) {
+                    false
+                }
+            }
         }
     }
 }
