@@ -140,8 +140,8 @@ class VoucherListScreenTest {
         composeRule.onNodeWithText("Couldn't verify, tap to check").assertIsDisplayed()
         composeRule.onNodeWithText("Expired").assertIsDisplayed()
         composeRule.onNodeWithText("Not started").assertIsDisplayed()
-        composeRule.onNodeWithText("Expires in 10 days").assertIsDisplayed()
-        composeRule.onNodeWithText("Expires in 40 days").assertIsDisplayed()
+        composeRule.onNodeWithText("10 days left").assertIsDisplayed()
+        composeRule.onNodeWithText("40 days left").assertIsDisplayed()
 
         // Spec 04 §4.3: total excludes the UNVERIFIED entry from value and count.
         composeRule.onNodeWithText("$92.50 remaining across 4 links").assertIsDisplayed()

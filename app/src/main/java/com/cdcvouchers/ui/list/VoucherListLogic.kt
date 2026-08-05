@@ -100,7 +100,7 @@ private fun totalRemaining(voucher: VoucherGroup): BigDecimal =
  */
 fun badgeLabel(state: BadgeState): String = when (state) {
     is BadgeState.Active ->
-        state.daysRemaining?.let { "Expires in $it days" } ?: "No expiry date"
+        state.daysRemaining?.let { "$it days left" } ?: "No expiry date"
     BadgeState.Expired -> "Expired"
     BadgeState.NoBalance -> "Fully used"
     BadgeState.NotStarted -> "Not started"

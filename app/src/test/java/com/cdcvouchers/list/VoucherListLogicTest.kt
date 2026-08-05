@@ -204,7 +204,7 @@ class VoucherListLogicTest {
             ),
             today,
         )
-        assertEquals("Expires in 12 days", badgeLabel(state))
+        assertEquals("12 days left", badgeLabel(state))
     }
 
     @Test
@@ -252,7 +252,7 @@ class VoucherListLogicTest {
                 "Couldn't verify, tap to check",
                 "Not started",
                 "Expired",
-                "Expires in 5 days",
+                "5 days left",
                 "Fully used",
             ),
             states.map(::badgeLabel),
@@ -300,7 +300,7 @@ class VoucherListLogicTest {
             today,
         )
         assertEquals(Urgency.FINE, (state as com.cdcvouchers.ui.list.BadgeState.Active).urgency)
-        assertEquals("Expires in 149 days", badgeLabel(state))
+        assertEquals("149 days left", badgeLabel(state))
     }
 
     @Test
