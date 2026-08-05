@@ -142,55 +142,59 @@ fun VoucherListScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            item(key = "summary") {
-                SummaryCard(summary)
-            }
-            if (sorted.isEmpty()) {
-                item(key = "empty") {
-                    Text(
-                        text = "No voucher links yet — add one with the + button.",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            } else {
-                items(sorted, key = { it.id }) { voucher ->
-                    VoucherRow(
-                        voucher = voucher,
-                        menuExpanded = vm.menuForId == voucher.id,
-                        onClick = { onOpenVoucher(voucher) },
-                        onMenuExpandedChange = { open ->
-                            vm.setMenu(if (open) voucher.id else null)
-                        },
-                        modifier = if (reduceMotion) {
-                            // System reduce-motion: disable item animations entirely.
-                            Modifier.animateItem(
-                                fadeInSpec = null,
-                                placementSpec = null,
-                                fadeOutSpec = null,
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // Pinned summary: fixed above the list, never scrolls with it.
+            SummaryCard(
+                summary,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (sorted.isEmpty()) {
+                    item(key = "empty") {
+                        Text(
+                            text = "No voucher links yet — add one with the + button.",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                } else {
+                    items(sorted, key = { it.id }) { voucher ->
+                        VoucherRow(
+                            voucher = voucher,
+                            menuExpanded = vm.menuForId == voucher.id,
+                            onClick = { onOpenVoucher(voucher) },
+                            onMenuExpandedChange = { open ->
+                                vm.setMenu(if (open) voucher.id else null)
+                            },
+                            modifier = if (reduceMotion) {
+                                // System reduce-motion: disable item animations entirely.
+                                Modifier.animateItem(
+                                    fadeInSpec = null,
+                                    placementSpec = null,
+                                    fadeOutSpec = null,
+                                )
+                            } else {
+                                Modifier.animateItem()
+                            },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Archive") },
+                                onClick = {
+                                    vm.setMenu(null)
+                                    vm.archive(voucher)
+                                },
                             )
-                        } else {
-                            Modifier.animateItem()
-                        },
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Archive") },
-                            onClick = {
-                                vm.setMenu(null)
-                                vm.archive(voucher)
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Delete") },
-                            onClick = {
-                                vm.setMenu(null)
-                                vm.requestDelete(voucher)
-                            },
-                        )
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                onClick = {
+                                    vm.setMenu(null)
+                                    vm.requestDelete(voucher)
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -209,7 +213,7 @@ fun VoucherListScreen(
 }
 
 @Composable
-private fun SummaryCard(summary: ListSummary) {
+private fun SummaryCard(summary: ListSummary, modifier: Modifier = Modifier) {
     val dark = LocalAppIsDark.current
     val containerColor = if (dark) {
         MaterialTheme.colorScheme.surfaceContainerHigh
@@ -220,7 +224,7 @@ private fun SummaryCard(summary: ListSummary) {
         shape = RoundedCornerShape(12.dp),
         color = containerColor,
         border = if (dark) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
