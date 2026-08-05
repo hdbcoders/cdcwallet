@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 
 /** User-facing theme choice; SYSTEM is the default and matches today's behavior. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
@@ -61,8 +62,42 @@ fun AppTheme(mode: ThemeMode, content: @Composable () -> Unit) {
     }
     CompositionLocalProvider(LocalAppIsDark provides dark) {
         MaterialTheme(
-            colorScheme = if (dark) darkColorScheme() else lightColorScheme(),
+            colorScheme = if (dark) darkColorScheme() else MistyBlueLightScheme,
             content = content,
         )
     }
 }
+
+/**
+ * Misty Blue light theme — a calm, cool pale-blue-grey palette replacing the
+ * default Material3 lavender cast. Background/surfaces are near-white with a
+ * faint blue tint; primary is a muted steel blue that pairs with the app's
+ * existing light-blue summary card (#D9E7FF).
+ */
+private val MistyBlueLightScheme = lightColorScheme(
+    primary = Color(0xFF3D6B8E),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFD3E7F5),
+    onPrimaryContainer = Color(0xFF12344C),
+    secondary = Color(0xFF5A6B7A),
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFDEE8F0),
+    onSecondaryContainer = Color(0xFF17242E),
+    tertiary = Color(0xFF6E5C8A),
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFE8DFF3),
+    onTertiaryContainer = Color(0xFF271A3C),
+    background = Color(0xFFF6F9FB),
+    onBackground = Color(0xFF1A1C1E),
+    surface = Color(0xFFF6F9FB),
+    onSurface = Color(0xFF1A1C1E),
+    surfaceVariant = Color(0xFFEAF1F5),
+    onSurfaceVariant = Color(0xFF3F4A52),
+    surfaceTint = Color(0xFF3D6B8E),
+    outline = Color(0xFF7A848C),
+    outlineVariant = Color(0xFFCBD7DE),
+    error = Color(0xFFBA1A1A),
+    errorContainer = Color(0xFFFFDAD6),
+    onError = Color.White,
+    onErrorContainer = Color(0xFF410002),
+)

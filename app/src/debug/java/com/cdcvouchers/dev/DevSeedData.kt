@@ -66,7 +66,7 @@ object DevSeedData {
             "dev-hs-100-150",
             "Durian",
             ValidityStatus.ACTIVE,
-            LocalDate.of(2026, 10, 31),
+            LocalDate.of(2026, 8, 31),
             listOf(
                 CategoryBalance("Heartland", BigDecimal("100")),
                 CategoryBalance("Supermarket", BigDecimal("150")),
