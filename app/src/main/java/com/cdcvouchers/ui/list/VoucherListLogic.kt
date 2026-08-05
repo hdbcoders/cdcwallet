@@ -41,7 +41,7 @@ enum class Urgency { URGENT, SOON, FINE }
 fun sortActive(vouchers: List<VoucherGroup>): List<VoucherGroup> =
     vouchers.sortedWith(
         compareByDescending<VoucherGroup> { it.validityStatus == ValidityStatus.UNVERIFIED }
-            .thenByDescending { voucher -> voucher.categoryBalances.isNotEmpty() }
+            .thenByDescending { voucher -> totalRemaining(voucher) > BigDecimal.ZERO }
             .thenBy(nullsLast()) { it.expiryDate }
             .thenBy { it.id },
     )

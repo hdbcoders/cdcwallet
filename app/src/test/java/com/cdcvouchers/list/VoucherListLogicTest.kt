@@ -107,6 +107,43 @@ class VoucherListLogicTest {
         )
     }
 
+    @Test
+    fun zeroSumBalancesSortAsFullyUsedNotAsHasBalance() {
+        // Banana-style fixture: a non-empty balance list whose values sum to
+        // zero. It must sort into the "no balance" tier (below any voucher
+        // with a positive sum), not be treated as having balance simply because
+        // the list is non-empty.
+        val zeroCat = voucher(
+            "banana", ValidityStatus.ACTIVE,
+            LocalDate.of(2027, 12, 31),
+            listOf(CategoryBalance("Climate", BigDecimal("0"))),
+        )
+        val onePositive = voucher(
+            "lychee", ValidityStatus.ACTIVE,
+            LocalDate.of(2027, 12, 31),
+            listOf(
+                CategoryBalance("Heartland", BigDecimal("0")),
+                CategoryBalance("Supermarket", BigDecimal("150")),
+            ),
+        )
+        val otherPositive = voucher(
+            "rambutan", ValidityStatus.ACTIVE,
+            LocalDate.of(2027, 12, 31),
+            listOf(
+                CategoryBalance("Heartland", BigDecimal("100")),
+                CategoryBalance("Supermarket", BigDecimal("0")),
+            ),
+        )
+        val alsoZero = voucher("durian", ValidityStatus.ACTIVE, LocalDate.of(2026, 12, 31))
+
+        // Both positive-sum vouchers ahead of the zero-sum one regardless of
+        // expiry; among the zero-sum ones, expiry (then id) decides.
+        assertEquals(
+            listOf("lychee", "rambutan", "durian", "banana"),
+            sortActive(listOf(zeroCat, alsoZero, onePositive, otherPositive)).map { it.id },
+        )
+    }
+
     // ---- badges (04 §4.2) ----
 
     @Test
