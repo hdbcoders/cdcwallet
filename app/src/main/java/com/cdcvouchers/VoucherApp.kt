@@ -10,6 +10,7 @@ import com.cdcvouchers.data.backup.BackupFlow
 import com.cdcvouchers.data.db.AppDatabase
 import com.cdcvouchers.data.db.SqlCipherNative
 import com.cdcvouchers.data.db.SqlCipherPassphraseStore
+import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.extraction.ExtractionEngine
 import com.cdcvouchers.ui.theme.ThemeModeStore
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
@@ -60,6 +61,10 @@ class AppContainer(context: Context) {
 
     val extractionEngine: ExtractionEngine by lazy {
         ExtractionEngine()
+    }
+
+    val extractionCoordinator: ExtractionCoordinator by lazy {
+        ExtractionCoordinator(repository, extractionEngine)
     }
 
     val backupFlow: BackupFlow by lazy {

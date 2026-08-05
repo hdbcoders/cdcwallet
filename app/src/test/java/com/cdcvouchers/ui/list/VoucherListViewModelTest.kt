@@ -3,6 +3,8 @@ package com.cdcvouchers.ui.list
 import com.cdcvouchers.data.FakeVoucherRepository
 import com.cdcvouchers.data.model.ValidityStatus
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.extraction.ExtractionCoordinator
+import com.cdcvouchers.extraction.ExtractionEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -48,11 +50,14 @@ class VoucherListViewModelTest {
         isArchived = archived,
     )
 
+    private fun coordinator(repo: FakeVoucherRepository) =
+        ExtractionCoordinator(repo, ExtractionEngine())
+
     @Test
     fun archiveEmitsArchivedUndoAfterPersisting() = runTest(dispatcher) {
         val repo = FakeVoucherRepository()
         repo.bulkInsert(listOf(voucher("v1")))
-        val vm = VoucherListViewModel(repo)
+        val vm = VoucherListViewModel(repo, coordinator(repo))
 
         val events = mutableListOf<ListEvent>()
         backgroundScope.launch { vm.events.collect { events.add(it) } }
@@ -68,7 +73,7 @@ class VoucherListViewModelTest {
     fun deleteAndRestoreCallThrough() = runTest(dispatcher) {
         val repo = FakeVoucherRepository()
         repo.bulkInsert(listOf(voucher("a"), voucher("b")))
-        val vm = VoucherListViewModel(repo)
+        val vm = VoucherListViewModel(repo, coordinator(repo))
 
         vm.archive(voucher("a"))
         runCurrent()
@@ -85,7 +90,7 @@ class VoucherListViewModelTest {
 
     @Test
     fun requestDeleteAndDismissTogglePendingDelete() = runTest(dispatcher) {
-        val vm = VoucherListViewModel(FakeVoucherRepository())
+        val vm = VoucherListViewModel(FakeVoucherRepository(), coordinator(FakeVoucherRepository()))
         val v = voucher("v1")
 
         vm.setMenu("v1")
@@ -102,7 +107,7 @@ class VoucherListViewModelTest {
     @Test
     fun vouchersAndArchivedCountReflectRepository() = runTest(dispatcher) {
         val repo = FakeVoucherRepository()
-        val vm = VoucherListViewModel(repo)
+        val vm = VoucherListViewModel(repo, coordinator(repo))
         backgroundScope.launch { vm.vouchers.collect {} }
         backgroundScope.launch { vm.archivedCount.collect {} }
         runCurrent()

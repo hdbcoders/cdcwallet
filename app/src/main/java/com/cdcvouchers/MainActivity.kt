@@ -168,6 +168,7 @@ private fun AppNavHost(
                 // load — render the list directly, never an empty list.
                 VoucherListScreen(
                     repository = container.repository,
+                    extractionCoordinator = container.extractionCoordinator,
                     onAddClick = { navController.navigate("add") },
                     onOpenVoucher = { voucher ->
                         navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
@@ -201,6 +202,7 @@ private fun AppNavHost(
                     if (ready) {
                         VoucherListScreen(
                             repository = container.repository,
+                            extractionCoordinator = container.extractionCoordinator,
                             onAddClick = { navController.navigate("add") },
                             onOpenVoucher = { voucher ->
                                 navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
@@ -223,6 +225,7 @@ private fun AppNavHost(
         ) {
             ArchivedVoucherScreen(
                 repository = container.repository,
+                extractionCoordinator = container.extractionCoordinator,
                 onOpenVoucher = { voucher ->
                     navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
                 },
@@ -283,6 +286,7 @@ private fun AppNavHost(
                 voucherUrl = entry.arguments?.getString("url").orEmpty(),
                 repository = container.repository,
                 extractionEngine = container.extractionEngine,
+                extractionCoordinator = container.extractionCoordinator,
                 onBack = { navController.popBackStack() },
             )
         }

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.extraction.ExtractionCoordinator
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,6 +23,7 @@ sealed interface ListEvent {
 
 class VoucherListViewModel(
     private val repository: VoucherRepository,
+    private val extractionCoordinator: ExtractionCoordinator,
 ) : ViewModel() {
 
     val vouchers: StateFlow<List<VoucherGroup>> = repository.observeActive()
@@ -60,5 +62,11 @@ class VoucherListViewModel(
     }
 
     fun restore(id: String) { viewModelScope.launch { repository.restore(id) } }
-    fun delete(id: String) { viewModelScope.launch { repository.delete(id) } }
+
+    fun delete(id: String) {
+        // Cancel any in-flight extraction for this voucher first (02 §2.7),
+        // then remove the row.
+        extractionCoordinator.cancel(id)
+        viewModelScope.launch { repository.delete(id) }
+    }
 }

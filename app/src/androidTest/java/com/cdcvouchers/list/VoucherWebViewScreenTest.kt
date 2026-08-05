@@ -20,6 +20,7 @@ import com.cdcvouchers.data.db.SqlCipherNative
 import com.cdcvouchers.data.model.CategoryBalance
 import com.cdcvouchers.data.model.ValidityStatus
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.extraction.ExtractionEngine
 import com.cdcvouchers.ui.detail.VoucherWebViewScreen
 import kotlinx.coroutines.delay
@@ -122,6 +123,7 @@ class VoucherWebViewScreenTest {
                         voucherUrl = url,
                         repository = repository,
                         extractionEngine = extractionEngine(),
+                        extractionCoordinator = ExtractionCoordinator(repository, extractionEngine()),
                         onBack = {},
                         webViewFactory = ::assetWebView,
                     )
@@ -177,6 +179,7 @@ class VoucherWebViewScreenTest {
                         voucherUrl = url,
                         repository = repository,
                         extractionEngine = extractionEngine(),
+                        extractionCoordinator = ExtractionCoordinator(repository, extractionEngine()),
                         onBack = {},
                         webViewFactory = ::assetWebView,
                     )

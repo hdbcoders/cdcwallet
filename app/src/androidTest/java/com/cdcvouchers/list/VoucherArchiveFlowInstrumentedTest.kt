@@ -22,6 +22,7 @@ import com.cdcvouchers.data.db.SqlCipherNative
 import com.cdcvouchers.data.model.CategoryBalance
 import com.cdcvouchers.data.model.ValidityStatus
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.extraction.ExtractionEngine
 import com.cdcvouchers.ui.detail.VoucherWebViewScreen
 import com.cdcvouchers.ui.list.ArchivedVoucherScreen
@@ -113,11 +114,15 @@ class VoucherArchiveFlowInstrumentedTest {
             }
         }
 
+    private fun coordinator(repository: RoomVoucherRepository) =
+        ExtractionCoordinator(repository, ExtractionEngine())
+
     private fun listContent(repository: RoomVoucherRepository, onOpenVoucher: (VoucherGroup) -> Unit = {}) {
         composeRule.setContent {
             MaterialTheme {
                 VoucherListScreen(
                     repository = repository,
+                    extractionCoordinator = coordinator(repository),
                     onAddClick = {},
                     onOpenVoucher = onOpenVoucher,
                     onArchivedClick = {}, onSettingsClick = {},
@@ -135,6 +140,7 @@ class VoucherArchiveFlowInstrumentedTest {
             MaterialTheme {
                 ArchivedVoucherScreen(
                     repository = repository,
+                    extractionCoordinator = coordinator(repository),
                     onOpenVoucher = onOpenVoucher,
                     onBack = {},
                 )
@@ -366,6 +372,7 @@ class VoucherArchiveFlowInstrumentedTest {
                     voucherUrl = url,
                     repository = repository,
                     extractionEngine = ExtractionEngine(),
+                    extractionCoordinator = coordinator(repository),
                     onBack = {},
                     webViewFactory = ::assetWebView,
                 )

@@ -22,6 +22,8 @@ import com.cdcvouchers.data.db.SqlCipherNative
 import com.cdcvouchers.data.model.CategoryBalance
 import com.cdcvouchers.data.model.ValidityStatus
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.extraction.ExtractionCoordinator
+import com.cdcvouchers.extraction.ExtractionEngine
 import com.cdcvouchers.ui.list.VoucherListScreen
 import kotlinx.coroutines.runBlocking
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
@@ -125,6 +127,7 @@ class VoucherListScreenTest {
             MaterialTheme {
                 VoucherListScreen(
                     repository = repository,
+                    extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
                     onAddClick = {},
                     onOpenVoucher = {},
                     onArchivedClick = {}, onSettingsClick = {},
@@ -185,6 +188,7 @@ class VoucherListScreenTest {
             MaterialTheme {
                 VoucherListScreen(
                     repository = repository,
+                    extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
                     onAddClick = {},
                     onOpenVoucher = {},
                     onArchivedClick = {}, onSettingsClick = {},
@@ -217,6 +221,7 @@ class VoucherListScreenTest {
             MaterialTheme {
                 VoucherListScreen(
                     repository = repository,
+                    extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
                     onAddClick = {},
                     onOpenVoucher = { openedId = it.id },
                     onArchivedClick = {}, onSettingsClick = {},
@@ -241,6 +246,7 @@ class VoucherListScreenTest {
             MaterialTheme {
                 VoucherListScreen(
                     repository = repository,
+                    extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
                     onAddClick = {},
                     onOpenVoucher = {},
                     onArchivedClick = {}, onSettingsClick = {},

@@ -64,6 +64,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.CategoryBalance
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.ui.theme.LocalAppIsDark
 import com.cdcvouchers.ui.theme.SummaryCardContainerLight
 import com.cdcvouchers.ui.theme.rememberReduceMotion
@@ -79,6 +80,7 @@ import kotlinx.coroutines.flow.collect
 @Composable
 fun VoucherListScreen(
     repository: VoucherRepository,
+    extractionCoordinator: ExtractionCoordinator,
     onAddClick: () -> Unit,
     onOpenVoucher: (VoucherGroup) -> Unit,
     onArchivedClick: () -> Unit,
@@ -86,7 +88,7 @@ fun VoucherListScreen(
     modifier: Modifier = Modifier,
 ) {
     val vm: VoucherListViewModel = viewModel(
-        initializer = { VoucherListViewModel(repository) },
+        initializer = { VoucherListViewModel(repository, extractionCoordinator) },
     )
     val vouchers by vm.vouchers.collectAsState()
     val archivedCount by vm.archivedCount.collectAsState()

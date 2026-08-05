@@ -3,6 +3,8 @@ package com.cdcvouchers.ui.list
 import com.cdcvouchers.data.FakeVoucherRepository
 import com.cdcvouchers.data.model.ValidityStatus
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.extraction.ExtractionCoordinator
+import com.cdcvouchers.extraction.ExtractionEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -50,6 +52,9 @@ class ArchivedVoucherViewModelTest {
         isArchived = true,
     )
 
+    private fun coordinator(repo: FakeVoucherRepository) =
+        ExtractionCoordinator(repo, ExtractionEngine())
+
     @Test
     fun vouchersAreSortedBySortActive() = runTest(dispatcher) {
         val repo = FakeVoucherRepository()
@@ -60,7 +65,7 @@ class ArchivedVoucherViewModelTest {
                 voucher("u", ValidityStatus.UNVERIFIED, null),
             ),
         )
-        val vm = ArchivedVoucherViewModel(repo)
+        val vm = ArchivedVoucherViewModel(repo, coordinator(repo))
         backgroundScope.launch { vm.vouchers.collect {} }
         runCurrent()
 
@@ -71,7 +76,7 @@ class ArchivedVoucherViewModelTest {
     fun restoreAndDeleteCallThrough() = runTest(dispatcher) {
         val repo = FakeVoucherRepository()
         repo.bulkInsert(listOf(voucher("a", ValidityStatus.ACTIVE), voucher("b", ValidityStatus.ACTIVE)))
-        val vm = ArchivedVoucherViewModel(repo)
+        val vm = ArchivedVoucherViewModel(repo, coordinator(repo))
 
         vm.restore("a")
         runCurrent()

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.extraction.ExtractionCoordinator
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 
 class ArchivedVoucherViewModel(
     private val repository: VoucherRepository,
+    private val extractionCoordinator: ExtractionCoordinator,
 ) : ViewModel() {
 
     val vouchers: StateFlow<List<VoucherGroup>> = repository.observeArchived()
@@ -30,5 +32,11 @@ class ArchivedVoucherViewModel(
     fun requestDelete(voucher: VoucherGroup) { pendingDelete = voucher }
     fun dismissDelete() { pendingDelete = null }
     fun restore(id: String) { viewModelScope.launch { repository.restore(id) } }
-    fun delete(id: String) { viewModelScope.launch { repository.delete(id) } }
+
+    fun delete(id: String) {
+        // Cancel any in-flight extraction for this voucher first (02 §2.7),
+        // then remove the row.
+        extractionCoordinator.cancel(id)
+        viewModelScope.launch { repository.delete(id) }
+    }
 }

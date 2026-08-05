@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.ui.theme.rememberReduceMotion
 
 /**
@@ -38,12 +39,13 @@ import com.cdcvouchers.ui.theme.rememberReduceMotion
 @Composable
 fun ArchivedVoucherScreen(
     repository: VoucherRepository,
+    extractionCoordinator: ExtractionCoordinator,
     onOpenVoucher: (VoucherGroup) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val vm: ArchivedVoucherViewModel = viewModel(
-        initializer = { ArchivedVoucherViewModel(repository) },
+        initializer = { ArchivedVoucherViewModel(repository, extractionCoordinator) },
     )
     val sorted by vm.vouchers.collectAsState()
     val reduceMotion = rememberReduceMotion()

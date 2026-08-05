@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcvouchers.data.VoucherRepository
+import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.extraction.ExtractionEngine
 
 /**
@@ -58,13 +59,16 @@ fun VoucherWebViewScreen(
     voucherUrl: String,
     repository: VoucherRepository,
     extractionEngine: ExtractionEngine,
+    extractionCoordinator: ExtractionCoordinator,
     onBack: () -> Unit,
     webViewFactory: (Context) -> WebView = { extractionEngine.acquireVisibleWebView(it) },
     modifier: Modifier = Modifier,
 ) {
     val vm: DetailViewModel = viewModel(
         key = "detail-$voucherId",
-        initializer = { DetailViewModel(repository, extractionEngine, voucherId, voucherUrl) },
+        initializer = {
+            DetailViewModel(repository, extractionEngine, extractionCoordinator, voucherId, voucherUrl)
+        },
     )
     val snackbarHostState = remember { SnackbarHostState() }
     val state by vm.uiState.collectAsState()

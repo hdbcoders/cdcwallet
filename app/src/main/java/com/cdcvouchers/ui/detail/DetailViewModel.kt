@@ -8,15 +8,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
-import com.cdcvouchers.data.model.VoucherRefreshData
+import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.extraction.ExtractionEngine
 import com.cdcvouchers.extraction.ExtractionResult
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import java.time.Instant
 
 data class DetailUiState(
     val isLoaded: Boolean = false,
@@ -26,6 +24,7 @@ data class DetailUiState(
 class DetailViewModel(
     private val repository: VoucherRepository,
     private val extractionEngine: ExtractionEngine,
+    private val extractionCoordinator: ExtractionCoordinator,
     private val voucherId: String,
     private val voucherUrl: String,
 ) : ViewModel() {
@@ -57,28 +56,23 @@ class DetailViewModel(
             return
         }
         refreshStarted = true
-        viewModelScope.launch {
-            when (val result = extractionEngine.extractFromVisibleWebView(webView, voucherUrl)) {
-                is ExtractionResult.Success -> repository.updateFromRefresh(
-                    voucherId,
-                    VoucherRefreshData(
-                        campaignName = result.campaignName,
-                        validityStatus = result.validityStatus,
-                        expiryDate = result.expiryDate,
-                        categoryBalances = result.categoryBalances,
-                        lastRefreshedAt = Instant.now(),
-                    ),
-                )
-                is ExtractionResult.Failure -> {
-                    repository.recordRefreshFailure(voucherId, result.reason.name)
+        // Delegate to the app-scoped coordinator: the extraction runs in a
+        // scope that survives screen exit (02 §2.7), so backing out mid-load
+        // still updates the row. The banner is best-effort UI state.
+        extractionCoordinator.launchVisible(
+            voucherId = voucherId,
+            voucherUrl = voucherUrl,
+            webView = webView,
+            onResult = { result ->
+                if (result is ExtractionResult.Failure) {
                     refreshMessage = when (result.reason) {
                         ExtractionResult.FailureReason.PARSE_ERROR -> "Website data failed to parse"
                         ExtractionResult.FailureReason.NETWORK_ERROR,
                         ExtractionResult.FailureReason.TIMEOUT -> "Unable to load website"
                     }
                 }
-            }
-        }
+            },
+        )
     }
 
     fun consumeRefreshMessage() { refreshMessage = null }
