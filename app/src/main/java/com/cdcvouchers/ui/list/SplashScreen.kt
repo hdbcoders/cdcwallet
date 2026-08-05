@@ -17,11 +17,12 @@ import com.cdcvouchers.R
 /**
  * Compose splash used on API < 31 (no OS system splash there): shows the
  * circular app logo centered on the theme background until the voucher
- * list's first DB read completes ([VoucherListViewModel.isLoaded]). The
- * unpadded circle logo renders as authored (no mask, flag peel visible);
- * the API 31+ system splash uses the padded `ic_splash_logo_circle` asset
- * instead (see `04 §4.7`). Sized at 222dp so the artwork ≈ 192dp, matching
- * the system splash icon size.
+ * list's first DB read completes. (The gating lives in MainActivity, which
+ * holds the splash on screen until the first `observeActive` emission; this
+ * composable itself is just the logo.) The unpadded circle logo renders as
+ * authored (no mask, flag peel visible); the API 31+ system splash uses the
+ * padded `ic_splash_logo_circle` asset instead (see `04 §4.7`). Sized at
+ * 222dp so the artwork ≈ 192dp, matching the system splash icon size.
  */
 @Composable
 fun SplashScreen(modifier: Modifier = Modifier) {

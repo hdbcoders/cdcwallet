@@ -94,7 +94,7 @@ private fun totalRemaining(voucher: VoucherGroup): BigDecimal =
     voucher.categoryBalances.fold(BigDecimal.ZERO) { acc, b -> acc + b.remainingValue }
 
 /**
- * Spec 04 §4.2 accessibility: exactly one of four strings per badge — no
+ * Spec 04 §4.2 accessibility: exactly one of six strings per badge — no
  * fall-through (UNVERIFIED must never announce blank/default). The badge
  * renders this same string, so what is on screen is what TalkBack announces.
  */

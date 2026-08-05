@@ -82,8 +82,8 @@ private val AppFontFamily = FontFamily(
 )
 
 /**
- * App-wide typography based on Inter. Starts from the Material3 defaults and
- * swaps every role's font family to Inter, keeping all sizes/weights.
+ * App-wide typography based on Roboto Flex. Starts from the Material3 defaults
+ * and swaps every role's font family to Roboto Flex, keeping all sizes/weights.
  */
 private val AppTypography: Typography = with(Typography()) {
     Typography(
@@ -109,7 +109,7 @@ private val AppTypography: Typography = with(Typography()) {
  * Misty Blue light theme — a calm, cool pale-blue-grey palette replacing the
  * default Material3 lavender cast. Background/surfaces are near-white with a
  * faint blue tint; primary is a muted steel blue that pairs with the app's
- * existing light-blue summary card (#D9E7FF).
+ * summary card (#E3EDF8).
  */
 private val MistyBlueLightScheme = lightColorScheme(
     primary = Color(0xFF3D6B8E),
