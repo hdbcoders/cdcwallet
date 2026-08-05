@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -81,7 +82,11 @@ fun VoucherListScreen(
         vm.events.collect { event ->
             when (event) {
                 is ListEvent.ArchivedUndo -> {
-                    val result = snackbarHostState.showSnackbar("Archived", actionLabel = "Undo")
+                    val result = snackbarHostState.showSnackbar(
+                        "Archived",
+                        actionLabel = "Undo",
+                        duration = SnackbarDuration.Short,
+                    )
                     if (result == SnackbarResult.ActionPerformed) vm.restore(event.voucherId)
                 }
             }

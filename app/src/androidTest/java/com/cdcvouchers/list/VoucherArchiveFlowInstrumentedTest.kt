@@ -187,6 +187,30 @@ class VoucherArchiveFlowInstrumentedTest {
     }
 
     @Test
+    fun undoSnackbarAutoDismissesWithoutInteraction() {
+        val repository = RoomVoucherRepository(database)
+        runBlocking { repository.insert(voucher("a1", "Link One")) }
+        listContent(repository)
+
+        composeRule.onNodeWithContentDescription("More options for Link One").performClick()
+        composeRule.onNodeWithText("Archive").performClick()
+
+        composeRule.onNodeWithText("Undo").assertIsDisplayed()
+
+        // Regression: M3 showSnackbar defaults action snackbars to Indefinite, so
+        // the Undo snackbar stayed on screen forever. Now set explicitly to Short
+        // (4s): still visible shortly before, gone after 5s with no interaction.
+        composeRule.mainClock.advanceTimeBy(3_000)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Undo").assertIsDisplayed()
+
+        composeRule.mainClock.advanceTimeBy(2_000)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Undo").assertDoesNotExist()
+        composeRule.onNodeWithText("Archived").assertDoesNotExist()
+    }
+
+    @Test
     fun undoRestoresRowToMainList() {
         val repository = RoomVoucherRepository(database)
         runBlocking {
