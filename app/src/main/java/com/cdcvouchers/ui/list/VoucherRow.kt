@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -141,22 +143,34 @@ fun VoucherRow(
     }
 }
 
-/** Footer for a voucher with remaining balance: a colored chip + amount per category. */
+/**
+ * Footer for a voucher with remaining balance. Categories sit side by side,
+ * each as a centered column with the colored chip on top and its amount below;
+ * a vertical divider separates adjacent categories (reference redesign).
+ */
 @Composable
 private fun BalanceChips(voucher: VoucherGroup, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        voucher.categoryBalances.forEach { balance ->
-            val palette = chipPalette(balance.category)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CategoryChip(balance.category, palette)
-                Spacer(Modifier.width(12.dp))
+        voucher.categoryBalances.forEachIndexed { index, balance ->
+            if (index > 0) {
+                VerticalDivider(
+                    thickness = 0.5.dp,
+                    modifier = Modifier.height(40.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
+            }
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                CategoryChip(balance.category, chipPalette(balance.category))
                 Text(
                     text = formatSgd(balance.remainingValue),
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(top = 2.dp),
                 )
             }
         }

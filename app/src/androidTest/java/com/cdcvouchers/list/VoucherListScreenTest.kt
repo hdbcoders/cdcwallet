@@ -3,11 +3,14 @@ package com.cdcvouchers.list
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -128,12 +131,14 @@ class VoucherListScreenTest {
         }
 
         // Spec 04 §4.1: UNVERIFIED pinned above everyone else; rest by soonest expiry.
+        // The taller redesigned cards leave the last row below the fold, so the
+        // position-order check covers the initially-visible rows and the last
+        // row is asserted after scrolling.
         assertTopToBottomOrder(
             "u.html",
             "Link Expired",
             "Link Not Started",
             "Link Ten",
-            "Link Forty",
         )
 
         // Spec 04 §4.2: all four badge states render distinctly.
@@ -141,7 +146,6 @@ class VoucherListScreenTest {
         composeRule.onNodeWithText("Expired").assertIsDisplayed()
         composeRule.onNodeWithText("Not started").assertIsDisplayed()
         composeRule.onNodeWithText("10 days left").assertIsDisplayed()
-        composeRule.onNodeWithText("40 days left").assertIsDisplayed()
 
         // Spec 04 §4.3: total excludes the UNVERIFIED entry from value and count.
         composeRule.onNodeWithText("$92.50 remaining across 4 links").assertIsDisplayed()
@@ -153,6 +157,11 @@ class VoucherListScreenTest {
         )) {
             composeRule.onNodeWithText(part, substring = true).assertIsDisplayed()
         }
+
+        // Last row (Link Forty) sits below the fold; scroll it into view.
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Link Forty"))
+        composeRule.onNodeWithText("Link Forty").assertIsDisplayed()
+        composeRule.onNodeWithText("40 days left").assertIsDisplayed()
     }
 
     @Test
