@@ -71,6 +71,42 @@ class VoucherListLogicTest {
         assertEquals(listOf("e", "s", "x"), sortActive(listOf(noExpiry, expired, soon)).map { it.id })
     }
 
+    @Test
+    fun vouchersWithBalanceSortBeforeFullyUsedOnesRegardlessOfExpiry() {
+        val hasBalance = voucher(
+            "hb", ValidityStatus.ACTIVE, today.plusDays(100),
+            listOf(CategoryBalance("heartland", BigDecimal("5"))),
+        )
+        val fullyUsedSoon = voucher("fu", ValidityStatus.ACTIVE, today.plusDays(2))
+        val fullyUsedFar = voucher("ff", ValidityStatus.ACTIVE, today.plusDays(50))
+
+        // hasBalance (even though it expires far later) must come before both
+        // fully-used vouchers; those two order by expiry.
+        assertEquals(
+            listOf("hb", "fu", "ff"),
+            sortActive(listOf(fullyUsedFar, hasBalance, fullyUsedSoon)).map { it.id },
+        )
+    }
+
+    @Test
+    fun balanceGroupOrdersByExpiryWithinEachPriority() {
+        val hasA = voucher(
+            "ha", ValidityStatus.ACTIVE, today.plusDays(40),
+            listOf(CategoryBalance("heartland", BigDecimal("5"))),
+        )
+        val hasB = voucher(
+            "hb", ValidityStatus.ACTIVE, today.plusDays(3),
+            listOf(CategoryBalance("supermarket", BigDecimal("10"))),
+        )
+        val usedA = voucher("ua", ValidityStatus.ACTIVE, today.plusDays(60))
+        val usedB = voucher("ub", ValidityStatus.ACTIVE, today.plusDays(1))
+
+        assertEquals(
+            listOf("hb", "ha", "ub", "ua"),
+            sortActive(listOf(hasA, usedA, hasB, usedB)).map { it.id },
+        )
+    }
+
     // ---- badges (04 §4.2) ----
 
     @Test
@@ -180,7 +216,7 @@ class VoucherListLogicTest {
                 "Not started",
                 "Expired",
                 "Expires in 5 days",
-                "No more balance",
+                "Fully used",
             ),
             states.map(::badgeLabel),
         )
@@ -205,7 +241,7 @@ class VoucherListLogicTest {
             com.cdcvouchers.ui.list.BadgeState.NoBalance,
             zero,
         )
-        assertEquals("No more balance", badgeLabel(zero))
+        assertEquals("Fully used", badgeLabel(zero))
 
         // Empty categoryBalances (nothing unused) also means zero balance.
         val empty = badgeState(voucher("e2", ValidityStatus.ACTIVE, today.plusDays(149)), today)

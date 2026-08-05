@@ -33,12 +33,15 @@ sealed interface BadgeState {
 enum class Urgency { URGENT, SOON, FINE }
 
 /**
- * Spec 04 §4.1: soonest expiry first; UNVERIFIED entries have no expiryDate and
- * are pinned above all real entries regardless of everyone else's dates.
+ * Spec 04 §4.1: sort priority —
+ *   1. UNVERIFIED pinned above all others (no expiry/balance to sort by),
+ *   2. vouchers WITH balance remaining come before those with none,
+ *   3. within each, soonest expiry first.
  */
 fun sortActive(vouchers: List<VoucherGroup>): List<VoucherGroup> =
     vouchers.sortedWith(
         compareByDescending<VoucherGroup> { it.validityStatus == ValidityStatus.UNVERIFIED }
+            .thenByDescending { voucher -> voucher.categoryBalances.isNotEmpty() }
             .thenBy(nullsLast()) { it.expiryDate }
             .thenBy { it.id },
     )
@@ -99,7 +102,7 @@ fun badgeLabel(state: BadgeState): String = when (state) {
     is BadgeState.Active ->
         state.daysRemaining?.let { "Expires in $it days" } ?: "No expiry date"
     BadgeState.Expired -> "Expired"
-    BadgeState.NoBalance -> "No more balance"
+    BadgeState.NoBalance -> "Fully used"
     BadgeState.NotStarted -> "Not started"
     BadgeState.Unverified -> "Couldn't verify, tap to check"
 }
