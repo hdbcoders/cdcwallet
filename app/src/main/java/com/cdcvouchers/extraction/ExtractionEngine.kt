@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.os.Build
 import android.view.ViewGroup
-import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
@@ -20,8 +19,10 @@ import kotlinx.coroutines.withTimeout
 /**
  * The single extraction implementation, used by exactly two call sites
  * (spec 02 §2.4):
- *  - extractForAdd: one-time hidden WebView at add time (Package 3) — fully
- *    fresh: cache and cookies wiped.
+ *  - extractForAdd: one-time hidden WebView at add time (Package 3) — a
+ *    fresh instance that loads network-fresh (LOAD_NO_CACHE) but shares the
+ *    persistent process session, since Android's cookie store is process-wide
+ *    (wiping it would destroy the visible session; see 2026-08-02 revision).
  *  - extractFromVisibleWebView: the visible WebView the user already opened
  *    (Package 4) — browser-like: HTTP cache and cookies persist across opens
  *    (spec 02 §2.4 revision 2026-08-02). Churning fresh sessions per open
@@ -214,17 +215,15 @@ class ExtractionEngine(
             // revision). Add-time loads stay LOAD_NO_CACHE.
             cacheMode = if (browserLike) WebSettings.LOAD_DEFAULT else WebSettings.LOAD_NO_CACHE
         }
-        if (browserLike) {
-            // The visible WebView keeps one persistent session (cookies + cache)
-            // like a normal browser. Creating a fresh anonymous session per open
-            // tripped the operator's rate limiting and hung the makeup view.
-            return
-        }
-        // Add-time validation fetch: fully fresh — no cookies, no cache carried
-        // over, since this one-shot hidden load has no prior session anyway.
-        CookieManager.getInstance().removeAllCookies(null)
-        CookieManager.getInstance().flush()
-        runCatching { webView.clearCache(false) }
+        // The visible WebView keeps one persistent session (cookies + cache)
+        // like a normal browser. Creating a fresh anonymous session per open
+        // tripped the operator's rate limiting and hung the makeup view.
+        // Add-time shares that same persistent session: Android's CookieManager
+        // is process-wide, so wiping it here for a "fresh" add-time load would
+        // destroy the visible session on every add — recreating exactly the
+        // churn this revision (2026-08-02) was written to prevent. The fresh
+        // hidden instance still loads network-fresh for its own request via
+        // LOAD_NO_CACHE; it just does not wipe the shared session.
     }
 
     /**
