@@ -104,7 +104,7 @@ fun VoucherRow(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp),
+                    modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 8.dp),
                 ) {
                     Text(
                         text = voucher.campaignName,
@@ -112,10 +112,16 @@ fun VoucherRow(
                         modifier = Modifier.weight(1f),
                     )
                     Box {
-                        IconButton(onClick = { onMenuExpandedChange(true) }) {
+                        IconButton(
+                            onClick = { onMenuExpandedChange(true) },
+                            // Shrink the touch target so the 48dp default
+                            // doesn't inflate the title row height.
+                            modifier = Modifier.size(32.dp),
+                        ) {
                             Icon(
                                 Icons.Default.MoreVert,
                                 contentDescription = "More options for ${voucher.campaignName}",
+                                modifier = Modifier.size(18.dp),
                             )
                         }
                         DropdownMenu(
@@ -143,7 +149,7 @@ fun VoucherRow(
                 HorizontalDivider(
                     modifier = Modifier
                         .padding(horizontal = 12.dp)
-                        .padding(vertical = 6.dp),
+                        .padding(vertical = 4.dp),
                     thickness = 0.5.dp,
                     color = MaterialTheme.colorScheme.outlineVariant,
                 )
@@ -153,7 +159,7 @@ fun VoucherRow(
                 } else if (fullyRedeemed) {
                     NoBalanceFooter()
                 } else {
-                    BalanceChips(voucher, Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp))
+                    BalanceChips(voucher, Modifier.padding(start = 12.dp, end = 12.dp, bottom = 8.dp))
                 }
             }
         }
@@ -235,14 +241,14 @@ private fun ExpiredFooter() {
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .padding(horizontal = 12.dp)
-            .padding(bottom = 12.dp)
+            .padding(bottom = 8.dp)
             .fillMaxWidth(),
     ) {
         Text(
             text = "This voucher link has expired",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 14.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
         )
     }
 }
@@ -255,11 +261,11 @@ private fun NoBalanceFooter() {
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .padding(horizontal = 12.dp)
-            .padding(bottom = 12.dp)
+            .padding(bottom = 8.dp)
             .fillMaxWidth(),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
