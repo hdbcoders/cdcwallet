@@ -5,6 +5,7 @@ import android.net.Uri
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherBackupPayload
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.data.token.VoucherToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -42,10 +43,9 @@ class BackupFlow(
      */
     suspend fun importMerge(payload: VoucherBackupPayload): Int {
         val existing = repository.findAll()
-        // distinctBy uses case-sensitive token equality — identical to
-        // VoucherToken.isDuplicate, so in-payload duplicates can never trip the
-        // unique index inside bulkInsert (01 §1.4 semantics preserved).
-        val merged = mergeVouchers(existing, payload.vouchers).distinctBy { it.token }
+        // dedupe via the canonical comparison so in-payload duplicates can
+        // never trip the unique index inside bulkInsert (01 §1.4 semantics).
+        val merged = dedupeByToken(mergeVouchers(existing, payload.vouchers))
         if (merged.isEmpty()) return 0
         repository.bulkInsert(merged)
         return merged.size
@@ -53,15 +53,14 @@ class BackupFlow(
 
     /** Replace mode (spec 06 §6.3) — the most destructive operation in the app. */
     suspend fun importReplace(payload: VoucherBackupPayload) {
-        repository.replaceAll(payload.vouchers.distinctBy { it.token })
+        repository.replaceAll(dedupeByToken(payload.vouchers))
     }
 }
 
 /**
- * Pure merge computation, kept testable. Duplicate detection is exact
- * case-sensitive token equality (01 §1.4 / 06 §6.3) — the same semantics as
- * `VoucherToken.isDuplicate` — do not add another token comparison here.
- * O(n+m): the existing token set is built once.
+ * Pure merge computation, kept testable. Duplicate detection uses the
+ * canonical `VoucherToken.isDuplicate` (01 §1.4 / 06 §6.3) — never a second
+ * implementation. O(n+m): the existing token set is built once.
  */
 fun mergeVouchers(
     existing: List<VoucherGroup>,
@@ -69,6 +68,20 @@ fun mergeVouchers(
 ): List<VoucherGroup> {
     val existingTokens = existing.mapTo(HashSet()) { it.token }
     return incoming.filter { candidate ->
-        !existingTokens.contains(candidate.token)
+        existingTokens.none { existingToken ->
+            VoucherToken.isDuplicate(candidate.token, existingToken)
+        }
+    }
+}
+
+/**
+ * Dedupe a list by token using the canonical comparison, keeping the first
+ * occurrence of each token (01 §1.4 semantics for in-payload duplicates).
+ */
+fun dedupeByToken(vouchers: List<VoucherGroup>): List<VoucherGroup> {
+    val seen = HashSet<String>()
+    return vouchers.filter { voucher ->
+        seen.none { seenToken -> VoucherToken.isDuplicate(voucher.token, seenToken) } &&
+            seen.add(voucher.token)
     }
 }

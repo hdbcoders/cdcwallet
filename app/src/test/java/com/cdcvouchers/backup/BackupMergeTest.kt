@@ -1,5 +1,6 @@
 package com.cdcvouchers.backup
 
+import com.cdcvouchers.data.backup.dedupeByToken
 import com.cdcvouchers.data.backup.mergeVouchers
 import com.cdcvouchers.data.model.CategoryBalance
 import com.cdcvouchers.data.model.ValidityStatus
@@ -89,5 +90,22 @@ class BackupMergeTest {
         val merged = mergeVouchers(existing, incoming)
 
         assertEquals(listOf("abc"), merged.map { it.token })
+    }
+
+    @Test
+    fun dedupeByTokenKeepsFirstOccurrenceCaseSensitively() {
+        val dups = listOf(
+            voucher("A", "first"),
+            voucher("A", "second"),
+            voucher("a", "case-different"),
+            voucher("B"),
+        )
+
+        val deduped = dedupeByToken(dups)
+
+        // Canonical comparison (01 §1.4) is case-sensitive: "a" is distinct
+        // from "A"; the two "A"s collapse to the first occurrence.
+        assertEquals(listOf("A", "a", "B"), deduped.map { it.token })
+        assertEquals("first", deduped[0].campaignName)
     }
 }
