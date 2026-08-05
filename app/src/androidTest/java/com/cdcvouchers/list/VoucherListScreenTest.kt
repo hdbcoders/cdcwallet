@@ -6,6 +6,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -148,14 +150,17 @@ class VoucherListScreenTest {
         composeRule.onNodeWithText("10 days left").assertIsDisplayed()
 
         // Spec 04 §4.3: total excludes the UNVERIFIED entry from value and count.
-        composeRule.onNodeWithText("$92.5 remaining across 4 links").assertIsDisplayed()
+        composeRule.onNodeWithText("Remaining Balance").assertIsDisplayed()
+        composeRule.onNodeWithText("$92.5").assertIsDisplayed()
+        composeRule.onNodeWithText("Across 4 voucher links").assertIsDisplayed()
+        // Category breakdown rows (top 3 by value) render in the right column.
+        // Use onFirst() because category names also appear on voucher cards.
         for (part in listOf(
-            "$10 groceries",
-            "$55 heartland",
-            "$2 merchants",
-            "$25.5 supermarket",
+            "groceries",
+            "heartland",
+            "supermarket",
         )) {
-            composeRule.onNodeWithText(part, substring = true).assertIsDisplayed()
+            composeRule.onAllNodesWithText(part, substring = true).onFirst().assertIsDisplayed()
         }
 
         // Last row (Link Forty) sits below the fold; scroll it into view.

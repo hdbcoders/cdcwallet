@@ -18,4 +18,4 @@ internal val ClimateChipLight = BadgeColors(Color(0xFFE8EFFC), Color(0xFF1A448A)
 internal val ClimateChipDark = BadgeColors(Color(0xFF1B2A4A), Color(0xFFA5C1E8))
 
 /** Flat informational banner container used by the list summary card. */
-internal val SummaryCardContainerLight = Color(0xFFD9E7FF)
+internal val SummaryCardContainerLight = Color(0xFFE3EDF8)
