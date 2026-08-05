@@ -9,8 +9,6 @@ import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import java.io.ByteArrayInputStream
 import java.io.InputStream
-import java.net.HttpURLConnection
-import java.net.URL
 
 internal const val BRIDGE_NAME = "RedeemBridge"
 
@@ -345,9 +343,11 @@ internal fun installInjection(
 
 /**
  * Fallback injection: rewrites the main HTML document to embed the wrapper script
- * ahead of the page's own bundle. The document is re-fetched over the network
- * because an intercepted response must be supplied in full; only the initial
- * main-frame document is ever rewritten (a one-shot `rewrote` flag).
+ * ahead of the page's own bundle, but ONLY when a delegate already supplies that
+ * document (test/asset loader). No native HTTP client is ever opened to a
+ * RedeemSG host (hard rule 02 §2.1): when there is no delegate response, the
+ * request falls through to the WebView's own network stack, which loads the real
+ * page without injection (extraction degrades to fail-soft on legacy WebViews).
  */
 private class HtmlRewritingClient(
     private val delegate: WebViewClient?,
@@ -369,41 +369,7 @@ private class HtmlRewritingClient(
             }
             return delegateResponse
         }
-        if (mainDocument && delegateResponse == null && isFetchable(request)) {
-            val response = fetchAndRewrite(request)
-            if (response != null) {
-                rewrote = true
-                return response
-            }
-            return null
-        }
         return delegateResponse
-    }
-
-    private fun isFetchable(request: WebResourceRequest): Boolean {
-        val scheme = request.url.scheme ?: return false
-        return scheme == "https" || scheme == "http"
-    }
-
-    private fun fetchAndRewrite(request: WebResourceRequest): WebResourceResponse? {
-        val connection = runCatching {
-            (URL(request.url.toString()).openConnection() as HttpURLConnection).apply {
-                connectTimeout = 10_000
-                readTimeout = 10_000
-                instanceFollowRedirects = true
-            }
-        }.getOrNull() ?: return null
-        return try {
-            val stream = runCatching { connection.inputStream }.getOrNull() ?: return null
-            val mimeType = connection.contentType?.substringBefore(';')?.trim().orEmpty()
-            if (!mimeType.startsWith("text/html")) return null
-            val encoding = connection.contentEncoding ?: "UTF-8"
-            rewriteHtml(stream, encoding)
-        } catch (e: Exception) {
-            null
-        } finally {
-            connection.disconnect()
-        }
     }
 
     private fun rewriteHtml(input: InputStream, encoding: String?): WebResourceResponse? {
