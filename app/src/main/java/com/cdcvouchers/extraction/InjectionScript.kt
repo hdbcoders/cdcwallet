@@ -299,9 +299,62 @@ internal const val MODAL_HEIGHT_FIX_SCRIPT =
     })();
     """
 
-/** Capture wrapper + viewport fix (see notes on each). */
+/**
+ * Loading-screen fix: the site's loading block is `.loading-container`
+ * (a column with `.loading-text` and a `.loader` spinner). In this WebView
+ * build the container's height collapses to 0 (the same vh-unit bug the
+ * viewport fix addresses), so the spinner overflows its parent and renders
+ * oversized and misplaced near the top; the real content can also paint
+ * alongside it. This pins the container to a sane height and the loader to a
+ * normal px size, centered in the screen, so the circle is small, centered,
+ * and disappears cleanly once the SPA replaces the loading block. Runs on
+ * DOMContentLoaded + retries + MutationObserver (the block is mounted lazily).
+ */
+internal const val LOADING_FIX_SCRIPT =
+    """
+    (function () {
+      var FIX_ID = 'cdcv-loading-fix';
+      function pin() {
+        var ih = window.innerHeight;
+        var iw = window.innerWidth;
+        if (!(ih > 200) || !(iw > 200)) return;
+        var container = document.querySelector('.loading-container');
+        if (!container) return;
+        var styleEl = document.getElementById(FIX_ID);
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = FIX_ID;
+          (document.head || document.documentElement).appendChild(styleEl);
+        }
+        // Pin the container to the real viewport height (fixes the vh collapse)
+        // and center its contents; pin the loader to a normal 40px spinner.
+        styleEl.textContent =
+          '.loading-container{height:' + ih + 'px !important;min-height:' + ih + 'px !important;' +
+          'display:flex !important;flex-direction:column !important;align-items:center !important;' +
+          'justify-content:center !important}' +
+          '.loading-container .loader{width:40px !important;height:40px !important;' +
+          'border-width:4px !important;border-radius:50% !important;margin:0 auto !important}';
+      }
+      function boot() {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', pin);
+        } else { pin(); }
+        window.addEventListener('resize', pin);
+        setTimeout(pin, 500);
+        setTimeout(pin, 1500);
+        setTimeout(pin, 4000);
+        if (document.documentElement) {
+          new MutationObserver(function () { pin(); })
+            .observe(document.documentElement, { childList: true, subtree: true });
+        }
+      }
+      boot();
+    })();
+    """
+
+/** Capture wrapper + viewport fix + modal fix + loading fix (see notes on each). */
 internal val INJECTION_SCRIPT: String =
-    CAPTURE_SCRIPT + "\n" + VIEWPORT_FIX_SCRIPT + "\n" + MODAL_HEIGHT_FIX_SCRIPT
+    CAPTURE_SCRIPT + "\n" + VIEWPORT_FIX_SCRIPT + "\n" + MODAL_HEIGHT_FIX_SCRIPT + "\n" + LOADING_FIX_SCRIPT
 
 internal val INJECTION_SCRIPT_TAG: String = "<script>$INJECTION_SCRIPT</script>"
 
