@@ -21,7 +21,7 @@ object DevActions {
      */
     fun autoSeedEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_AUTO_SEED, true)
+            .getBoolean(KEY_AUTO_SEED, false)
 
     fun setAutoSeedEnabled(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
