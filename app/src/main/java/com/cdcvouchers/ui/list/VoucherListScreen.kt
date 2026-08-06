@@ -60,7 +60,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -103,6 +105,7 @@ fun VoucherListScreen(
     val sorted = remember(vouchers) { sortActive(vouchers) }
     val summary = remember(sorted) { summarizeActive(sorted) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val clipboardManager = LocalClipboardManager.current
     // Scroll + flash the row requested by a duplicate-add (spec 03 §3.2 step 2).
     val listState = rememberLazyListState()
     var highlightedId by remember { mutableStateOf<String?>(null) }
@@ -226,6 +229,13 @@ fun VoucherListScreen(
                                 Modifier.animateItem()
                             },
                         ) {
+                            DropdownMenuItem(
+                                text = { Text("Copy URL") },
+                                onClick = {
+                                    vm.setMenu(null)
+                                    clipboardManager.setText(AnnotatedString(voucher.url))
+                                },
+                            )
                             DropdownMenuItem(
                                 text = { Text("Archive") },
                                 onClick = {

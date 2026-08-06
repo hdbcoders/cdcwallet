@@ -193,6 +193,24 @@ class VoucherArchiveFlowInstrumentedTest {
     }
 
     @Test
+    fun copyUrlMenuItemCopiesVoucherUrlToClipboard() {
+        val repository = RoomVoucherRepository(database)
+        runBlocking { repository.insert(voucher("a1", "Link One")) }
+        listContent(repository)
+
+        composeRule.onNodeWithContentDescription("More options for Link One").performClick()
+        composeRule.onNodeWithText("Copy URL").assertIsDisplayed()
+        composeRule.onNodeWithText("Copy URL").performClick()
+        composeRule.waitForIdle()
+
+        val clipboard = appContext.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        assertEquals(
+            "https://example.com/a1",
+            clipboard.primaryClip?.getItemAt(0)?.text?.toString(),
+        )
+    }
+
+    @Test
     fun undoSnackbarAutoDismissesWithoutInteraction() {
         val repository = RoomVoucherRepository(database)
         runBlocking { repository.insert(voucher("a1", "Link One")) }

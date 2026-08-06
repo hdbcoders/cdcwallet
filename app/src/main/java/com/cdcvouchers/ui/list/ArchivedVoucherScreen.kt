@@ -20,6 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcvouchers.data.VoucherRepository
@@ -49,6 +51,7 @@ fun ArchivedVoucherScreen(
     )
     val sorted by vm.vouchers.collectAsState()
     val reduceMotion = rememberReduceMotion()
+    val clipboardManager = LocalClipboardManager.current
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -94,6 +97,13 @@ fun ArchivedVoucherScreen(
                             Modifier.animateItem()
                         },
                     ) {
+                        DropdownMenuItem(
+                            text = { Text("Copy URL") },
+                            onClick = {
+                                vm.setMenu(null)
+                                clipboardManager.setText(AnnotatedString(voucher.url))
+                            },
+                        )
                         DropdownMenuItem(
                             text = { Text("Restore") },
                             onClick = {
