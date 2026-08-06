@@ -22,10 +22,12 @@ object DevSeedData {
         status: ValidityStatus,
         expiry: LocalDate?,
         balances: List<CategoryBalance>,
+        url: String = "https://test.local/$id",
+        token: String = id,
     ) = VoucherGroup(
         id = id,
-        token = id,
-        url = "https://test.local/$id",
+        token = token,
+        url = url,
         campaignName = campaignName,
         validityStatus = status,
         expiryDate = expiry,
@@ -93,6 +95,20 @@ object DevSeedData {
                 CategoryBalance("Heartland", BigDecimal("0")),
                 CategoryBalance("Supermarket", BigDecimal("150")),
             ),
+        ),
+        // 7. REAL zero-balance RedeemSG test link — URL/token intentionally NOT
+        // stored in git (personal link, see local note in docs/ or AGENTS.md).
+        // Restore the real URL locally if needed for tests:
+        //   url   = "https://voucher.redeem.gov.sg/<TOKEN>?lang=en-US"
+        //   token = "<TOKEN>"
+        voucher(
+            "dev-redeem-zero",
+            "Zero-Balance Test",
+            ValidityStatus.ACTIVE,
+            null,
+            emptyList(),
+            url = "https://test.local/dev-redeem-zero",
+            token = "dev-redeem-zero",
         ),
     )
 }
