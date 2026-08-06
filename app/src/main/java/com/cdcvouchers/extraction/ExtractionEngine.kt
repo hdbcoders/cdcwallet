@@ -105,6 +105,15 @@ class ExtractionEngine(
         }
         return WebView(context).also { view ->
             visibleWebView = view
+            // Explicit MATCH_PARENT is required: without it the page's viewport
+            // units (100vh/100%) resolve to 0 and the RedeemSG loading screen
+            // collapses to the top of the page instead of centering (the
+            // diagnostic WebView set MATCH_PARENT explicitly and rendered
+            // correctly). Fixed 2026-08-07.
+            view.layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
             configureSession(view, browserLike = true)
             view.webViewClient = visibleClient
         }

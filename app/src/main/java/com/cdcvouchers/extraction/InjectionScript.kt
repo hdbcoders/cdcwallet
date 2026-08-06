@@ -301,7 +301,7 @@ internal const val MODAL_HEIGHT_FIX_SCRIPT =
 
 /** Capture wrapper + viewport fix (see notes on each). */
 internal val INJECTION_SCRIPT: String =
-    CAPTURE_SCRIPT + "\n" + VIEWPORT_FIX_SCRIPT + "\n" + MODAL_HEIGHT_FIX_SCRIPT
+    CAPTURE_SCRIPT // Capture-only: extraction wrapper active, no layout fixes.
 
 internal val INJECTION_SCRIPT_TAG: String = "<script>$INJECTION_SCRIPT</script>"
 
