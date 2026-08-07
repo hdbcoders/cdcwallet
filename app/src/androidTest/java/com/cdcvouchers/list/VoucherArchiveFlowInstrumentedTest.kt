@@ -27,6 +27,7 @@ import com.cdcvouchers.extraction.ExtractionEngine
 import com.cdcvouchers.ui.detail.VoucherWebViewScreen
 import com.cdcvouchers.ui.list.ArchivedVoucherScreen
 import com.cdcvouchers.ui.list.VoucherListScreen
+import com.cdcvouchers.ui.theme.LanguageStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -126,6 +127,8 @@ class VoucherArchiveFlowInstrumentedTest {
                     onAddClick = {},
                     onOpenVoucher = onOpenVoucher,
                     onArchivedClick = {}, onSettingsClick = {},
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
                 )
             }
         }

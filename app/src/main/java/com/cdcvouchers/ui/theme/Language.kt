@@ -8,16 +8,18 @@ import androidx.compose.runtime.setValue
 import java.util.Locale
 
 /**
- * User-facing language choice; SYSTEM is the default and matches today's
- * behavior (the app follows the device locale). Each explicit choice maps to
- * the [Locale] whose resource qualifiers (`values-*`) carry the translations.
+ * The app's four user-facing languages. There is no "follow system" choice:
+ * the initial default is derived from the device locale on first launch (see
+ * [LanguageStore]), and the user's explicit pick thereafter wins. Each value
+ * maps to the [Locale] whose resource qualifiers (`values-*`) carry the
+ * translations.
  */
-enum class AppLanguage(val locale: Locale?) {
-    SYSTEM(null),
+enum class AppLanguage(val locale: Locale) {
     EN(Locale.ENGLISH),
     // Simplified Chinese (the Singapore standard). The explicit zh-CN locale
-    // resolves `values-zh-rCN`; a device set to zh-TW under "Follow system"
-    // simply falls back to English rather than showing the wrong script.
+    // resolves `values-zh-rCN`. Any system Chinese region (including zh-TW)
+    // maps to ZH — Simplified Chinese is the only Chinese variant the app
+    // offers, so a zh-TW device gets the simplified script rather than English.
     ZH(Locale("zh", "CN")),
     MS(Locale("ms")),
     TA(Locale("ta")),
@@ -26,7 +28,7 @@ enum class AppLanguage(val locale: Locale?) {
 /**
  * Persists the in-app language choice in SharedPreferences (same pattern as
  * ThemeModeStore). The choice is held in Compose snapshot state so the
- * Settings screen recomposes instantly; applying it app-wide happens in
+ * language picker recomposes instantly; applying it app-wide happens in
  * MainActivity.attachBaseContext via [wrapWithLocale].
  */
 class LanguageStore(context: Context) {
@@ -42,7 +44,18 @@ class LanguageStore(context: Context) {
         "zh" -> AppLanguage.ZH
         "ms" -> AppLanguage.MS
         "ta" -> AppLanguage.TA
-        else -> AppLanguage.SYSTEM
+        // No explicit choice yet: default to the system language when it is
+        // one of the four the app ships, otherwise English.
+        else -> defaultFromSystem()
+    }
+
+    /** First-launch default: the system language if it is one of the four
+     *  app languages (any `zh` region → Simplified Chinese), else English. */
+    private fun defaultFromSystem(): AppLanguage = when (Locale.getDefault().language) {
+        "zh" -> AppLanguage.ZH
+        "ms" -> AppLanguage.MS
+        "ta" -> AppLanguage.TA
+        else -> AppLanguage.EN
     }
 
     fun setAppLanguage(newLanguage: AppLanguage) {

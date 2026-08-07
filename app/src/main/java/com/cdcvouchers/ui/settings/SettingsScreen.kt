@@ -51,8 +51,6 @@ import com.cdcvouchers.data.backup.BackupFlow
 import com.cdcvouchers.data.model.VoucherBackupPayload
 import com.cdcvouchers.ui.components.AppDialogSurface
 import com.cdcvouchers.ui.components.DialogButtonRow
-import com.cdcvouchers.ui.theme.AppLanguage
-import com.cdcvouchers.ui.theme.LanguageStore
 import com.cdcvouchers.ui.theme.ThemeMode
 import com.cdcvouchers.ui.theme.ThemeModeStore
 import kotlinx.coroutines.flow.collect
@@ -73,8 +71,6 @@ fun SettingsScreen(
     backupFlow: BackupFlow,
     repository: VoucherRepository,
     themeModeStore: ThemeModeStore,
-    languageStore: LanguageStore,
-    onLanguageSelected: (AppLanguage) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     backupBytesProvider: (() -> ByteArray?)? = null,
@@ -169,40 +165,6 @@ fun SettingsScreen(
             )
             Text(
                 text = stringResource(R.string.appearance_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = stringResource(R.string.language),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            ModeOption(
-                label = stringResource(R.string.follow_system),
-                selected = languageStore.language == AppLanguage.SYSTEM,
-                onClick = { onLanguageSelected(AppLanguage.SYSTEM) },
-            )
-            ModeOption(
-                label = stringResource(R.string.language_en),
-                selected = languageStore.language == AppLanguage.EN,
-                onClick = { onLanguageSelected(AppLanguage.EN) },
-            )
-            ModeOption(
-                label = stringResource(R.string.language_zh),
-                selected = languageStore.language == AppLanguage.ZH,
-                onClick = { onLanguageSelected(AppLanguage.ZH) },
-            )
-            ModeOption(
-                label = stringResource(R.string.language_ms),
-                selected = languageStore.language == AppLanguage.MS,
-                onClick = { onLanguageSelected(AppLanguage.MS) },
-            )
-            ModeOption(
-                label = stringResource(R.string.language_ta),
-                selected = languageStore.language == AppLanguage.TA,
-                onClick = { onLanguageSelected(AppLanguage.TA) },
-            )
-            Text(
-                text = stringResource(R.string.language_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

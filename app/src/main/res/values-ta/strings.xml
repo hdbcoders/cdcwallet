@@ -65,12 +65,12 @@
     <string name="appearance_desc">பயன்பாட்டின் தோற்றம். கணினியைப் பின்பற்றுவது உங்கள் தொலைபேசி அமைப்பைப் பொருத்தும்.</string>
 
     <string name="language">மொழி</string>
-    <string name="language_desc">பயன்பாடு காட்டும் மொழி. கணினியைப் பின்பற்றுவது உங்கள் தொலைபேசி அமைப்பைப் பொருத்தும்.</string>
     <!-- மொழிப் பெயர்கள் எப்போதும் அவற்றின் சொந்த எழுத்துகளில். -->
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
     <string name="language_ms">Bahasa Melayu</string>
     <string name="language_ta">தமிழ்</string>
+    <string name="select_language">மொழியைத் தேர்ந்தெடுக்கவும்</string>
 
     <string name="backup">காப்புப்பிரதி</string>
     <string name="export_backup">காப்புப்பிரதியை ஏற்றுமதி செய்</string>

@@ -5,20 +5,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cdcvouchers.data.RoomVoucherRepository
-import com.cdcvouchers.data.backup.BackupFlow
 import com.cdcvouchers.data.db.AppDatabase
 import com.cdcvouchers.data.db.SqlCipherNative
-import com.cdcvouchers.ui.settings.SettingsScreen
+import com.cdcvouchers.extraction.ExtractionCoordinator
+import com.cdcvouchers.extraction.ExtractionEngine
+import com.cdcvouchers.ui.list.LanguagePickerDialog
+import com.cdcvouchers.ui.list.VoucherListScreen
 import com.cdcvouchers.ui.theme.AppLanguage
 import com.cdcvouchers.ui.theme.LanguageStore
-import com.cdcvouchers.ui.theme.ThemeModeStore
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -26,11 +27,13 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.Locale
 
 /**
- * In-app language (i18n): the LanguageStore default/persistence contract and
- * the Settings screen's Language section wiring — selecting a language
- * persists the choice and highlights the row. The activity-recreation side
+ * In-app language (i18n, spec 07 §7.5): the LanguageStore default/persistence
+ * contract and the standalone picker flow — the Translate button in the main
+ * list's app bar opens the picker (outside Settings), selecting a language
+ * persists the choice and dismisses. The activity-recreation side
  * (attachBaseContext) is covered by manual QA.
  */
 @RunWith(AndroidJUnit4::class)
@@ -42,6 +45,7 @@ class LanguageSettingsInstrumentedTest {
     private val appContext: Context = ApplicationProvider.getApplicationContext()
     private lateinit var database: AppDatabase
     private lateinit var languageStore: LanguageStore
+    private lateinit var originalLocale: Locale
 
     @Before
     fun setUp() {
@@ -50,19 +54,33 @@ class LanguageSettingsInstrumentedTest {
             .openHelperFactory(SupportOpenHelperFactory("test-passphrase".toByteArray()))
             .allowMainThreadQueries()
             .build()
+        originalLocale = Locale.getDefault()
+        // Fresh prefs per test: the store derives its first-launch default
+        // from the system locale, so a persisted choice from a previous test
+        // would leak state.
+        appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().commit()
         languageStore = LanguageStore(appContext)
     }
 
     @After
     fun tearDown() {
         database.close()
-        // Never leak a non-default language into other tests in this process.
-        languageStore.setAppLanguage(AppLanguage.SYSTEM)
+        Locale.setDefault(originalLocale)
+        appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().commit()
     }
 
     @Test
-    fun storeDefaultsToSystem() {
-        assertEquals(AppLanguage.SYSTEM, languageStore.language)
+    fun storeDefaultsToSystemLanguageWhenSupported() {
+        // zh-TW is not one of the app's locales (zh-CN is) — any zh region
+        // still maps to Simplified Chinese, the only Chinese variant offered.
+        Locale.setDefault(Locale("zh", "TW"))
+        assertEquals(AppLanguage.ZH, LanguageStore(appContext).language)
+    }
+
+    @Test
+    fun storeDefaultsToEnglishWhenSystemLanguageUnsupported() {
+        Locale.setDefault(Locale.FRENCH)
+        assertEquals(AppLanguage.EN, LanguageStore(appContext).language)
     }
 
     @Test
@@ -72,23 +90,47 @@ class LanguageSettingsInstrumentedTest {
     }
 
     @Test
-    fun selectingChinesePersistsAndHighlightsTheRow() {
+    fun translateButtonOpensPickerAndSelectionPersistsAndDismisses() {
         val repository = RoomVoucherRepository(database)
         composeRule.setContent {
             MaterialTheme {
-                SettingsScreen(
-                    backupFlow = BackupFlow(repository),
+                VoucherListScreen(
                     repository = repository,
-                    themeModeStore = ThemeModeStore(appContext),
+                    extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
+                    onAddClick = {},
+                    onOpenVoucher = {},
+                    onArchivedClick = {},
+                    onSettingsClick = {},
                     languageStore = languageStore,
                     onLanguageSelected = { languageStore.setAppLanguage(it) },
-                    onBack = {},
                 )
             }
         }
-        composeRule.onNodeWithText("中文").performScrollTo().assertIsDisplayed()
+        // The standalone app-bar button (outside Settings) opens the picker.
+        composeRule.onNodeWithContentDescription("Select language").performClick()
+        composeRule.onNodeWithText("中文").assertIsDisplayed()
         composeRule.onNodeWithText("中文").performClick()
         assertEquals(AppLanguage.ZH, languageStore.language)
-        composeRule.onNodeWithText("中文").assertIsSelected()
+        // Selecting persists and dismisses the picker.
+        composeRule.onNodeWithText("中文").assertDoesNotExist()
+    }
+
+    @Test
+    fun pickerChecksTheActiveLanguage() {
+        languageStore.setAppLanguage(AppLanguage.MS)
+        composeRule.setContent {
+            MaterialTheme {
+                LanguagePickerDialog(
+                    current = languageStore.language,
+                    onLanguageSelected = { languageStore.setAppLanguage(it) },
+                    onDismiss = {},
+                )
+            }
+        }
+        composeRule.onNodeWithText("Bahasa Melayu").assertIsDisplayed().assertIsSelected()
+    }
+
+    private companion object {
+        const val PREFS_NAME = "voucher_language_prefs"
     }
 }

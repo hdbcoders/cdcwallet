@@ -77,12 +77,12 @@
 
     <!-- Settings: language. -->
     <string name="language">Language</string>
-    <string name="language_desc">The language the app shows. Follow system matches your phone\'s setting.</string>
     <!-- Language names are shown in their own script in every locale. -->
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
     <string name="language_ms">Bahasa Melayu</string>
     <string name="language_ta">தமிழ்</string>
+    <string name="select_language">Select language</string>
 
     <!-- Settings: backup (spec 06). -->
     <string name="backup">Backup</string>

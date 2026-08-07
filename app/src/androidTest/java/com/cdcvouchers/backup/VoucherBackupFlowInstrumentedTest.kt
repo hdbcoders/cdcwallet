@@ -25,7 +25,6 @@ import com.cdcvouchers.data.model.ValidityStatus
 import com.cdcvouchers.data.model.VoucherBackupPayload
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.ui.settings.SettingsScreen
-import com.cdcvouchers.ui.theme.LanguageStore
 import com.cdcvouchers.ui.theme.ThemeModeStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -112,8 +111,6 @@ class VoucherBackupFlowInstrumentedTest {
                     backupFlow = flow,
                     repository = repository,
                     themeModeStore = ThemeModeStore(appContext),
-                    languageStore = LanguageStore(appContext),
-                    onLanguageSelected = {},
                     onBack = {},
                     backupBytesProvider = bytesProvider,
                 )

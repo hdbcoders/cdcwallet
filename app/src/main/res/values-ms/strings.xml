@@ -65,12 +65,12 @@
     <string name="appearance_desc">Rupa aplikasi. Ikut sistem memadankan tetapan telefon anda.</string>
 
     <string name="language">Bahasa</string>
-    <string name="language_desc">Bahasa yang ditunjukkan aplikasi. Ikut sistem memadankan tetapan telefon anda.</string>
     <!-- Nama bahasa sentiasa dalam skrip masing-masing. -->
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
     <string name="language_ms">Bahasa Melayu</string>
     <string name="language_ta">தமிழ்</string>
+    <string name="select_language">Pilih bahasa</string>
 
     <string name="backup">Sandaran</string>
     <string name="export_backup">Eksport sandaran</string>

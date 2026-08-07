@@ -25,6 +25,7 @@ import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.extraction.ExtractionEngine
 import com.cdcvouchers.ui.list.VoucherListScreen
+import com.cdcvouchers.ui.theme.LanguageStore
 import kotlinx.coroutines.runBlocking
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import org.junit.After
@@ -131,6 +132,8 @@ class VoucherListScreenTest {
                     onAddClick = {},
                     onOpenVoucher = {},
                     onArchivedClick = {}, onSettingsClick = {},
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
                 )
             }
         }
@@ -192,6 +195,8 @@ class VoucherListScreenTest {
                     onAddClick = {},
                     onOpenVoucher = {},
                     onArchivedClick = {}, onSettingsClick = {},
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
                 )
             }
         }
@@ -225,6 +230,8 @@ class VoucherListScreenTest {
                     onAddClick = {},
                     onOpenVoucher = { openedId = it.id },
                     onArchivedClick = {}, onSettingsClick = {},
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
                 )
             }
         }
@@ -250,6 +257,8 @@ class VoucherListScreenTest {
                     onAddClick = {},
                     onOpenVoucher = {},
                     onArchivedClick = {}, onSettingsClick = {},
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
                 )
             }
         }

@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Link
@@ -72,6 +73,8 @@ import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.CategoryBalance
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.extraction.ExtractionCoordinator
+import com.cdcvouchers.ui.theme.AppLanguage
+import com.cdcvouchers.ui.theme.LanguageStore
 import com.cdcvouchers.ui.theme.LocalAppIsDark
 import com.cdcvouchers.ui.theme.SummaryCardContainerLight
 import com.cdcvouchers.ui.theme.rememberReduceMotion
@@ -93,6 +96,8 @@ fun VoucherListScreen(
     onOpenVoucher: (VoucherGroup) -> Unit,
     onArchivedClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    languageStore: LanguageStore,
+    onLanguageSelected: (AppLanguage) -> Unit,
     modifier: Modifier = Modifier,
     highlightVoucherId: String? = null,
     onHighlightConsumed: () -> Unit = {},
@@ -114,6 +119,9 @@ fun VoucherListScreen(
     // Scroll + flash the row requested by a duplicate-add (spec 03 §3.2 step 2).
     val listState = rememberLazyListState()
     var highlightedId by remember { mutableStateOf<String?>(null) }
+    // Standalone language picker (spec 07 §7.5): opened from the Translate
+    // button in the app bar — deliberately outside Settings.
+    var showLanguagePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(highlightVoucherId, sorted) {
         val target = highlightVoucherId ?: return@LaunchedEffect
@@ -152,6 +160,12 @@ fun VoucherListScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
+                    IconButton(onClick = { showLanguagePicker = true }) {
+                        Icon(
+                            Icons.Filled.Translate,
+                            contentDescription = stringResource(R.string.select_language),
+                        )
+                    }
                     TextButton(onClick = onArchivedClick) {
                         Text(pluralStringResource(R.plurals.archived_count, archivedCount, archivedCount))
                     }
@@ -269,6 +283,14 @@ fun VoucherListScreen(
                 vm.delete(voucher.id)
             },
             onDismiss = { vm.dismissDelete() },
+        )
+    }
+
+    if (showLanguagePicker) {
+        LanguagePickerDialog(
+            current = languageStore.language,
+            onLanguageSelected = onLanguageSelected,
+            onDismiss = { showLanguagePicker = false },
         )
     }
 }

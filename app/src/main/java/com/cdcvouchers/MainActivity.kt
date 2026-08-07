@@ -75,13 +75,16 @@ class MainActivity : ComponentActivity() {
 
     override fun attachBaseContext(newBase: Context) {
         // In-app language (LanguageStore): wrap the base context so resource
-        // resolution uses the chosen locale before the activity is created.
-        // SYSTEM (the default) leaves the device locale untouched. Note:
-        // getApplication() is null here (Activity.attach assigns it after
-        // attachBaseContext), so the app is read from the base context.
+        // resolution uses the app language before the activity is created.
+        // The store always resolves to one of the four concrete languages
+        // (first launch: the system language when it is one of the four,
+        // otherwise English — see LanguageStore), so the wrap is
+        // unconditional. Note: getApplication() is null here (Activity.attach
+        // assigns it after attachBaseContext), so the app is read from the
+        // base context.
         val app = newBase.applicationContext as? VoucherApp
-        val locale = app?.container?.languageStore?.language?.locale
-        super.attachBaseContext(if (locale != null) newBase.wrapWithLocale(locale) else newBase)
+        val language = app?.container?.languageStore?.language
+        super.attachBaseContext(newBase.wrapWithLocale(language?.locale ?: AppLanguage.EN.locale))
     }
 
     /** Persists a language change and rebuilds the activity so the new
@@ -206,6 +209,8 @@ private fun AppNavHost(
                     },
                     onArchivedClick = { navController.navigate("archived") },
                     onSettingsClick = { navController.navigate("settings") },
+                    languageStore = container.languageStore,
+                    onLanguageSelected = onLanguageSelected,
                 )
             } else {
                 // API < 31: no system splash, so the Compose splash masks the
@@ -242,6 +247,8 @@ private fun AppNavHost(
                             },
                             onArchivedClick = { navController.navigate("archived") },
                             onSettingsClick = { navController.navigate("settings") },
+                            languageStore = container.languageStore,
+                            onLanguageSelected = onLanguageSelected,
                         )
                     } else {
                         SplashScreen()
@@ -276,8 +283,6 @@ private fun AppNavHost(
                 backupFlow = container.backupFlow,
                 repository = container.repository,
                 themeModeStore = container.themeModeStore,
-                languageStore = container.languageStore,
-                onLanguageSelected = onLanguageSelected,
                 onBack = { navController.popBackStack() },
             )
         }
