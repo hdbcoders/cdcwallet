@@ -266,6 +266,33 @@ class VoucherListScreenTest {
             .assertIsDisplayed()
     }
 
+    @Test
+    fun hamburgerOpensDrawerWithSettingsEntry() {
+        val repository = RoomVoucherRepository(database)
+        var settingsClicked = false
+        composeRule.setContent {
+            MaterialTheme {
+                VoucherListScreen(
+                    repository = repository,
+                    extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
+                    onAddClick = {},
+                    onOpenVoucher = {},
+                    onArchivedClick = {},
+                    onSettingsClick = { settingsClicked = true },
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
+                )
+            }
+        }
+        // The hamburger (top-left) opens the navigation drawer; the gear is
+        // no longer in the top bar — Settings lives in the drawer.
+        composeRule.onNodeWithContentDescription("Menu").performClick()
+        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeRule.onNodeWithText("Settings").performClick()
+        composeRule.waitForIdle()
+        assertTrue(settingsClicked)
+    }
+
     private fun assertTopToBottomOrder(vararg texts: String) {
         val positions = texts.map { text ->
             composeRule.onNodeWithText(text).fetchSemanticsNode().boundsInRoot.top

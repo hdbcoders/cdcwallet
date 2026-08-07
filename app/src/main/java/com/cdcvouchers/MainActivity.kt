@@ -46,7 +46,6 @@ import androidx.navigation.navArgument
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import com.cdcvouchers.addflow.AddVoucherFlow
 import com.cdcvouchers.ui.add.AddVoucherScreen
@@ -220,9 +219,10 @@ private fun AppNavHost(
                 // owns its own ViewModel. `listLoadedOnce` (rememberSaveable
                 // at AppNavHost scope) latches true after the initial load so
                 // returning to the list via back never re-shows the splash.
-                val loaded by container.repository.observeActive()
-                    .map { true }
-                    .collectAsState(initial = false)
+                val loaded by produceState(initialValue = false) {
+                    container.repository.observeActive().first()
+                    value = true
+                }
                 val minHoldElapsed by produceState(initialValue = false) {
                     delay(SPLASH_MIN_MS)
                     value = true

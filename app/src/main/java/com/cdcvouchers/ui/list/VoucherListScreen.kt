@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.outlined.Eco
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -41,6 +43,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -51,12 +56,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,6 +89,7 @@ import com.cdcvouchers.ui.theme.SummaryCardContainerLight
 import com.cdcvouchers.ui.theme.rememberReduceMotion
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 /**
  * Main voucher list (spec 04, 05). Owns the aggregate summary and the
@@ -121,12 +129,18 @@ fun VoucherListScreen(
     // collector below shows the snackbar via these strings.
     val archivedLabel = stringResource(R.string.archived)
     val undoLabel = stringResource(R.string.undo)
+    val linkCopiedLabel = stringResource(R.string.link_copied)
     // Scroll + flash the row requested by a duplicate-add (spec 03 §3.2 step 2).
     val listState = rememberLazyListState()
     var highlightedId by remember { mutableStateOf<String?>(null) }
     // Standalone language picker (spec 07 §7.5): opened from the Translate
     // button in the app bar — deliberately outside Settings.
     var showLanguagePicker by remember { mutableStateOf(false) }
+    // Navigation drawer (Settings entry, spec 06/07): the hamburger in the
+    // top bar opens it; the drawer holds Settings. Archived + Translate stay
+    // as top-bar actions.
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(highlightVoucherId, sorted) {
         val target = highlightVoucherId ?: return@LaunchedEffect
@@ -159,126 +173,151 @@ fun VoucherListScreen(
         }
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
-                actions = {
-                    IconButton(onClick = { showLanguagePicker = true }) {
-                        Icon(
-                            Icons.Filled.Translate,
-                            contentDescription = stringResource(R.string.select_language),
-                        )
-                    }
-                    TextButton(onClick = onArchivedClick) {
-                        Text(pluralStringResource(R.plurals.archived_count, archivedCount, archivedCount))
-                    }
-                    IconButton(onClick = onSettingsClick) {
-                        Icon(
-                            Icons.Default.Settings,
-                            contentDescription = stringResource(R.string.settings),
-                        )
-                    }
-                },
-            )
-        },
-        floatingActionButton = {
-            AnimatedVisibility(
-                // Entrance only: scale+fade the FAB in when the screen appears.
-                visible = true,
-                enter = if (reduceMotion) {
-                    EnterTransition.None
-                } else {
-                    scaleIn(tween(220), initialScale = 0.85f) + fadeIn(tween(220))
-                },
-            ) {
-                ExtendedFloatingActionButton(
-                    onClick = onAddClick,
-                    // Brand purple from the reference (Add-voucher) button.
-                    containerColor = Color(0xFF5D3FD3),
-                    contentColor = Color.White,
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = null,
-                    )
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                ModalDrawerSheet {
                     Text(
-                        text = stringResource(R.string.add_voucher),
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(start = 8.dp),
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                    HorizontalDivider()
+                    NavigationDrawerItem(
+                        label = { Text(stringResource(R.string.settings)) },
+                        icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                        selected = false,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            onSettingsClick()
+                        },
                     )
                 }
-            }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            // Pinned summary: fixed above the list, never scrolls with it.
-            SummaryCard(
-                summary,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (sorted.isEmpty()) {
-                    item(key = "empty") {
+            },
+        ) {
+            Scaffold(
+                modifier = modifier.fillMaxSize(),
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.app_name)) },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(
+                                Icons.Filled.Menu,
+                                contentDescription = stringResource(R.string.menu),
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { showLanguagePicker = true }) {
+                            Icon(
+                                Icons.Filled.Translate,
+                                contentDescription = stringResource(R.string.select_language),
+                            )
+                        }
+                        TextButton(onClick = onArchivedClick) {
+                            Text(pluralStringResource(R.plurals.archived_count, archivedCount, archivedCount))
+                        }
+                    },
+                )
+            },
+            floatingActionButton = {
+                AnimatedVisibility(
+                    // Entrance only: scale+fade the FAB in when the screen appears.
+                    visible = true,
+                    enter = if (reduceMotion) {
+                        EnterTransition.None
+                    } else {
+                        scaleIn(tween(220), initialScale = 0.85f) + fadeIn(tween(220))
+                    },
+                ) {
+                    ExtendedFloatingActionButton(
+                        onClick = onAddClick,
+                        // Brand purple from the reference (Add-voucher) button.
+                        containerColor = Color(0xFF5D3FD3),
+                        contentColor = Color.White,
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = null,
+                        )
                         Text(
-                            text = stringResource(R.string.empty_list),
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = stringResource(R.string.add_voucher),
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.padding(start = 8.dp),
                         )
                     }
-                } else {
-                    items(sorted, key = { it.id }) { voucher ->
-                        VoucherRow(
-                            voucher = voucher,
-                            menuExpanded = vm.menuForId == voucher.id,
-                            isHighlighted = voucher.id == highlightedId,
-                            onClick = { onOpenVoucher(voucher) },
-                            onMenuExpandedChange = { open ->
-                                vm.setMenu(if (open) voucher.id else null)
-                            },
-                            modifier = if (reduceMotion) {
-                                // System reduce-motion: disable item animations entirely.
-                                Modifier.animateItem(
-                                    fadeInSpec = null,
-                                    placementSpec = null,
-                                    fadeOutSpec = null,
+                }
+            },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+        ) { padding ->
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                // Pinned summary: fixed above the list, never scrolls with it.
+                SummaryCard(
+                    summary,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (sorted.isEmpty()) {
+                        item(key = "empty") {
+                            Text(
+                                text = stringResource(R.string.empty_list),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    } else {
+                        items(sorted, key = { it.id }) { voucher ->
+                            VoucherRow(
+                                voucher = voucher,
+                                menuExpanded = vm.menuForId == voucher.id,
+                                isHighlighted = voucher.id == highlightedId,
+                                onClick = { onOpenVoucher(voucher) },
+                                onMenuExpandedChange = { open ->
+                                    vm.setMenu(if (open) voucher.id else null)
+                                },
+                                modifier = if (reduceMotion) {
+                                    // System reduce-motion: disable item animations entirely.
+                                    Modifier.animateItem(
+                                        fadeInSpec = null,
+                                        placementSpec = null,
+                                        fadeOutSpec = null,
+                                    )
+                                } else {
+                                    Modifier.animateItem()
+                                },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.copy_url)) },
+                                    onClick = {
+                                        vm.setMenu(null)
+                                        clipboardManager.setText(AnnotatedString(voucher.url))
+                                        Toast.makeText(
+                                            context,
+                                            linkCopiedLabel,
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    },
                                 )
-                            } else {
-                                Modifier.animateItem()
-                            },
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.copy_url)) },
-                                onClick = {
-                                    vm.setMenu(null)
-                                    clipboardManager.setText(AnnotatedString(voucher.url))
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.link_copied),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.archive)) },
-                                onClick = {
-                                    vm.setMenu(null)
-                                    vm.archive(voucher)
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.delete)) },
-                                onClick = {
-                                    vm.setMenu(null)
-                                    vm.requestDelete(voucher)
-                                },
-                            )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.archive)) },
+                                    onClick = {
+                                        vm.setMenu(null)
+                                        vm.archive(voucher)
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.delete)) },
+                                    onClick = {
+                                        vm.setMenu(null)
+                                        vm.requestDelete(voucher)
+                                    },
+                                )
+                            }
                         }
                     }
                 }

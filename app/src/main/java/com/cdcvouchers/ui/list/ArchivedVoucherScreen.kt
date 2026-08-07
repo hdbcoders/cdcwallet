@@ -59,6 +59,9 @@ fun ArchivedVoucherScreen(
     // Toast on Copy URL (REQ-10 feedback): the activity context is wrapped
     // with the active app locale, so the message follows the app language.
     val context = LocalContext.current
+    // Resolved at composition time (lint-clean locale-aware resolution); the
+    // toast shows this string.
+    val linkCopiedLabel = stringResource(R.string.link_copied)
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -111,7 +114,7 @@ fun ArchivedVoucherScreen(
                                 clipboardManager.setText(AnnotatedString(voucher.url))
                                 Toast.makeText(
                                     context,
-                                    context.getString(R.string.link_copied),
+                                    linkCopiedLabel,
                                     Toast.LENGTH_SHORT,
                                 ).show()
                             },

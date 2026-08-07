@@ -2,6 +2,7 @@
 <resources>
     <!-- தமிழ். பிராண்ட் பெயர் "CDC Bookmark" மொழிபெயர்க்கப்படவில்லை. -->
     <string name="app_name">CDC Bookmark</string>
+    <string name="menu">மெனு</string>
     <string name="date_pattern">d MMM yyyy</string>
     <string name="back">பின்</string>
     <string name="settings">அமைப்புகள்</string>
