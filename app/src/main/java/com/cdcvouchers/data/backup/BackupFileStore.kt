@@ -24,6 +24,17 @@ object BackupFileStore {
     fun writeToDownloads(context: Context, bytes: ByteArray): Uri {
         val resolver = context.contentResolver
         if (Build.VERSION.SDK_INT >= 29) {
+            // Remove previous exports first (spec 06 §6.2: one predictable
+            // file in Downloads). Match the whole "cdcvoucher*" family —
+            // earlier runs created cdcvoucher (1).backup…(n).backup, and
+            // MediaStore's unique-file logic treats those siblings as making
+            // the base name unavailable. Cleaning them also clears stale
+            // index rows left by uninstall/reinstall cycles.
+            resolver.delete(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                "${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ?",
+                arrayOf("$FILE_NAME%"),
+            )
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, FILE_NAME)
                 put(MediaStore.MediaColumns.MIME_TYPE, MIME_TYPE)
@@ -38,6 +49,9 @@ object BackupFileStore {
         val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         if (!dir.exists() && !dir.mkdirs()) throw IOException("Cannot create Downloads dir")
         val file = File(dir, FILE_NAME)
+        // API 24–28 raw-file path: drop any previous export so we always land
+        // a fresh cdcvoucher.backup rather than accumulating (n) copies.
+        if (file.exists() && !file.delete()) throw IOException("Cannot remove previous backup")
         file.writeBytes(bytes)
         return Uri.fromFile(file)
     }

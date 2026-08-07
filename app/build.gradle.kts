@@ -44,6 +44,14 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    testOptions {
+        // Speed/quietness for connected tests: disable system animations so
+        // Compose test waits are deterministic. (AGP has no supported DSL to
+        // keep the app installed after the run — uninstalling after tests is
+        // built-in, so the app data dir is wiped unless re-imported; that's
+        // expected and tests themselves never touch real data.)
+        animationsDisabled = true
+    }
 }
 
 kotlin {
