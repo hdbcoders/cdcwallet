@@ -8,6 +8,7 @@
     <string name="cancel">取消</string>
     <string name="delete">删除</string>
     <string name="copy_url">复制链接</string>
+    <string name="link_copied">链接已复制</string>
     <string name="undo">撤销</string>
 
     <string name="add_voucher">添加礼券</string>

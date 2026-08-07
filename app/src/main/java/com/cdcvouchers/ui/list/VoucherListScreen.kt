@@ -1,5 +1,6 @@
 package com.cdcvouchers.ui.list
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.tween
@@ -62,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -112,6 +114,9 @@ fun VoucherListScreen(
     val summary = remember(sorted) { summarizeActive(sorted) }
     val snackbarHostState = remember { SnackbarHostState() }
     val clipboardManager = LocalClipboardManager.current
+    // Toast on Copy URL (REQ-10 feedback): the activity context is wrapped
+    // with the active app locale, so the message follows the app language.
+    val context = LocalContext.current
     // Resolved at composition time (lint-clean locale-aware resolution); the
     // collector below shows the snackbar via these strings.
     val archivedLabel = stringResource(R.string.archived)
@@ -253,6 +258,11 @@ fun VoucherListScreen(
                                 onClick = {
                                     vm.setMenu(null)
                                     clipboardManager.setText(AnnotatedString(voucher.url))
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.link_copied),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
                                 },
                             )
                             DropdownMenuItem(

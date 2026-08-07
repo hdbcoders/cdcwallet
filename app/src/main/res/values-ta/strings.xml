@@ -8,6 +8,7 @@
     <string name="cancel">ரத்து</string>
     <string name="delete">நீக்கு</string>
     <string name="copy_url">URL நகலெடு</string>
+    <string name="link_copied">இணைப்பு நகலெடுக்கப்பட்டது</string>
     <string name="undo">செயல்தவிர்</string>
 
     <string name="add_voucher">வவுச்சரைச் சேர்</string>

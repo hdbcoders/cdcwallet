@@ -8,6 +8,7 @@
     <string name="cancel">Batal</string>
     <string name="delete">Padam</string>
     <string name="copy_url">Salin URL</string>
+    <string name="link_copied">Pautan disalin</string>
     <string name="undo">Buat asal</string>
 
     <string name="add_voucher">Tambah Baucar</string>

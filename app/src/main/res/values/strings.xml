@@ -11,6 +11,7 @@
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
     <string name="copy_url">Copy URL</string>
+    <string name="link_copied">Link copied</string>
     <string name="undo">Undo</string>
 
     <!-- Main list (spec 04). -->

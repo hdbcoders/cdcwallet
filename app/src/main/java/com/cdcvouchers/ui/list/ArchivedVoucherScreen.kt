@@ -1,5 +1,6 @@
 package com.cdcvouchers.ui.list
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
@@ -54,6 +56,9 @@ fun ArchivedVoucherScreen(
     val sorted by vm.vouchers.collectAsState()
     val reduceMotion = rememberReduceMotion()
     val clipboardManager = LocalClipboardManager.current
+    // Toast on Copy URL (REQ-10 feedback): the activity context is wrapped
+    // with the active app locale, so the message follows the app language.
+    val context = LocalContext.current
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -104,6 +109,11 @@ fun ArchivedVoucherScreen(
                             onClick = {
                                 vm.setMenu(null)
                                 clipboardManager.setText(AnnotatedString(voucher.url))
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.link_copied),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                             },
                         )
                         DropdownMenuItem(

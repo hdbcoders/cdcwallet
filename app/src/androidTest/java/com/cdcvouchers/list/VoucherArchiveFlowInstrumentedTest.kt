@@ -165,7 +165,6 @@ class VoucherArchiveFlowInstrumentedTest {
         }
         return last as T
     }
-
     @Test
     fun archiveFromMenuHidesRowAndShowsUndoSnackbar() {
         val repository = RoomVoucherRepository(database)
@@ -209,6 +208,29 @@ class VoucherArchiveFlowInstrumentedTest {
         val clipboard = appContext.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         assertEquals(
             "https://example.com/a1",
+            clipboard.primaryClip?.getItemAt(0)?.text?.toString(),
+        )
+        // REQ-10 feedback: a brief "Link copied" toast confirms the copy so
+        // the tap never feels dead. Toast windows are not exposed to
+        // UiAutomation on API 36, so the toast itself is covered by manual QA.
+    }
+
+    @Test
+    fun archivedScreenCopyUrlCopiesToClipboard() {
+        val repository = RoomVoucherRepository(database)
+        runBlocking {
+            repository.insert(voucher("arch1", "Archived One"))
+            repository.archive("arch1")
+        }
+        archivedContent(repository)
+
+        composeRule.onNodeWithContentDescription("More options for Archived One").performClick()
+        composeRule.onNodeWithText("Copy URL").performClick()
+        composeRule.waitForIdle()
+
+        val clipboard = appContext.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        assertEquals(
+            "https://example.com/arch1",
             clipboard.primaryClip?.getItemAt(0)?.text?.toString(),
         )
     }
