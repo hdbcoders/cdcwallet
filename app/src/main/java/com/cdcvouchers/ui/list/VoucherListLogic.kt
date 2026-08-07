@@ -3,6 +3,7 @@ package com.cdcvouchers.ui.list
 import com.cdcvouchers.data.model.CategoryBalance
 import com.cdcvouchers.data.model.ValidityStatus
 import com.cdcvouchers.data.model.VoucherGroup
+import com.cdcvouchers.R
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
@@ -94,17 +95,24 @@ private fun totalRemaining(voucher: VoucherGroup): BigDecimal =
     voucher.categoryBalances.fold(BigDecimal.ZERO) { acc, b -> acc + b.remainingValue }
 
 /**
- * Spec 04 §4.2 accessibility: exactly one of six strings per badge — no
- * fall-through (UNVERIFIED must never announce blank/default). The badge
- * renders this same string, so what is on screen is what TalkBack announces.
+ * Spec 04 §4.2 accessibility: exactly one label per badge state — no
+ * fall-through (UNVERIFIED must never announce blank/default). The label is a
+ * string-resource reference (localized); the days-left variant carries its
+ * count so the caller can resolve the plural form.
  */
-fun badgeLabel(state: BadgeState): String = when (state) {
+data class BadgeLabel(val resId: Int, val pluralCount: Long? = null)
+
+fun badgeLabel(state: BadgeState): BadgeLabel = when (state) {
     is BadgeState.Active ->
-        state.daysRemaining?.let { "$it days left" } ?: "No expiry date"
-    BadgeState.Expired -> "Expired"
-    BadgeState.NoBalance -> "Fully used"
-    BadgeState.NotStarted -> "Not started"
-    BadgeState.Unverified -> "Couldn't verify, tap to check"
+        if (state.daysRemaining != null) {
+            BadgeLabel(R.plurals.badge_days_left, state.daysRemaining)
+        } else {
+            BadgeLabel(R.string.badge_no_expiry)
+        }
+    BadgeState.Expired -> BadgeLabel(R.string.badge_expired)
+    BadgeState.NoBalance -> BadgeLabel(R.string.badge_fully_used)
+    BadgeState.NotStarted -> BadgeLabel(R.string.badge_not_started)
+    BadgeState.Unverified -> BadgeLabel(R.string.badge_unverified)
 }
 
 /**

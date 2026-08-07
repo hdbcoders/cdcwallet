@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- தமிழ். பிராண்ட் பெயர் "CDC Bookmark" மொழிபெயர்க்கப்படவில்லை. -->
+    <string name="app_name">CDC Bookmark</string>
+    <string name="date_pattern">d MMM yyyy</string>
+    <string name="back">பின்</string>
+    <string name="settings">அமைப்புகள்</string>
+    <string name="cancel">ரத்து</string>
+    <string name="delete">நீக்கு</string>
+    <string name="copy_url">URL நகலெடு</string>
+    <string name="undo">செயல்தவிர்</string>
+
+    <string name="add_voucher">வவுச்சரைச் சேர்</string>
+    <string name="archived">காப்பகம்</string>
+    <string name="archive">காப்பகப்படுத்து</string>
+    <string name="restore">மீட்டெடு</string>
+    <string name="empty_list">இன்னும் வவுச்சர் இணைப்புகள் இல்லை — + பொத்தானைப் பயன்படுத்திச் சேர்க்கவும்.</string>
+    <string name="remaining_balance">மீதி இருப்பு</string>
+    <string name="more_categories">மேலும் %1$d</string>
+    <plurals name="archived_count">
+        <item quantity="one">காப்பகம் (%1$d)</item>
+        <item quantity="other">காப்பகம் (%1$d)</item>
+    </plurals>
+    <plurals name="summary_links">
+        <item quantity="one">மொத்தம் %1$d வவுச்சர் இணைப்பு</item>
+        <item quantity="other">மொத்தம் %1$d வவுச்சர் இணைப்புகள்</item>
+    </plurals>
+
+    <string name="no_archived">இன்னும் காப்பகப்படுத்தப்பட்ட வவுச்சர்கள் இல்லை</string>
+
+    <string name="add_title">வவுச்சர் இணைப்பைச் சேர்</string>
+    <string name="paste_link">வவுச்சர் இணைப்பை ஒட்டவும்</string>
+    <string name="add">சேர்</string>
+    <string name="add_invalid">இது RedeemSG வவுச்சர் இணைப்பாகத் தெரியவில்லை.</string>
+    <string name="add_duplicate">இந்த இணைப்பு ஏற்கனவே உங்கள் பட்டியலில் உள்ளது.</string>
+    <string name="add_added">சேர்க்கப்பட்டது — %1$s</string>
+    <string name="add_added_unverified">சேர்க்கப்பட்டது — இன்னும் சரிபார்க்க முடியவில்லை; பிறகு பார்க்க உள்ளீட்டைத் தட்டவும்.</string>
+
+    <string name="detail_parse_error">வலைத்தளத் தரவைப் பாகுபடுத்த முடியவில்லை</string>
+    <string name="detail_network_error">வலைத்தளத்தை ஏற்ற முடியவில்லை</string>
+
+    <string name="delete_title">இந்த வவுச்சர் இணைப்பை நீக்கவா?</string>
+    <string name="delete_body">நீக்கிய பிறகு இந்த இணைப்பை மீண்டும் பெற முடியாமல் போகலாம்.</string>
+
+    <string name="expires">%1$s அன்று காலாவதியாகிறது</string>
+    <string name="more_options">%1$sக்கான மேலும் விருப்பங்கள்</string>
+    <string name="expired_footer">இந்த வவுச்சர் இணைப்பு காலாவதியாகிவிட்டது</string>
+    <string name="zero_remaining">%1$s மீதம்</string>
+    <string name="no_balance_footer">இந்த வவுச்சர் இணைப்பில் மீதி இருப்பு இல்லை.</string>
+
+    <string name="badge_no_expiry">காலாவதி தேதி இல்லை</string>
+    <string name="badge_expired">காலாவதியானது</string>
+    <string name="badge_fully_used">முழுமையாகப் பயன்படுத்தப்பட்டது</string>
+    <string name="badge_not_started">தொடங்கப்படவில்லை</string>
+    <string name="badge_unverified">சரிபார்க்க முடியவில்லை, சரிபார்க்கத் தட்டவும்</string>
+    <plurals name="badge_days_left">
+        <item quantity="one">%1$d நாள் உள்ளது</item>
+        <item quantity="other">%1$d நாட்கள் உள்ளன</item>
+    </plurals>
+
+    <string name="appearance">தோற்றம்</string>
+    <string name="follow_system">கணினியைப் பின்பற்று</string>
+    <string name="theme_light">வெளிச்சம்</string>
+    <string name="theme_dark">இருள்</string>
+    <string name="appearance_desc">பயன்பாட்டின் தோற்றம். கணினியைப் பின்பற்றுவது உங்கள் தொலைபேசி அமைப்பைப் பொருத்தும்.</string>
+
+    <string name="language">மொழி</string>
+    <string name="language_desc">பயன்பாடு காட்டும் மொழி. கணினியைப் பின்பற்றுவது உங்கள் தொலைபேசி அமைப்பைப் பொருத்தும்.</string>
+    <!-- மொழிப் பெயர்கள் எப்போதும் அவற்றின் சொந்த எழுத்துகளில். -->
+    <string name="language_en">English</string>
+    <string name="language_zh">中文</string>
+    <string name="language_ms">Bahasa Melayu</string>
+    <string name="language_ta">தமிழ்</string>
+
+    <string name="backup">காப்புப்பிரதி</string>
+    <string name="export_backup">காப்புப்பிரதியை ஏற்றுமதி செய்</string>
+    <string name="export_desc">உங்கள் அனைத்து வவுச்சர் இணைப்புகளின் மறைகுறியாக்கப்பட்ட நகலை பதிவிறக்கங்களில் சேமிக்கிறது. கடவுச்சொல்லை அமைப்பீர்கள் — அதை நினைவில் வைத்திருங்கள், அதை மீட்டெடுக்க முடியாது.</string>
+    <string name="import_backup">காப்புப்பிரதியை இறக்குமதி செய்</string>
+    <string name="import_desc">நீங்கள் முன்பு ஏற்றுமதி செய்த காப்புப்பிரதிக் கோப்பிலிருந்து மீட்டெடுக்கிறது. இறக்குமதியின் போது எதுவும் பதிவிறக்கப்படாது.</string>
+    <string name="export">ஏற்றுமதி</string>
+    <string name="import_confirm">இறக்குமதி</string>
+    <string name="replace_all_title">எல்லா தரவையும் மாற்றவா?</string>
+    <plurals name="replace_all_body">
+        <item quantity="one">இது தற்போது சேமித்துள்ள %1$d வவுச்சரை நீக்கி, இந்த காப்புப்பிரதியால் மாற்றும். இதை மீளமுடியாது.</item>
+        <item quantity="other">இது தற்போது சேமித்துள்ள %1$d வவுச்சர்களை நீக்கி, இந்த காப்புப்பிரதியால் மாற்றும். இதை மீளமுடியாது.</item>
+    </plurals>
+    <string name="set_backup_password">காப்புப்பிரதி கடவுச்சொல்லை அமைக்கவும்</string>
+    <string name="backup_password">காப்புப்பிரதி கடவுச்சொல்</string>
+    <string name="password_encrypt_desc">இந்த கடவுச்சொல் காப்புப்பிரதி கோப்பை மறைகுறியாக்குகிறது. இது ஒருபோதும் சேமிக்கப்படாது — நீங்கள் மறந்துவிட்டால், காப்புப்பிரதியைத் திறக்க முடியாது.</string>
+    <string name="password_enter_desc">இந்த காப்புப்பிரதி ஏற்றுமதி செய்யப்பட்ட கடவுச்சொல்லை உள்ளிடவும்.</string>
+    <string name="confirm_password">கடவுச்சொல்லை உறுதிப்படுத்து</string>
+    <string name="merge_desc">இணைத்தல் உங்களிடம் இல்லாத இணைப்புகளை மட்டுமே சேர்க்கும். மாற்றுதல் தற்போது சேமித்த அனைத்தையும் நீக்கும்.</string>
+    <string name="merge">ஏற்கனவே உள்ள தரவுடன் இணை</string>
+    <string name="replace">ஏற்கனவே உள்ள தரவை மாற்று</string>
+    <string name="replace_confirm">மாற்று</string>
+    <plurals name="backup_summary">
+        <item quantity="one">%1$s இலிருந்து காப்புப்பிரதி · %2$d வவுச்சர் (%3$d காப்பகம்). இந்த காப்புப்பிரதியை இறக்குமதி செய்யவா?</item>
+        <item quantity="other">%1$s இலிருந்து காப்புப்பிரதி · %2$d வவுச்சர்கள் (%3$d காப்பகம்). இந்த காப்புப்பிரதியை இறக்குமதி செய்யவா?</item>
+    </plurals>
+    <plurals name="snackbar_imported_count">
+        <item quantity="one">%1$d வவுச்சர் இறக்குமதி செய்யப்பட்டது</item>
+        <item quantity="other">%1$d வவுச்சர்கள் இறக்குமதி செய்யப்பட்டன</item>
+    </plurals>
+    <string name="snackbar_backup_saved">காப்புப்பிரதி பதிவிறக்கங்களில் சேமிக்கப்பட்டது</string>
+    <string name="snackbar_save_failed">காப்புப்பிரதியைச் சேமிக்க முடியவில்லை</string>
+    <string name="snackbar_backup_imported">காப்புப்பிரதி இறக்குமதி செய்யப்பட்டது</string>
+    <string name="snackbar_import_failed">காப்புப்பிரதியை இறக்குமதி செய்ய முடியவில்லை</string>
+    <string name="backup_generic_error">இந்த காப்புப்பிரதியைத் திறக்க முடியவில்லை. உங்கள் கடவுச்சொல்லைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.</string>
+</resources>

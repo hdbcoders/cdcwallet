@@ -10,7 +10,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.cdcvouchers.R
 import com.cdcvouchers.ui.components.AppDialogSurface
 import com.cdcvouchers.ui.components.DialogButtonRow
 import kotlinx.coroutines.delay
@@ -29,19 +31,19 @@ fun DeleteVoucherDialog(
     val cancelFocus = remember { FocusRequester() }
     AppDialogSurface(onDismissRequest = onDismiss) {
         Text(
-            text = "Delete this voucher link?",
+            text = stringResource(R.string.delete_title),
             style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "You may not be able to get this link back once it's deleted.",
+            text = stringResource(R.string.delete_body),
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(modifier = Modifier.height(24.dp))
         DialogButtonRow(
-            cancelLabel = "Cancel",
+            cancelLabel = stringResource(R.string.cancel),
             onCancel = onDismiss,
-            confirmLabel = "Delete",
+            confirmLabel = stringResource(R.string.delete),
             onConfirm = onConfirm,
             destructive = true,
             cancelModifier = Modifier.focusRequester(cancelFocus),

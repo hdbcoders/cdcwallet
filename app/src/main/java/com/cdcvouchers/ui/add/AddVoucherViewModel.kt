@@ -1,11 +1,13 @@
 package com.cdcvouchers.ui.add
 
 import android.content.Context
+import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cdcvouchers.R
 import com.cdcvouchers.addflow.AddVoucherFlow
 import com.cdcvouchers.addflow.AddVoucherResult
 import kotlinx.coroutines.launch
@@ -13,7 +15,14 @@ import kotlinx.coroutines.launch
 sealed interface AddUiStatus {
     data object Idle : AddUiStatus
     data object Working : AddUiStatus
-    data class Message(val text: String, val isError: Boolean) : AddUiStatus
+
+    /** Localized message: a string resource id + format args (resolved by the
+     *  screen via stringResource so the active app locale is used). */
+    data class Message(
+        @StringRes val resId: Int,
+        val isError: Boolean,
+        val formatArgs: List<Any> = emptyList(),
+    ) : AddUiStatus
 }
 
 /**
@@ -59,15 +68,19 @@ class AddVoucherViewModel(
         viewModelScope.launch {
             status = when (val result = flow.add(appContext, url)) {
                 is AddVoucherResult.InvalidFormat ->
-                    AddUiStatus.Message("This doesn't look like a RedeemSG voucher link.", isError = true)
+                    AddUiStatus.Message(R.string.add_invalid, isError = true)
                 is AddVoucherResult.Duplicate -> {
                     duplicateEvent = AddUiEvent.Duplicate(result.existing.id)
-                    AddUiStatus.Message("This link is already in your list.", isError = false)
+                    AddUiStatus.Message(R.string.add_duplicate, isError = false)
                 }
                 is AddVoucherResult.Added ->
-                    AddUiStatus.Message("Added — ${result.voucher.campaignName}", isError = false)
+                    AddUiStatus.Message(
+                        R.string.add_added,
+                        isError = false,
+                        formatArgs = listOf(result.voucher.campaignName),
+                    )
                 is AddVoucherResult.AddedUnverified ->
-                    AddUiStatus.Message("Added — couldn't verify it yet; tap the entry to check later.", isError = false)
+                    AddUiStatus.Message(R.string.add_added_unverified, isError = false)
             }
         }
     }

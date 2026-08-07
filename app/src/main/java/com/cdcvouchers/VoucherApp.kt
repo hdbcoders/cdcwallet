@@ -12,6 +12,7 @@ import com.cdcvouchers.data.db.SqlCipherNative
 import com.cdcvouchers.data.db.SqlCipherPassphraseStore
 import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.extraction.ExtractionEngine
+import com.cdcvouchers.ui.theme.LanguageStore
 import com.cdcvouchers.ui.theme.ThemeModeStore
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
@@ -45,6 +46,10 @@ class AppContainer(context: Context) {
 
     val themeModeStore: ThemeModeStore by lazy {
         ThemeModeStore(appContext)
+    }
+
+    val languageStore: LanguageStore by lazy {
+        LanguageStore(appContext)
     }
 
     val database: AppDatabase by lazy {

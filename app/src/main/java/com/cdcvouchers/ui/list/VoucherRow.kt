@@ -29,8 +29,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.cdcvouchers.R
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.ui.theme.BadgeColors
 import com.cdcvouchers.ui.theme.ClimateChipDark
@@ -42,7 +45,6 @@ import com.cdcvouchers.ui.theme.SupermarketChipDark
 import com.cdcvouchers.ui.theme.SupermarketChipLight
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * Row layout shared by the main list and the archived screen (spec 04 / 05).
@@ -66,9 +68,16 @@ fun VoucherRow(
     menuContent: @Composable ColumnScope.() -> Unit,
 ) {
     val badge = badgeState(voucher)
-    val expiryText = remember(voucher.expiryDate) {
-        voucher.expiryDate?.let { "Expires " + EXPIRY_DATE_FORMAT.format(it) }
+    // Date formatted in the app's active locale: the pattern is a per-locale
+    // resource and the month names come from the locale itself.
+    val datePattern = stringResource(R.string.date_pattern)
+    val locale = LocalConfiguration.current.locales[0]
+    val dateText = remember(voucher.expiryDate, locale) {
+        voucher.expiryDate?.let { date ->
+            DateTimeFormatter.ofPattern(datePattern, locale).format(date)
+        }
     }
+    val expiryText = dateText?.let { stringResource(R.string.expires, it) }
     // A voucher is "fully redeemed" when nothing remains to spend.
     val fullyRedeemed = remember(voucher.categoryBalances) {
         voucher.categoryBalances.none { it.remainingValue > BigDecimal.ZERO }
@@ -120,7 +129,7 @@ fun VoucherRow(
                         ) {
                             Icon(
                                 Icons.Default.MoreVert,
-                                contentDescription = "More options for ${voucher.campaignName}",
+                                contentDescription = stringResource(R.string.more_options, voucher.campaignName),
                                 modifier = Modifier.size(18.dp),
                             )
                         }
@@ -245,7 +254,7 @@ private fun ExpiredFooter() {
             .fillMaxWidth(),
     ) {
         Text(
-            text = "This voucher link has expired",
+            text = stringResource(R.string.expired_footer),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -277,12 +286,12 @@ private fun NoBalanceFooter() {
             Spacer(Modifier.width(10.dp))
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "${formatSgd(BigDecimal.ZERO)} remaining",
+                    text = stringResource(R.string.zero_remaining, formatSgd(BigDecimal.ZERO)),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "This voucher link has no remaining balance.",
+                    text = stringResource(R.string.no_balance_footer),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -290,6 +299,3 @@ private fun NoBalanceFooter() {
         }
     }
 }
-
-private val EXPIRY_DATE_FORMAT: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)

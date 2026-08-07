@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -106,6 +107,10 @@ fun VoucherListScreen(
     val summary = remember(sorted) { summarizeActive(sorted) }
     val snackbarHostState = remember { SnackbarHostState() }
     val clipboardManager = LocalClipboardManager.current
+    // Resolved at composition time (lint-clean locale-aware resolution); the
+    // collector below shows the snackbar via these strings.
+    val archivedLabel = stringResource(R.string.archived)
+    val undoLabel = stringResource(R.string.undo)
     // Scroll + flash the row requested by a duplicate-add (spec 03 §3.2 step 2).
     val listState = rememberLazyListState()
     var highlightedId by remember { mutableStateOf<String?>(null) }
@@ -131,8 +136,8 @@ fun VoucherListScreen(
             when (event) {
                 is ListEvent.ArchivedUndo -> {
                     val result = snackbarHostState.showSnackbar(
-                        "Archived",
-                        actionLabel = "Undo",
+                        archivedLabel,
+                        actionLabel = undoLabel,
                         duration = SnackbarDuration.Short,
                     )
                     if (result == SnackbarResult.ActionPerformed) vm.restore(event.voucherId)
@@ -148,12 +153,12 @@ fun VoucherListScreen(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     TextButton(onClick = onArchivedClick) {
-                        Text("Archived ($archivedCount)")
+                        Text(pluralStringResource(R.plurals.archived_count, archivedCount, archivedCount))
                     }
                     IconButton(onClick = onSettingsClick) {
                         Icon(
                             Icons.Default.Settings,
-                            contentDescription = "Settings",
+                            contentDescription = stringResource(R.string.settings),
                         )
                     }
                 },
@@ -180,7 +185,7 @@ fun VoucherListScreen(
                         contentDescription = null,
                     )
                     Text(
-                        text = "Add Voucher",
+                        text = stringResource(R.string.add_voucher),
                         style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.padding(start = 8.dp),
                     )
@@ -204,7 +209,7 @@ fun VoucherListScreen(
                 if (sorted.isEmpty()) {
                     item(key = "empty") {
                         Text(
-                            text = "No voucher links yet — add one with the + button.",
+                            text = stringResource(R.string.empty_list),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -230,21 +235,21 @@ fun VoucherListScreen(
                             },
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Copy URL") },
+                                text = { Text(stringResource(R.string.copy_url)) },
                                 onClick = {
                                     vm.setMenu(null)
                                     clipboardManager.setText(AnnotatedString(voucher.url))
                                 },
                             )
                             DropdownMenuItem(
-                                text = { Text("Archive") },
+                                text = { Text(stringResource(R.string.archive)) },
                                 onClick = {
                                     vm.setMenu(null)
                                     vm.archive(voucher)
                                 },
                             )
                             DropdownMenuItem(
-                                text = { Text("Delete") },
+                                text = { Text(stringResource(R.string.delete)) },
                                 onClick = {
                                     vm.setMenu(null)
                                     vm.requestDelete(voucher)
@@ -297,7 +302,7 @@ private fun SummaryCard(summary: ListSummary, modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.SpaceEvenly,
             ) {
                 Text(
-                    text = "Remaining Balance",
+                    text = stringResource(R.string.remaining_balance),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -318,7 +323,11 @@ private fun SummaryCard(summary: ListSummary, modifier: Modifier = Modifier) {
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = "Across ${summary.linkCount} voucher ${if (summary.linkCount == 1) "link" else "links"}",
+                        text = pluralStringResource(
+                            R.plurals.summary_links,
+                            summary.linkCount,
+                            summary.linkCount,
+                        ),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -352,7 +361,7 @@ private fun SummaryCard(summary: ListSummary, modifier: Modifier = Modifier) {
                 val hidden = summary.categoryTotals.size - 3
                 if (hidden > 0) {
                     Text(
-                        text = "+$hidden more",
+                        text = stringResource(R.string.more_categories, hidden),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

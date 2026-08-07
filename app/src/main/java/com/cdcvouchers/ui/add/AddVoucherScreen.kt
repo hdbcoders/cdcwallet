@@ -22,8 +22,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cdcvouchers.R
 import com.cdcvouchers.addflow.AddVoucherFlow
 
 /**
@@ -63,10 +65,10 @@ fun AddVoucherScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Add a voucher link") },
+                title = { Text(stringResource(R.string.add_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
             )
@@ -80,7 +82,7 @@ fun AddVoucherScreen(
                 value = vm.url,
                 onValueChange = vm::onUrlChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Paste voucher link") },
+                label = { Text(stringResource(R.string.paste_link)) },
                 singleLine = true,
                 enabled = vm.status !is AddUiStatus.Working,
             )
@@ -89,12 +91,12 @@ fun AddVoucherScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = vm.url.isNotBlank() && vm.status !is AddUiStatus.Working,
             ) {
-                Text("Add")
+                Text(stringResource(R.string.add))
             }
             when (val s = vm.status) {
                 is AddUiStatus.Working -> CircularProgressIndicator()
                 is AddUiStatus.Message -> Text(
-                    text = s.text,
+                    text = stringResource(s.resId, *s.formatArgs.toTypedArray()),
                     color = if (s.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 )
                 is AddUiStatus.Idle -> {}

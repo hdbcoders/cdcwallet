@@ -5,10 +5,11 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import androidx.annotation.AnyRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cdcvouchers.R
 import com.cdcvouchers.data.VoucherRepository
-import com.cdcvouchers.data.backup.BackupException
 import com.cdcvouchers.data.backup.BackupFileStore
 import com.cdcvouchers.data.backup.BackupFlow
 import com.cdcvouchers.data.model.VoucherBackupPayload
@@ -36,7 +37,14 @@ data class SettingsUiState(
 )
 
 sealed interface SettingsEvent {
-    data class Snackbar(val message: String) : SettingsEvent
+    /** Localized snackbar: string-resource id (or plurals id when
+     *  [pluralCount] is set) + format args. Resolved by the screen so the
+     *  active app locale is used. */
+    data class Snackbar(
+        @AnyRes val resId: Int,
+        val formatArgs: List<Any> = emptyList(),
+        val pluralCount: Int? = null,
+    ) : SettingsEvent
     data object RequestLegacyPermission : SettingsEvent
 }
 
@@ -83,7 +91,7 @@ class SettingsViewModel(
         if (granted && password != null) {
             exportBackup(password)
         } else {
-            _events.trySend(SettingsEvent.Snackbar("Couldn't save the backup"))
+            _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_save_failed))
         }
     }
 
@@ -91,7 +99,9 @@ class SettingsViewModel(
         viewModelScope.launch {
             val ok = runCatching { backupFlow.export(appContext, password) }.isSuccess
             _events.trySend(
-                SettingsEvent.Snackbar(if (ok) "Backup saved to Downloads" else "Couldn't save the backup"),
+                SettingsEvent.Snackbar(
+                    if (ok) R.string.snackbar_backup_saved else R.string.snackbar_save_failed,
+                ),
             )
         }
     }
@@ -108,7 +118,7 @@ class SettingsViewModel(
                 runCatching { BackupFileStore.open(appContext, uri).readBytes() }.getOrNull()
             }
             if (bytes == null) {
-                _events.trySend(SettingsEvent.Snackbar(BackupException.GENERIC_MESSAGE))
+                _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
             } else {
                 pendingImportBytes = bytes
                 _uiState.update { it.copy(passwordDialogFor = PasswordDialogTarget.IMPORT) }
@@ -125,7 +135,7 @@ class SettingsViewModel(
                 runCatching { backupFlow.decryptBackup(bytes, password) }.getOrNull()
             }
             if (payload == null) {
-                _events.trySend(SettingsEvent.Snackbar(BackupException.GENERIC_MESSAGE))
+                _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
             } else {
                 _uiState.update { it.copy(summaryPayload = payload) }
             }
@@ -143,8 +153,13 @@ class SettingsViewModel(
         when (mode) {
             ImportMode.MERGE -> viewModelScope.launch {
                 val imported = backupFlow.importMerge(payload)
-                val message = if (imported == 1) "1 voucher imported" else "$imported vouchers imported"
-                _events.trySend(SettingsEvent.Snackbar(message))
+                _events.trySend(
+                    SettingsEvent.Snackbar(
+                        R.plurals.snackbar_imported_count,
+                        formatArgs = listOf(imported),
+                        pluralCount = imported,
+                    ),
+                )
             }
             ImportMode.REPLACE -> _uiState.update { it.copy(pendingReplace = payload) }
         }
@@ -157,8 +172,8 @@ class SettingsViewModel(
         _uiState.update { it.copy(pendingReplace = null) }
         viewModelScope.launch {
             runCatching { backupFlow.importReplace(payload) }
-                .onSuccess { _events.trySend(SettingsEvent.Snackbar("Backup imported")) }
-                .onFailure { _events.trySend(SettingsEvent.Snackbar("Couldn't import the backup")) }
+                .onSuccess { _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_backup_imported)) }
+                .onFailure { _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_import_failed)) }
         }
     }
 

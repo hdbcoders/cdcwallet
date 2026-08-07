@@ -1,11 +1,13 @@
 package com.cdcvouchers.ui.detail
 
 import android.webkit.WebView
+import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cdcvouchers.R
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.extraction.ExtractionCoordinator
@@ -44,7 +46,10 @@ class DetailViewModel(
         private set
     var pageProgress by mutableStateOf(100)
         private set
-    var refreshMessage by mutableStateOf<String?>(null)
+
+    /** Non-blocking banner text as a localized resource id (resolved by the
+     *  screen so the active app locale is used). */
+    var refreshMessageRes by mutableStateOf<Int?>(null)
         private set
 
     fun onPageProgressChanged(progress: Int) { pageProgress = progress }
@@ -65,16 +70,16 @@ class DetailViewModel(
             webView = webView,
             onResult = { result ->
                 if (result is ExtractionResult.Failure) {
-                    refreshMessage = when (result.reason) {
+                    refreshMessageRes = when (result.reason) {
                         // Spec 02 §2.7: timeout is treated as a parse error.
                         ExtractionResult.FailureReason.PARSE_ERROR,
-                        ExtractionResult.FailureReason.TIMEOUT -> "Website data failed to parse"
-                        ExtractionResult.FailureReason.NETWORK_ERROR -> "Unable to load website"
+                        ExtractionResult.FailureReason.TIMEOUT -> R.string.detail_parse_error
+                        ExtractionResult.FailureReason.NETWORK_ERROR -> R.string.detail_network_error
                     }
                 }
             },
         )
     }
 
-    fun consumeRefreshMessage() { refreshMessage = null }
+    fun consumeRefreshMessage() { refreshMessageRes = null }
 }

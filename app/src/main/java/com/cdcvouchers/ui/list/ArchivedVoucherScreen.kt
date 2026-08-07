@@ -21,9 +21,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cdcvouchers.R
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.extraction.ExtractionCoordinator
@@ -57,10 +59,10 @@ fun ArchivedVoucherScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Archived") },
+                title = { Text(stringResource(R.string.archived)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
             )
@@ -68,7 +70,7 @@ fun ArchivedVoucherScreen(
     ) { padding ->
         if (sorted.isEmpty()) {
             Text(
-                text = "No archived vouchers yet",
+                text = stringResource(R.string.no_archived),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(padding).padding(16.dp),
             )
@@ -98,21 +100,21 @@ fun ArchivedVoucherScreen(
                         },
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Copy URL") },
+                            text = { Text(stringResource(R.string.copy_url)) },
                             onClick = {
                                 vm.setMenu(null)
                                 clipboardManager.setText(AnnotatedString(voucher.url))
                             },
                         )
                         DropdownMenuItem(
-                            text = { Text("Restore") },
+                            text = { Text(stringResource(R.string.restore)) },
                             onClick = {
                                 vm.setMenu(null)
                                 vm.restore(voucher.id)
                             },
                         )
                         DropdownMenuItem(
-                            text = { Text("Delete") },
+                            text = { Text(stringResource(R.string.delete)) },
                             onClick = {
                                 vm.setMenu(null)
                                 vm.requestDelete(voucher)

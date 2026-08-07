@@ -29,8 +29,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cdcvouchers.R
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.extraction.ExtractionEngine
@@ -86,7 +88,7 @@ fun VoucherWebViewScreen(
                 title = { Text(voucher?.campaignName.orEmpty()) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
             )
@@ -130,8 +132,11 @@ fun VoucherWebViewScreen(
         }
     }
 
-    LaunchedEffect(vm.refreshMessage) {
-        vm.refreshMessage?.let { msg ->
+    // Resolved at composition time so the snackbar text follows the active
+    // app locale; the LaunchedEffect below shows it when it changes.
+    val refreshMessage = vm.refreshMessageRes?.let { stringResource(it) }
+    LaunchedEffect(vm.refreshMessageRes) {
+        refreshMessage?.let { msg ->
             snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Long)
             vm.consumeRefreshMessage()
         }

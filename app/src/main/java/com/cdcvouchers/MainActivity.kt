@@ -1,5 +1,6 @@
 package com.cdcvouchers
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
@@ -54,8 +55,10 @@ import com.cdcvouchers.ui.list.ArchivedVoucherScreen
 import com.cdcvouchers.ui.list.SplashScreen
 import com.cdcvouchers.ui.list.VoucherListScreen
 import com.cdcvouchers.ui.settings.SettingsScreen
+import com.cdcvouchers.ui.theme.AppLanguage
 import com.cdcvouchers.ui.theme.AppTheme
 import com.cdcvouchers.ui.theme.rememberReduceMotion
+import com.cdcvouchers.ui.theme.wrapWithLocale
 
 class MainActivity : ComponentActivity() {
 
@@ -69,6 +72,24 @@ class MainActivity : ComponentActivity() {
     }
 
     private var navControllerRef: NavController? = null
+
+    override fun attachBaseContext(newBase: Context) {
+        // In-app language (LanguageStore): wrap the base context so resource
+        // resolution uses the chosen locale before the activity is created.
+        // SYSTEM (the default) leaves the device locale untouched. Note:
+        // getApplication() is null here (Activity.attach assigns it after
+        // attachBaseContext), so the app is read from the base context.
+        val app = newBase.applicationContext as? VoucherApp
+        val locale = app?.container?.languageStore?.language?.locale
+        super.attachBaseContext(if (locale != null) newBase.wrapWithLocale(locale) else newBase)
+    }
+
+    /** Persists a language change and rebuilds the activity so the new
+     *  locale's resources take effect app-wide. */
+    fun setAppLanguage(language: AppLanguage) {
+        container.languageStore.setAppLanguage(language)
+        recreate()
+    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -129,6 +150,7 @@ class MainActivity : ComponentActivity() {
                     sharedUrl = sharedUrl,
                     isColdStart = savedInstanceState == null,
                     navController = navController,
+                    onLanguageSelected = { language -> setAppLanguage(language) },
                 )
             }
         }
@@ -142,6 +164,7 @@ private fun AppNavHost(
     sharedUrl: String?,
     isColdStart: Boolean,
     navController: NavHostController,
+    onLanguageSelected: (AppLanguage) -> Unit,
 ) {
     if (isColdStart && sharedUrl != null) {
         LaunchedEffect(Unit) {
@@ -253,6 +276,8 @@ private fun AppNavHost(
                 backupFlow = container.backupFlow,
                 repository = container.repository,
                 themeModeStore = container.themeModeStore,
+                languageStore = container.languageStore,
+                onLanguageSelected = onLanguageSelected,
                 onBack = { navController.popBackStack() },
             )
         }

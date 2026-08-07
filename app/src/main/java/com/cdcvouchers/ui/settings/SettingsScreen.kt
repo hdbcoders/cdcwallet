@@ -37,22 +37,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cdcvouchers.R
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.backup.BackupFlow
 import com.cdcvouchers.data.model.VoucherBackupPayload
 import com.cdcvouchers.ui.components.AppDialogSurface
 import com.cdcvouchers.ui.components.DialogButtonRow
+import com.cdcvouchers.ui.theme.AppLanguage
+import com.cdcvouchers.ui.theme.LanguageStore
 import com.cdcvouchers.ui.theme.ThemeMode
 import com.cdcvouchers.ui.theme.ThemeModeStore
 import kotlinx.coroutines.flow.collect
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * Settings screen (spec 06): encrypted backup export to Downloads and import
@@ -68,12 +73,18 @@ fun SettingsScreen(
     backupFlow: BackupFlow,
     repository: VoucherRepository,
     themeModeStore: ThemeModeStore,
+    languageStore: LanguageStore,
+    onLanguageSelected: (AppLanguage) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     backupBytesProvider: (() -> ByteArray?)? = null,
 ) {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    // Snackbar event held in state: the message text is resolved at
+    // composition time via stringResource/pluralStringResource so the active
+    // app locale is always used.
+    var pendingSnackbar by remember { mutableStateOf<SettingsEvent.Snackbar?>(null) }
 
     val vm: SettingsViewModel = viewModel(
         initializer = { SettingsViewModel(backupFlow, repository, context.applicationContext) },
@@ -99,7 +110,7 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         vm.events.collect { event ->
             when (event) {
-                is SettingsEvent.Snackbar -> snackbarHostState.showSnackbar(event.message)
+                is SettingsEvent.Snackbar -> pendingSnackbar = event
                 SettingsEvent.RequestLegacyPermission ->
                     exportPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
@@ -119,10 +130,10 @@ fun SettingsScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
             )
@@ -138,41 +149,75 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = "Appearance",
+                text = stringResource(R.string.appearance),
                 style = MaterialTheme.typography.titleMedium,
             )
             ModeOption(
-                label = "Follow system",
+                label = stringResource(R.string.follow_system),
                 selected = themeModeStore.mode == ThemeMode.SYSTEM,
                 onClick = { themeModeStore.setThemeMode(ThemeMode.SYSTEM) },
             )
             ModeOption(
-                label = "Light",
+                label = stringResource(R.string.theme_light),
                 selected = themeModeStore.mode == ThemeMode.LIGHT,
                 onClick = { themeModeStore.setThemeMode(ThemeMode.LIGHT) },
             )
             ModeOption(
-                label = "Dark",
+                label = stringResource(R.string.theme_dark),
                 selected = themeModeStore.mode == ThemeMode.DARK,
                 onClick = { themeModeStore.setThemeMode(ThemeMode.DARK) },
             )
             Text(
-                text = "How the app looks. Follow system matches your phone's setting.",
+                text = stringResource(R.string.appearance_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = "Backup",
+                text = stringResource(R.string.language),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            ModeOption(
+                label = stringResource(R.string.follow_system),
+                selected = languageStore.language == AppLanguage.SYSTEM,
+                onClick = { onLanguageSelected(AppLanguage.SYSTEM) },
+            )
+            ModeOption(
+                label = stringResource(R.string.language_en),
+                selected = languageStore.language == AppLanguage.EN,
+                onClick = { onLanguageSelected(AppLanguage.EN) },
+            )
+            ModeOption(
+                label = stringResource(R.string.language_zh),
+                selected = languageStore.language == AppLanguage.ZH,
+                onClick = { onLanguageSelected(AppLanguage.ZH) },
+            )
+            ModeOption(
+                label = stringResource(R.string.language_ms),
+                selected = languageStore.language == AppLanguage.MS,
+                onClick = { onLanguageSelected(AppLanguage.MS) },
+            )
+            ModeOption(
+                label = stringResource(R.string.language_ta),
+                selected = languageStore.language == AppLanguage.TA,
+                onClick = { onLanguageSelected(AppLanguage.TA) },
+            )
+            Text(
+                text = stringResource(R.string.language_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(R.string.backup),
                 style = MaterialTheme.typography.titleMedium,
             )
             OutlinedButton(
                 onClick = { vm.openExportDialog() },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Export backup")
+                Text(stringResource(R.string.export_backup))
             }
             Text(
-                text = "Saves an encrypted copy of all your voucher links to Downloads. You'll set a password — remember it, it can't be recovered.",
+                text = stringResource(R.string.export_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -180,20 +225,32 @@ fun SettingsScreen(
                 onClick = { startImport() },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Import backup")
+                Text(stringResource(R.string.import_backup))
             }
             Text(
-                text = "Restores from a backup file you exported before. Nothing is downloaded during import.",
+                text = stringResource(R.string.import_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 
+    pendingSnackbar?.let { event ->
+        val text = if (event.pluralCount != null) {
+            pluralStringResource(event.resId, event.pluralCount, *event.formatArgs.toTypedArray())
+        } else {
+            stringResource(event.resId, *event.formatArgs.toTypedArray())
+        }
+        LaunchedEffect(text) {
+            snackbarHostState.showSnackbar(text)
+            pendingSnackbar = null
+        }
+    }
+
     if (state.exportDialogOpen) {
         BackupPasswordDialog(
             requireConfirmation = true,
-            confirmLabel = "Export",
+            confirmLabel = stringResource(R.string.export),
             onConfirm = { password -> vm.onExportPasswordConfirmed(password) },
             onDismiss = { vm.dismissExportDialog() },
         )
@@ -203,7 +260,7 @@ fun SettingsScreen(
         PasswordDialogTarget.IMPORT -> {
             BackupPasswordDialog(
                 requireConfirmation = false,
-                confirmLabel = "Import",
+                confirmLabel = stringResource(R.string.import_confirm),
                 onConfirm = { password -> vm.onImportPasswordConfirmed(password) },
                 onDismiss = { vm.onImportDialogDismissed() },
             )
@@ -220,11 +277,9 @@ fun SettingsScreen(
         )
     }
 
-    state.pendingReplace?.let { payload ->
-        val message = "Replace all data? This will delete your ${activeCount + archivedCount} " +
-            "currently saved vouchers and replace them with this backup. This can't be undone."
+    if (state.pendingReplace != null) {
         ConfirmReplaceDialog(
-            message = message,
+            count = activeCount + archivedCount,
             onReplace = { vm.onReplaceConfirmed() },
             onCancel = { vm.onReplaceDismissed() },
         )
@@ -244,15 +299,19 @@ private fun BackupPasswordDialog(
 
     AppDialogSurface(onDismissRequest = onDismiss) {
         Text(
-            text = if (requireConfirmation) "Set a backup password" else "Backup password",
+            text = if (requireConfirmation) {
+                stringResource(R.string.set_backup_password)
+            } else {
+                stringResource(R.string.backup_password)
+            },
             style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = if (requireConfirmation) {
-                "This password encrypts the backup file. It is never stored — if you forget it, the backup can't be opened."
+                stringResource(R.string.password_encrypt_desc)
             } else {
-                "Enter the password this backup was exported with."
+                stringResource(R.string.password_enter_desc)
             },
             style = MaterialTheme.typography.bodyMedium,
         )
@@ -260,7 +319,7 @@ private fun BackupPasswordDialog(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Backup password") },
+            label = { Text(stringResource(R.string.backup_password)) },
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
             modifier = Modifier.fillMaxWidth().testTag("backup_password"),
@@ -270,7 +329,7 @@ private fun BackupPasswordDialog(
             OutlinedTextField(
                 value = confirmation,
                 onValueChange = { confirmation = it },
-                label = { Text("Confirm password") },
+                label = { Text(stringResource(R.string.confirm_password)) },
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().testTag("backup_confirm_password"),
@@ -278,7 +337,7 @@ private fun BackupPasswordDialog(
         }
         Spacer(modifier = Modifier.height(24.dp))
         DialogButtonRow(
-            cancelLabel = "Cancel",
+            cancelLabel = stringResource(R.string.cancel),
             onCancel = onDismiss,
             confirmLabel = confirmLabel,
             onConfirm = { onConfirm(password) },
@@ -295,39 +354,49 @@ private fun BackupSummaryDialog(
     onDismiss: () -> Unit,
 ) {
     var mode by remember { mutableStateOf(ImportMode.MERGE) }
+    // Date formatted in the app's active locale (pattern is a per-locale
+    // resource; month names come from the locale itself).
+    val datePattern = stringResource(R.string.date_pattern)
+    val locale = LocalConfiguration.current.locales[0]
     val date = payload.createdAt
         .atZone(ZoneId.systemDefault())
         .toLocalDate()
-        .format(BACKUP_DATE_FORMAT)
+        .format(DateTimeFormatter.ofPattern(datePattern, locale))
     val archived = payload.vouchers.count { it.isArchived }
 
     AppDialogSurface(onDismissRequest = onDismiss) {
         Text(
-            text = "Backup from $date · ${payload.vouchers.size} vouchers ($archived archived). Import this backup?",
+            text = pluralStringResource(
+                R.plurals.backup_summary,
+                payload.vouchers.size,
+                date,
+                payload.vouchers.size,
+                archived,
+            ),
             style = MaterialTheme.typography.titleMedium,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Merge adds only links you don't already have. Replace deletes everything currently saved.",
+            text = stringResource(R.string.merge_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(8.dp))
         ModeOption(
-            label = "Merge with existing data",
+            label = stringResource(R.string.merge),
             selected = mode == ImportMode.MERGE,
             onClick = { mode = ImportMode.MERGE },
         )
         ModeOption(
-            label = "Replace existing data",
+            label = stringResource(R.string.replace),
             selected = mode == ImportMode.REPLACE,
             onClick = { mode = ImportMode.REPLACE },
         )
         Spacer(modifier = Modifier.height(24.dp))
         DialogButtonRow(
-            cancelLabel = "Cancel",
+            cancelLabel = stringResource(R.string.cancel),
             onCancel = onDismiss,
-            confirmLabel = "Import",
+            confirmLabel = stringResource(R.string.import_confirm),
             onConfirm = { onImport(mode) },
         )
     }
@@ -353,25 +422,27 @@ private fun ModeOption(
 
 @Composable
 private fun ConfirmReplaceDialog(
-    message: String,
+    count: Int,
     onReplace: () -> Unit,
     onCancel: () -> Unit,
 ) {
     AppDialogSurface(onDismissRequest = onCancel) {
         Text(
-            text = message,
+            text = stringResource(R.string.replace_all_title),
             style = MaterialTheme.typography.titleMedium,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = pluralStringResource(R.plurals.replace_all_body, count, count),
+            style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(modifier = Modifier.height(24.dp))
         DialogButtonRow(
-            cancelLabel = "Cancel",
+            cancelLabel = stringResource(R.string.cancel),
             onCancel = onCancel,
-            confirmLabel = "Replace",
+            confirmLabel = stringResource(R.string.replace_confirm),
             onConfirm = onReplace,
             destructive = true,
         )
     }
 }
-
-private val BACKUP_DATE_FORMAT: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)

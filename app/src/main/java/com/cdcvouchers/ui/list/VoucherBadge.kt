@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.cdcvouchers.ui.theme.AmberBadgeDark
 import com.cdcvouchers.ui.theme.AmberBadgeLight
@@ -74,6 +76,15 @@ fun VoucherBadge(state: BadgeState, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = contentColor)
-        Text(badgeLabel(state), style = MaterialTheme.typography.labelSmall, color = contentColor)
+        // One label per state (badgeLabel); the days-left variant resolves a
+        // plural form. Same text is what TalkBack announces (spec 04 §4.2).
+        val label = badgeLabel(state)
+        val text = if (label.pluralCount != null) {
+            val count = label.pluralCount.toInt()
+            pluralStringResource(label.resId, count, count)
+        } else {
+            stringResource(label.resId)
+        }
+        Text(text, style = MaterialTheme.typography.labelSmall, color = contentColor)
     }
 }

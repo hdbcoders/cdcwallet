@@ -1,4 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App-wide chrome. The product name stays "CDC Bookmark" in every
+         locale (brand name, not translated). -->
     <string name="app_name">CDC Bookmark</string>
+    <!-- Date pattern for the app's dates ("Expires 12 Mar 2026", backup
+         summary). Localized per locale — e.g. Chinese uses yyyy年M月d日. -->
+    <string name="date_pattern">d MMM yyyy</string>
+    <string name="back">Back</string>
+    <string name="settings">Settings</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="copy_url">Copy URL</string>
+    <string name="undo">Undo</string>
+
+    <!-- Main list (spec 04). -->
+    <string name="add_voucher">Add Voucher</string>
+    <string name="archived">Archived</string>
+    <string name="archive">Archive</string>
+    <string name="restore">Restore</string>
+    <string name="empty_list">No voucher links yet — add one with the + button.</string>
+    <string name="remaining_balance">Remaining Balance</string>
+    <string name="more_categories">+%1$d more</string>
+    <plurals name="archived_count">
+        <item quantity="one">Archived (%1$d)</item>
+        <item quantity="other">Archived (%1$d)</item>
+    </plurals>
+    <plurals name="summary_links">
+        <item quantity="one">Across %1$d voucher link</item>
+        <item quantity="other">Across %1$d voucher links</item>
+    </plurals>
+
+    <!-- Archived screen (spec 05). -->
+    <string name="no_archived">No archived vouchers yet</string>
+
+    <!-- Add flow (spec 03). -->
+    <string name="add_title">Add a voucher link</string>
+    <string name="paste_link">Paste voucher link</string>
+    <string name="add">Add</string>
+    <string name="add_invalid">This doesn\'t look like a RedeemSG voucher link.</string>
+    <string name="add_duplicate">This link is already in your list.</string>
+    <string name="add_added">Added — %1$s</string>
+    <string name="add_added_unverified">Added — couldn\'t verify it yet; tap the entry to check later.</string>
+
+    <!-- Detail / WebView screen. -->
+    <string name="detail_parse_error">Website data failed to parse</string>
+    <string name="detail_network_error">Unable to load website</string>
+
+    <!-- Delete confirmation dialog (spec 05 §5.3). -->
+    <string name="delete_title">Delete this voucher link?</string>
+    <string name="delete_body">You may not be able to get this link back once it\'s deleted.</string>
+
+    <!-- Voucher row (spec 04). -->
+    <string name="expires">Expires %1$s</string>
+    <string name="more_options">More options for %1$s</string>
+    <string name="expired_footer">This voucher link has expired</string>
+    <string name="zero_remaining">%1$s remaining</string>
+    <string name="no_balance_footer">This voucher link has no remaining balance.</string>
+
+    <!-- Badges (spec 04 §4.2) — one label per state. -->
+    <string name="badge_no_expiry">No expiry date</string>
+    <string name="badge_expired">Expired</string>
+    <string name="badge_fully_used">Fully used</string>
+    <string name="badge_not_started">Not started</string>
+    <string name="badge_unverified">Couldn\'t verify, tap to check</string>
+    <plurals name="badge_days_left">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
+    </plurals>
+
+    <!-- Settings: appearance. -->
+    <string name="appearance">Appearance</string>
+    <string name="follow_system">Follow system</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="appearance_desc">How the app looks. Follow system matches your phone\'s setting.</string>
+
+    <!-- Settings: language. -->
+    <string name="language">Language</string>
+    <string name="language_desc">The language the app shows. Follow system matches your phone\'s setting.</string>
+    <!-- Language names are shown in their own script in every locale. -->
+    <string name="language_en">English</string>
+    <string name="language_zh">中文</string>
+    <string name="language_ms">Bahasa Melayu</string>
+    <string name="language_ta">தமிழ்</string>
+
+    <!-- Settings: backup (spec 06). -->
+    <string name="backup">Backup</string>
+    <string name="export_backup">Export backup</string>
+    <string name="export_desc">Saves an encrypted copy of all your voucher links to Downloads. You\'ll set a password — remember it, it can\'t be recovered.</string>
+    <string name="import_backup">Import backup</string>
+    <string name="import_desc">Restores from a backup file you exported before. Nothing is downloaded during import.</string>
+    <string name="export">Export</string>
+    <string name="import_confirm">Import</string>
+    <string name="replace_all_title">Replace all data?</string>
+    <plurals name="replace_all_body">
+        <item quantity="one">This will delete your %1$d currently saved voucher and replace them with this backup. This can\'t be undone.</item>
+        <item quantity="other">This will delete your %1$d currently saved vouchers and replace them with this backup. This can\'t be undone.</item>
+    </plurals>
+    <string name="set_backup_password">Set a backup password</string>
+    <string name="backup_password">Backup password</string>
+    <string name="password_encrypt_desc">This password encrypts the backup file. It is never stored — if you forget it, the backup can\'t be opened.</string>
+    <string name="password_enter_desc">Enter the password this backup was exported with.</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="merge_desc">Merge adds only links you don\'t already have. Replace deletes everything currently saved.</string>
+    <string name="merge">Merge with existing data</string>
+    <string name="replace">Replace existing data</string>
+    <string name="replace_confirm">Replace</string>
+    <plurals name="backup_summary">
+        <item quantity="one">Backup from %1$s · %2$d voucher (%3$d archived). Import this backup?</item>
+        <item quantity="other">Backup from %1$s · %2$d vouchers (%3$d archived). Import this backup?</item>
+    </plurals>
+    <plurals name="snackbar_imported_count">
+        <item quantity="one">%1$d voucher imported</item>
+        <item quantity="other">%1$d vouchers imported</item>
+    </plurals>
+    <string name="snackbar_backup_saved">Backup saved to Downloads</string>
+    <string name="snackbar_save_failed">Couldn\'t save the backup</string>
+    <string name="snackbar_backup_imported">Backup imported</string>
+    <string name="snackbar_import_failed">Couldn\'t import the backup</string>
+    <!-- Same generic copy as BackupException.GENERIC_MESSAGE (never distinguish
+         wrong password / corruption / bad version in the UI). -->
+    <string name="backup_generic_error">Couldn\'t open this backup. Check your password and try again.</string>
 </resources>

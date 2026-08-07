@@ -25,6 +25,7 @@ import com.cdcvouchers.data.model.ValidityStatus
 import com.cdcvouchers.data.model.VoucherBackupPayload
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.ui.settings.SettingsScreen
+import com.cdcvouchers.ui.theme.LanguageStore
 import com.cdcvouchers.ui.theme.ThemeModeStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -111,6 +112,8 @@ class VoucherBackupFlowInstrumentedTest {
                     backupFlow = flow,
                     repository = repository,
                     themeModeStore = ThemeModeStore(appContext),
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
                     onBack = {},
                     backupBytesProvider = bytesProvider,
                 )
@@ -295,10 +298,13 @@ class VoucherBackupFlowInstrumentedTest {
         composeRule.onNodeWithText("Replace existing data").performClick()
         composeRule.onNodeWithText("Import").performClick()
 
-        // Exact copy, own confirmation, before anything is wiped.
-        val message = "Replace all data? This will delete your 1 currently saved " +
-            "vouchers and replace them with this backup. This can't be undone."
-        composeRule.onNodeWithText(message).assertIsDisplayed()
+        // Exact copy, own confirmation, before anything is wiped. The dialog
+        // is title + body; the count resolves the singular plural form.
+        composeRule.onNodeWithText("Replace all data?").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "This will delete your 1 currently saved voucher and replace them " +
+                "with this backup. This can't be undone.",
+        ).assertIsDisplayed()
         composeRule.onNodeWithText("Cancel").assertIsDisplayed()
 
         // Cancel: nothing wiped.

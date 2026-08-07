@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Bahasa Melayu. Nama jenama "CDC Bookmark" tidak diterjemah. -->
+    <string name="app_name">CDC Bookmark</string>
+    <string name="date_pattern">d MMM yyyy</string>
+    <string name="back">Kembali</string>
+    <string name="settings">Tetapan</string>
+    <string name="cancel">Batal</string>
+    <string name="delete">Padam</string>
+    <string name="copy_url">Salin URL</string>
+    <string name="undo">Buat asal</string>
+
+    <string name="add_voucher">Tambah Baucar</string>
+    <string name="archived">Diarkibkan</string>
+    <string name="archive">Arkib</string>
+    <string name="restore">Pulihkan</string>
+    <string name="empty_list">Belum ada pautan baucar — tambah dengan butang +.</string>
+    <string name="remaining_balance">Baki Tertinggal</string>
+    <string name="more_categories">+%1$d lagi</string>
+    <plurals name="archived_count">
+        <item quantity="one">Diarkibkan (%1$d)</item>
+        <item quantity="other">Diarkibkan (%1$d)</item>
+    </plurals>
+    <plurals name="summary_links">
+        <item quantity="one">Merentas %1$d pautan baucar</item>
+        <item quantity="other">Merentas %1$d pautan baucar</item>
+    </plurals>
+
+    <string name="no_archived">Belum ada baucar diarkibkan</string>
+
+    <string name="add_title">Tambah pautan baucar</string>
+    <string name="paste_link">Tampal pautan baucar</string>
+    <string name="add">Tambah</string>
+    <string name="add_invalid">Ini bukan pautan baucar RedeemSG.</string>
+    <string name="add_duplicate">Pautan ini sudah ada dalam senarai anda.</string>
+    <string name="add_added">Ditambah — %1$s</string>
+    <string name="add_added_unverified">Ditambah — belum dapat disahkan; ketik untuk semak kemudian.</string>
+
+    <string name="detail_parse_error">Data laman web gagal diproses</string>
+    <string name="detail_network_error">Tidak dapat memuatkan laman web</string>
+
+    <string name="delete_title">Padam pautan baucar ini?</string>
+    <string name="delete_body">Anda mungkin tidak dapat mendapatkan semula pautan ini selepas dipadam.</string>
+
+    <string name="expires">Luput %1$s</string>
+    <string name="more_options">Lebih banyak pilihan untuk %1$s</string>
+    <string name="expired_footer">Pautan baucar ini telah luput</string>
+    <string name="zero_remaining">%1$s baki</string>
+    <string name="no_balance_footer">Pautan baucar ini tiada baki tertinggal.</string>
+
+    <string name="badge_no_expiry">Tiada tarikh luput</string>
+    <string name="badge_expired">Telah luput</string>
+    <string name="badge_fully_used">Habis digunakan</string>
+    <string name="badge_not_started">Belum bermula</string>
+    <string name="badge_unverified">Tidak dapat disahkan, ketik untuk semak</string>
+    <plurals name="badge_days_left">
+        <item quantity="one">%1$d hari lagi</item>
+        <item quantity="other">%1$d hari lagi</item>
+    </plurals>
+
+    <string name="appearance">Penampilan</string>
+    <string name="follow_system">Ikut sistem</string>
+    <string name="theme_light">Cerah</string>
+    <string name="theme_dark">Gelap</string>
+    <string name="appearance_desc">Rupa aplikasi. Ikut sistem memadankan tetapan telefon anda.</string>
+
+    <string name="language">Bahasa</string>
+    <string name="language_desc">Bahasa yang ditunjukkan aplikasi. Ikut sistem memadankan tetapan telefon anda.</string>
+    <!-- Nama bahasa sentiasa dalam skrip masing-masing. -->
+    <string name="language_en">English</string>
+    <string name="language_zh">中文</string>
+    <string name="language_ms">Bahasa Melayu</string>
+    <string name="language_ta">தமிழ்</string>
+
+    <string name="backup">Sandaran</string>
+    <string name="export_backup">Eksport sandaran</string>
+    <string name="export_desc">Menyimpan salinan disulitkan semua pautan baucar anda ke Muat Turun. Anda akan menetapkan kata laluan — ingatlah, ia tidak dapat dipulihkan.</string>
+    <string name="import_backup">Import sandaran</string>
+    <string name="import_desc">Memulihkan daripada fail sandaran yang anda eksport sebelum ini. Tiada apa-apa dimuat turun semasa import.</string>
+    <string name="export">Eksport</string>
+    <string name="import_confirm">Import</string>
+    <string name="replace_all_title">Ganti semua data?</string>
+    <plurals name="replace_all_body">
+        <item quantity="one">Ini akan memadam %1$d baucar yang disimpan dan menggantikannya dengan sandaran ini. Ini tidak boleh dibatalkan.</item>
+        <item quantity="other">Ini akan memadam %1$d baucar yang disimpan dan menggantikannya dengan sandaran ini. Ini tidak boleh dibatalkan.</item>
+    </plurals>
+    <string name="set_backup_password">Tetapkan kata laluan sandaran</string>
+    <string name="backup_password">Kata laluan sandaran</string>
+    <string name="password_encrypt_desc">Kata laluan ini menyulitkan fail sandaran. Ia tidak pernah disimpan — jika anda melupakannya, sandaran tidak boleh dibuka.</string>
+    <string name="password_enter_desc">Masukkan kata laluan yang digunakan untuk mengeksport sandaran ini.</string>
+    <string name="confirm_password">Sahkan kata laluan</string>
+    <string name="merge_desc">Gabung hanya menambah pautan yang belum anda ada. Ganti memadam semua yang disimpan sekarang.</string>
+    <string name="merge">Gabung dengan data sedia ada</string>
+    <string name="replace">Ganti data sedia ada</string>
+    <string name="replace_confirm">Ganti</string>
+    <plurals name="backup_summary">
+        <item quantity="one">Sandaran daripada %1$s · %2$d baucar (%3$d diarkibkan). Import sandaran ini?</item>
+        <item quantity="other">Sandaran daripada %1$s · %2$d baucar (%3$d diarkibkan). Import sandaran ini?</item>
+    </plurals>
+    <plurals name="snackbar_imported_count">
+        <item quantity="one">%1$d baucar diimport</item>
+        <item quantity="other">%1$d baucar diimport</item>
+    </plurals>
+    <string name="snackbar_backup_saved">Sandaran disimpan ke Muat Turun</string>
+    <string name="snackbar_save_failed">Tidak dapat menyimpan sandaran</string>
+    <string name="snackbar_backup_imported">Sandaran diimport</string>
+    <string name="snackbar_import_failed">Tidak dapat mengimport sandaran</string>
+    <string name="backup_generic_error">Tidak dapat membuka sandaran ini. Semak kata laluan anda dan cuba lagi.</string>
+</resources>
