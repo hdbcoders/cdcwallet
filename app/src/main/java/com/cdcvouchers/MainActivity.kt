@@ -6,7 +6,6 @@ import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.Crossfade
@@ -118,15 +117,6 @@ class MainActivity : ComponentActivity() {
             }
         }
         super.onCreate(savedInstanceState)
-        // §0.4 security bar: keep the app out of screenshots/recents previews.
-        // Debug builds only — release builds always set FLAG_SECURE. Relaxed in
-        // debug so development/testing can capture screenshots.
-        if (!BuildConfig.DEBUG) {
-            window.setFlags(
-                WindowManager.LayoutParams.FLAG_SECURE,
-                WindowManager.LayoutParams.FLAG_SECURE,
-            )
-        }
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val sharedUrl = intent?.getStringExtra(Intent.EXTRA_TEXT)
         setContent {
