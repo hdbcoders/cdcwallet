@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -143,7 +146,16 @@ fun VoucherListScreen(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 6.dp, bottom = 26.dp),
+                // The window is edge-to-edge on every API level, so the list
+                // must clear the navigation bar itself (the M3 TopAppBar
+                // already handles the status bar via its windowInsets).
+                contentPadding = PaddingValues(
+                    start = 18.dp,
+                    end = 18.dp,
+                    top = 6.dp,
+                    bottom = 26.dp +
+                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
+                ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (sorted.isEmpty()) {
@@ -225,7 +237,10 @@ fun VoucherListScreen(
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 12.dp),
+                .padding(
+                    bottom = 12.dp +
+                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
+                ),
         )
     }
 
