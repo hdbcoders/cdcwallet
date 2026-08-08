@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Translate
@@ -106,6 +107,7 @@ fun VoucherListScreen(
     onOpenVoucher: (VoucherGroup) -> Unit,
     onArchivedClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onAboutClick: () -> Unit,
     languageStore: LanguageStore,
     onLanguageSelected: (AppLanguage) -> Unit,
     modifier: Modifier = Modifier,
@@ -176,7 +178,7 @@ fun VoucherListScreen(
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
-                ModalDrawerSheet {
+                ModalDrawerSheet(modifier = Modifier.width(280.dp)) {
                     Text(
                         text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.titleLarge,
@@ -190,6 +192,15 @@ fun VoucherListScreen(
                         onClick = {
                             scope.launch { drawerState.close() }
                             onSettingsClick()
+                        },
+                    )
+                    NavigationDrawerItem(
+                        label = { Text(stringResource(R.string.about_app)) },
+                        icon = { Icon(Icons.Filled.Info, contentDescription = null) },
+                        selected = false,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            onAboutClick()
                         },
                     )
                 }

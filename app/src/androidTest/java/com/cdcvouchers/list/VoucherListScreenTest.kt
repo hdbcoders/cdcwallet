@@ -30,6 +30,7 @@ import kotlinx.coroutines.runBlocking
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -131,7 +132,7 @@ class VoucherListScreenTest {
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
                     onAddClick = {},
                     onOpenVoucher = {},
-                    onArchivedClick = {}, onSettingsClick = {},
+                    onArchivedClick = {}, onSettingsClick = {}, onAboutClick = {},
                     languageStore = LanguageStore(appContext),
                     onLanguageSelected = {},
                 )
@@ -194,7 +195,7 @@ class VoucherListScreenTest {
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
                     onAddClick = {},
                     onOpenVoucher = {},
-                    onArchivedClick = {}, onSettingsClick = {},
+                    onArchivedClick = {}, onSettingsClick = {}, onAboutClick = {},
                     languageStore = LanguageStore(appContext),
                     onLanguageSelected = {},
                 )
@@ -229,7 +230,7 @@ class VoucherListScreenTest {
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
                     onAddClick = {},
                     onOpenVoucher = { openedId = it.id },
-                    onArchivedClick = {}, onSettingsClick = {},
+                    onArchivedClick = {}, onSettingsClick = {}, onAboutClick = {},
                     languageStore = LanguageStore(appContext),
                     onLanguageSelected = {},
                 )
@@ -256,7 +257,7 @@ class VoucherListScreenTest {
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
                     onAddClick = {},
                     onOpenVoucher = {},
-                    onArchivedClick = {}, onSettingsClick = {},
+                    onArchivedClick = {}, onSettingsClick = {}, onAboutClick = {},
                     languageStore = LanguageStore(appContext),
                     onLanguageSelected = {},
                 )
@@ -267,9 +268,10 @@ class VoucherListScreenTest {
     }
 
     @Test
-    fun hamburgerOpensDrawerWithSettingsEntry() {
+    fun hamburgerOpensDrawerWithSettingsAndAboutEntries() {
         val repository = RoomVoucherRepository(database)
         var settingsClicked = false
+        var aboutClicked = false
         composeRule.setContent {
             MaterialTheme {
                 VoucherListScreen(
@@ -279,18 +281,21 @@ class VoucherListScreenTest {
                     onOpenVoucher = {},
                     onArchivedClick = {},
                     onSettingsClick = { settingsClicked = true },
+                    onAboutClick = { aboutClicked = true },
                     languageStore = LanguageStore(appContext),
                     onLanguageSelected = {},
                 )
             }
         }
         // The hamburger (top-left) opens the navigation drawer; the gear is
-        // no longer in the top bar — Settings lives in the drawer.
+        // no longer in the top bar — Settings and About App live in the drawer.
         composeRule.onNodeWithContentDescription("Menu").performClick()
         composeRule.onNodeWithText("Settings").assertIsDisplayed()
-        composeRule.onNodeWithText("Settings").performClick()
+        composeRule.onNodeWithText("About App").assertIsDisplayed()
+        composeRule.onNodeWithText("About App").performClick()
         composeRule.waitForIdle()
-        assertTrue(settingsClicked)
+        assertTrue(aboutClicked)
+        assertFalse(settingsClicked)
     }
 
     private fun assertTopToBottomOrder(vararg texts: String) {

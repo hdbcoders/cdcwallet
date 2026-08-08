@@ -100,7 +100,7 @@ class LanguageSettingsInstrumentedTest {
                     onAddClick = {},
                     onOpenVoucher = {},
                     onArchivedClick = {},
-                    onSettingsClick = {},
+                    onSettingsClick = {}, onAboutClick = {},
                     languageStore = languageStore,
                     onLanguageSelected = { languageStore.setAppLanguage(it) },
                 )

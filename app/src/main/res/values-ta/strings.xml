@@ -6,6 +6,8 @@
     <string name="date_pattern">d MMM yyyy</string>
     <string name="back">பின்</string>
     <string name="settings">அமைப்புகள்</string>
+    <string name="about_app">பயன்பாட்டைப் பற்றி</string>
+    <string name="about_placeholder">மேலும் தகவல் எதிர்காலத்தில் இங்கு கிடைக்கும்.</string>
     <string name="cancel">ரத்து</string>
     <string name="delete">நீக்கு</string>
     <string name="copy_url">URL நகலெடு</string>

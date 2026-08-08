@@ -6,6 +6,8 @@
     <string name="date_pattern">d MMM yyyy</string>
     <string name="back">Kembali</string>
     <string name="settings">Tetapan</string>
+    <string name="about_app">Tentang Apl</string>
+    <string name="about_placeholder">Maklumat lanjut akan tersedia di sini pada masa hadapan.</string>
     <string name="cancel">Batal</string>
     <string name="delete">Padam</string>
     <string name="copy_url">Salin URL</string>

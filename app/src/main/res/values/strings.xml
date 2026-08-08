@@ -9,6 +9,8 @@
     <string name="date_pattern">d MMM yyyy</string>
     <string name="back">Back</string>
     <string name="settings">Settings</string>
+    <string name="about_app">About App</string>
+    <string name="about_placeholder">More information will be available here in the future.</string>
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
     <string name="copy_url">Copy URL</string>

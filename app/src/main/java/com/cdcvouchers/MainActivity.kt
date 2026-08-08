@@ -52,6 +52,7 @@ import com.cdcvouchers.ui.detail.VoucherWebViewScreen
 import com.cdcvouchers.ui.list.ArchivedVoucherScreen
 import com.cdcvouchers.ui.list.SplashScreen
 import com.cdcvouchers.ui.list.VoucherListScreen
+import com.cdcvouchers.ui.settings.AboutScreen
 import com.cdcvouchers.ui.settings.SettingsScreen
 import com.cdcvouchers.ui.theme.AppLanguage
 import com.cdcvouchers.ui.theme.AppTheme
@@ -198,6 +199,7 @@ private fun AppNavHost(
                     },
                     onArchivedClick = { navController.navigate("archived") },
                     onSettingsClick = { navController.navigate("settings") },
+                    onAboutClick = { navController.navigate("about") },
                     languageStore = container.languageStore,
                     onLanguageSelected = onLanguageSelected,
                 )
@@ -237,6 +239,7 @@ private fun AppNavHost(
                             },
                             onArchivedClick = { navController.navigate("archived") },
                             onSettingsClick = { navController.navigate("settings") },
+                    onAboutClick = { navController.navigate("about") },
                             languageStore = container.languageStore,
                             onLanguageSelected = onLanguageSelected,
                         )
@@ -273,6 +276,17 @@ private fun AppNavHost(
                 backupFlow = container.backupFlow,
                 repository = container.repository,
                 themeModeStore = container.themeModeStore,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = "about",
+            enterTransition = { layerEnter(reduceMotion) },
+            exitTransition = { layerExit(reduceMotion) },
+            popEnterTransition = { layerPopEnter(reduceMotion) },
+            popExitTransition = { layerPopExit(reduceMotion) },
+        ) {
+            AboutScreen(
                 onBack = { navController.popBackStack() },
             )
         }

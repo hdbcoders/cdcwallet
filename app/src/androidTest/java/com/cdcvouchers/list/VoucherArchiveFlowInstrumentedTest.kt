@@ -126,7 +126,7 @@ class VoucherArchiveFlowInstrumentedTest {
                     extractionCoordinator = coordinator(repository),
                     onAddClick = {},
                     onOpenVoucher = onOpenVoucher,
-                    onArchivedClick = {}, onSettingsClick = {},
+                    onArchivedClick = {}, onSettingsClick = {}, onAboutClick = {},
                     languageStore = LanguageStore(appContext),
                     onLanguageSelected = {},
                 )
