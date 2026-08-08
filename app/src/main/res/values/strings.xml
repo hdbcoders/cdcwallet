@@ -33,6 +33,11 @@
         <item quantity="one">Across %1$d voucher link</item>
         <item quantity="other">Across %1$d voucher links</item>
     </plurals>
+    <!-- Balance hero meta (redesign): plain count, no "Across" prefix. -->
+    <plurals name="hero_links">
+        <item quantity="one">%1$d voucher link</item>
+        <item quantity="other">%1$d voucher links</item>
+    </plurals>
 
     <!-- Archived screen (spec 05). -->
     <string name="no_archived">No archived vouchers yet</string>
@@ -58,8 +63,7 @@
     <string name="expires">Expires %1$s</string>
     <string name="more_options">More options for %1$s</string>
     <string name="expired_footer">This voucher link has expired</string>
-    <string name="zero_remaining">%1$s remaining</string>
-    <string name="no_balance_footer">This voucher link has no remaining balance.</string>
+    <string name="no_balance_banner">This voucher link has no more balance</string>
 
     <!-- Badges (spec 04 §4.2) — one label per state. -->
     <string name="badge_no_expiry">No expiry date</string>

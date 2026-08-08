@@ -145,11 +145,17 @@ fun summarizeActive(vouchers: List<VoucherGroup>): ListSummary {
     )
 }
 
-fun formatSgd(value: BigDecimal): String =
+fun formatSgd(value: BigDecimal): String {
     // Currency is implicitly Singapore dollars throughout the app. Strip
     // trailing zeros so whole-dollar amounts read "$50" (not "$50.00"), while
-    // fractional cents like "$25.50" keep their decimals.
-    "$" + value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()
+    // fractional cents like "$25.50" keep their decimals. Group thousands on
+    // the integer part only ("$1,030", "$1,030.5") to match the mockup's
+    // hero amount.
+    val plain = value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()
+    val parts = plain.split(".", limit = 2)
+    val groupedInt = parts[0].replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")
+    return "$" + if (parts.size == 2) "$groupedInt.${parts[1]}" else groupedInt
+}
 
 fun summaryHeadline(summary: ListSummary): String =
     "${formatSgd(summary.total)} remaining across ${summary.linkCount} " +

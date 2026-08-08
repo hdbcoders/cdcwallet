@@ -29,6 +29,10 @@
         <item quantity="one">共 %1$d 个礼券链接</item>
         <item quantity="other">共 %1$d 个礼券链接</item>
     </plurals>
+    <plurals name="hero_links">
+        <item quantity="one">%1$d 个礼券链接</item>
+        <item quantity="other">%1$d 个礼券链接</item>
+    </plurals>
 
     <string name="no_archived">暂无已存档礼券</string>
 
@@ -49,8 +53,7 @@
     <string name="expires">有效期至 %1$s</string>
     <string name="more_options">%1$s 的更多选项</string>
     <string name="expired_footer">此礼券链接已过期</string>
-    <string name="zero_remaining">剩余 %1$s</string>
-    <string name="no_balance_footer">此礼券链接已无剩余金额。</string>
+    <string name="no_balance_banner">此礼券链接已没有更多余额</string>
 
     <string name="badge_no_expiry">无到期日期</string>
     <string name="badge_expired">已过期</string>

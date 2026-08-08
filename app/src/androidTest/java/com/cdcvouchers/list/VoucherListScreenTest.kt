@@ -140,26 +140,28 @@ class VoucherListScreenTest {
         }
 
         // Spec 04 §4.1: UNVERIFIED pinned above everyone else; rest by soonest expiry.
-        // The taller redesigned cards leave the last row below the fold, so the
-        // position-order check covers the initially-visible rows and the last
-        // row is asserted after scrolling.
+        // The taller redesigned cards leave later rows below the fold, so the
+        // position-order check covers the initially-visible rows and later rows
+        // are asserted after scrolling.
         assertTopToBottomOrder(
             "u.html",
             "Link Expired",
             "Link Not Started",
-            "Link Ten",
         )
 
-        // Spec 04 §4.2: all four badge states render distinctly.
+        // Spec 04 §4.2: badge states render distinctly (Unverified / Expired /
+        // Not started are visible up top; Link Ten's days-left is asserted
+        // after scrolling to it below).
         composeRule.onNodeWithText("Couldn't verify, tap to check").assertIsDisplayed()
         composeRule.onNodeWithText("Expired").assertIsDisplayed()
         composeRule.onNodeWithText("Not started").assertIsDisplayed()
-        composeRule.onNodeWithText("10 days left").assertIsDisplayed()
 
         // Spec 04 §4.3: total excludes the UNVERIFIED entry from value and count.
-        composeRule.onNodeWithText("Remaining Balance").assertIsDisplayed()
-        composeRule.onNodeWithText("$92.5").assertIsDisplayed()
-        composeRule.onNodeWithText("Across 4 voucher links").assertIsDisplayed()
+        // The hero renders the eyebrow in uppercase and splits "$" from the
+        // amount into separate Text nodes (mockup), so assert per-node.
+        composeRule.onNodeWithText("REMAINING BALANCE").assertIsDisplayed()
+        composeRule.onNodeWithText("92.5").assertIsDisplayed()
+        composeRule.onNodeWithText("4 voucher links").assertIsDisplayed()
         // Category breakdown rows (top 3 by value) render in the right column.
         // Use onFirst() because category names also appear on voucher cards.
         for (part in listOf(
@@ -169,6 +171,11 @@ class VoucherListScreenTest {
         )) {
             composeRule.onAllNodesWithText(part, substring = true).onFirst().assertIsDisplayed()
         }
+
+        // Link Ten (4th row) may sit below the fold; scroll it into view.
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Link Ten"))
+        composeRule.onNodeWithText("Link Ten").assertIsDisplayed()
+        composeRule.onNodeWithText("10 days left").assertIsDisplayed()
 
         // Last row (Link Forty) sits below the fold; scroll it into view.
         composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Link Forty"))
@@ -265,6 +272,31 @@ class VoucherListScreenTest {
         }
         composeRule.onNodeWithText("No voucher links yet — add one with the + button.")
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun addVoucherRowTriggersAddClick() {
+        val repository = RoomVoucherRepository(database)
+        var addClicked = false
+        composeRule.setContent {
+            MaterialTheme {
+                VoucherListScreen(
+                    repository = repository,
+                    extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
+                    onAddClick = { addClicked = true },
+                    onOpenVoucher = {},
+                    onArchivedClick = {}, onSettingsClick = {}, onAboutClick = {},
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
+                )
+            }
+        }
+        // The redesign's dashed "Add Voucher" row replaces the FAB: tapping it
+        // must route to the add flow (regression guard — the row previously
+        // rendered without a clickable).
+        composeRule.onNodeWithText("Add Voucher").performScrollTo().performClick()
+        composeRule.waitForIdle()
+        assertTrue(addClicked)
     }
 
     @Test

@@ -444,4 +444,12 @@ class VoucherListLogicTest {
         assertEquals("$100", formatSgd(BigDecimal("100")))
         assertEquals("$0.5", formatSgd(BigDecimal("0.50")))
     }
+
+    @Test
+    fun formatSgdGroupsThousandsOnIntegerPartOnly() {
+        assertEquals("$1,030", formatSgd(BigDecimal("1030")))
+        assertEquals("$1,030.5", formatSgd(BigDecimal("1030.5")))
+        assertEquals("$12,345.67", formatSgd(BigDecimal("12345.67")))
+        assertEquals("$1,000,000", formatSgd(BigDecimal("1000000")))
+    }
 }

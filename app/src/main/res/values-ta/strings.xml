@@ -29,6 +29,10 @@
         <item quantity="one">மொத்தம் %1$d வவுச்சர் இணைப்பு</item>
         <item quantity="other">மொத்தம் %1$d வவுச்சர் இணைப்புகள்</item>
     </plurals>
+    <plurals name="hero_links">
+        <item quantity="one">%1$d வவுச்சர் இணைப்பு</item>
+        <item quantity="other">%1$d வவுச்சர் இணைப்புகள்</item>
+    </plurals>
 
     <string name="no_archived">இன்னும் காப்பகப்படுத்தப்பட்ட வவுச்சர்கள் இல்லை</string>
 
@@ -49,8 +53,7 @@
     <string name="expires">%1$s அன்று காலாவதியாகிறது</string>
     <string name="more_options">%1$sக்கான மேலும் விருப்பங்கள்</string>
     <string name="expired_footer">இந்த வவுச்சர் இணைப்பு காலாவதியாகிவிட்டது</string>
-    <string name="zero_remaining">%1$s மீதம்</string>
-    <string name="no_balance_footer">இந்த வவுச்சர் இணைப்பில் மீதி இருப்பு இல்லை.</string>
+    <string name="no_balance_banner">இந்த வவுச்சர் இணைப்பில் மேலும் இருப்பு இல்லை</string>
 
     <string name="badge_no_expiry">காலாவதி தேதி இல்லை</string>
     <string name="badge_expired">காலாவதியானது</string>

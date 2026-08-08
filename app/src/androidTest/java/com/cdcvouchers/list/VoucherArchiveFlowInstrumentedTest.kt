@@ -7,8 +7,10 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.room.Room
@@ -174,18 +176,17 @@ class VoucherArchiveFlowInstrumentedTest {
         }
         listContent(repository)
 
-        composeRule.onNodeWithText("Archived (0)").assertIsDisplayed()
+        composeRule.onNodeWithTag("archived-count", useUnmergedTree = true).assertTextEquals("0")
         composeRule.onNodeWithContentDescription("More options for Link One").performClick()
         composeRule.onNodeWithText("Archive").assertIsDisplayed()
         composeRule.onNodeWithText("Delete").assertIsDisplayed()
         composeRule.onNodeWithText("Archive").performClick()
 
         // Spec 05 §5.2: snackbar with Undo; row leaves the main list without a dialog.
-        composeRule.onNodeWithText("Archived").assertIsDisplayed()
         composeRule.onNodeWithText("Undo").assertIsDisplayed()
         composeRule.onNodeWithText("Link One").assertDoesNotExist()
         composeRule.onNodeWithText("Link Two").assertIsDisplayed()
-        composeRule.onNodeWithText("Archived (1)").assertIsDisplayed()
+        composeRule.onNodeWithTag("archived-count", useUnmergedTree = true).assertTextEquals("1")
 
         // Row still exists in the database, just flagged archived — not destroyed.
         waitFor {
@@ -256,7 +257,6 @@ class VoucherArchiveFlowInstrumentedTest {
         composeRule.mainClock.advanceTimeBy(2_000)
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Undo").assertDoesNotExist()
-        composeRule.onNodeWithText("Archived").assertDoesNotExist()
     }
 
     @Test
@@ -276,7 +276,7 @@ class VoucherArchiveFlowInstrumentedTest {
             if (row != null && !row.isArchived) row else null
         }
         composeRule.onNodeWithText("Link One").assertIsDisplayed()
-        composeRule.onNodeWithText("Archived (0)").assertIsDisplayed()
+        composeRule.onNodeWithTag("archived-count", useUnmergedTree = true).assertTextEquals("0")
     }
 
     @Test

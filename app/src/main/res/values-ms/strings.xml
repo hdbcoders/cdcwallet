@@ -29,6 +29,10 @@
         <item quantity="one">Merentas %1$d pautan baucar</item>
         <item quantity="other">Merentas %1$d pautan baucar</item>
     </plurals>
+    <plurals name="hero_links">
+        <item quantity="one">%1$d pautan baucar</item>
+        <item quantity="other">%1$d pautan baucar</item>
+    </plurals>
 
     <string name="no_archived">Belum ada baucar diarkibkan</string>
 
@@ -49,8 +53,7 @@
     <string name="expires">Luput %1$s</string>
     <string name="more_options">Lebih banyak pilihan untuk %1$s</string>
     <string name="expired_footer">Pautan baucar ini telah luput</string>
-    <string name="zero_remaining">%1$s baki</string>
-    <string name="no_balance_footer">Pautan baucar ini tiada baki tertinggal.</string>
+    <string name="no_balance_banner">Pautan baucar ini tiada baki lagi</string>
 
     <string name="badge_no_expiry">Tiada tarikh luput</string>
     <string name="badge_expired">Telah luput</string>

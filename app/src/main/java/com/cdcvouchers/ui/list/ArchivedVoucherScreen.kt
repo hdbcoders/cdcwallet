@@ -31,15 +31,16 @@ import com.cdcvouchers.R
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.extraction.ExtractionCoordinator
+import com.cdcvouchers.ui.components.TicketCard
 import com.cdcvouchers.ui.theme.rememberReduceMotion
 
 /**
- * Archived screen (spec 05 §5.4): same row layout and overflow pattern as the
- * main list, with Restore/Delete instead of Archive/Delete, and tap-to-open
- * retained — tapping an archived row opens the real URL in-app exactly like a
- * main-list tap (04 §4.4, 02 §2.7). Delete shares the one confirmation
- * dialog; empty state is a plain message, not a blank screen. State and DB
- * calls live in [ArchivedVoucherViewModel].
+ * Archived screen (spec 05 §5.4): same ticket-row layout and overflow pattern
+ * as the main list (restyled alongside it), with Restore/Delete instead of
+ * Archive/Delete, and tap-to-open retained — tapping an archived row opens the
+ * real URL in-app exactly like a main-list tap (04 §4.4, 02 §2.7). Delete
+ * shares the one confirmation dialog; empty state is a plain message, not a
+ * blank screen. State and DB calls live in [ArchivedVoucherViewModel].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,10 +87,10 @@ fun ArchivedVoucherScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(sorted, key = { it.id }) { voucher ->
-                    VoucherRow(
+                    TicketCard(
                         voucher = voucher,
                         menuExpanded = vm.menuForId == voucher.id,
                         onClick = { onOpenVoucher(voucher) },
