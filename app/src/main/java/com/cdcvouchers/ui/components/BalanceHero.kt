@@ -69,7 +69,8 @@ fun BalanceHero(summary: ListSummary, modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                // Left: eyebrow + amount + meta.
+                // Left: eyebrow + amount + meta. Grows to fill (mockup:
+                // .balance-left { flex: 1 1 auto }).
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(R.string.remaining_balance).uppercase(),
@@ -121,11 +122,17 @@ fun BalanceHero(summary: ListSummary, modifier: Modifier = Modifier) {
                     }
                 }
 
-                // Right: category mini rows (top 3 by value).
+                // Right: category mini rows (top 3 by value). Shares the card
+                // width with the balance side (reference: icon group starts
+                // ~mid-card, amounts at the card's right edge). Wider than the
+                // left so the scaled-up rows (27dp icon + label + amount)
+                // fit on one line without wrapping.
                 Column(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(top = 2.dp),
+                    modifier = Modifier
+                        .weight(1.4f)
+                        .padding(top = 2.dp),
                 ) {
                     val top = summary.categoryTotals
                         .sortedByDescending { it.remainingValue }
@@ -151,36 +158,45 @@ fun BalanceHero(summary: ListSummary, modifier: Modifier = Modifier) {
 private fun CategoryMiniRow(balance: CategoryBalance, dark: Boolean) {
     val c = LocalRedesignColors.current
     val visuals = categoryVisuals(balance.category, dark)
+    // Mockup .cat-mini: space-between — icon+name group on the left, amount
+    // right-aligned to the (content-width) column's edge.
     Row(
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Box(
-            modifier = Modifier
-                .size(18.dp)
-                .background(visuals.color, RoundedCornerShape(6.dp)),
-            contentAlignment = Alignment.Center,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Icon(
-                visuals.icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(10.dp),
+            Box(
+                modifier = Modifier
+                    .size(27.dp)
+                    .background(visuals.color, RoundedCornerShape(9.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    visuals.icon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(15.dp),
+                )
+            }
+            Text(
+                text = balance.category,
+                fontSize = 16.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = c.textSecondary,
+                maxLines = 1,
             )
         }
         Text(
-            text = balance.category,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = c.textSecondary,
-            maxLines = 1,
-        )
-        Text(
             text = formatSgd(balance.remainingValue),
             fontFamily = PlexMonoFontFamily,
-            fontSize = 12.5.sp,
+            fontSize = 18.75.sp,
             fontWeight = FontWeight.SemiBold,
             color = c.textPrimary,
+            maxLines = 1,
         )
     }
 }
