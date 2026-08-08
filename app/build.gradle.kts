@@ -46,12 +46,43 @@ android {
     }
     testOptions {
         // Speed/quietness for connected tests: disable system animations so
-        // Compose test waits are deterministic. (AGP has no supported DSL to
-        // keep the app installed after the run — uninstalling after tests is
-        // built-in, so the app data dir is wiped unless re-imported; that's
-        // expected and tests themselves never touch real data.)
+        // Compose test waits are deterministic.
         animationsDisabled = true
     }
+}
+
+// AGP 9 removed the old `android.experimental.androidTest.uninstallAfterTest`
+// knob, and connectedDebugAndroidTest uninstalls the app + test APK at the
+// end of its own action — there is no DSL/task to stop it. To keep the app
+// installed after a test run (so device state survives verification runs),
+// reinstall the debug APK as soon as the test task finishes, including on
+// failure. Target device: -PandroidTestSerial=<serial> if set, else the
+// ANDROID_SERIAL env var, else plain `adb install` (single-device only).
+tasks.matching { it.name == "connectedDebugAndroidTest" }.configureEach {
+    val thisTask = this
+    fun reinstallAfterTests() {
+        val apk = layout.buildDirectory.file("outputs/apk/debug/app-debug.apk").get().asFile
+        val serial = providers.gradleProperty("androidTestSerial").orNull
+            ?: System.getenv("ANDROID_SERIAL")
+        runCatching {
+            val proc = ProcessBuilder(
+                buildList {
+                    add("adb")
+                    if (serial != null) {
+                        add("-s")
+                        add(serial)
+                    }
+                    addAll(listOf("install", "-r", apk.absolutePath))
+                },
+            ).inheritIO().start()
+            println("Reinstalled debug APK on $serial after connected tests (adb exit ${proc.waitFor()})")
+        }.onFailure { println("WARN: reinstall-after-tests failed: $it") }
+    }
+    // afterTask covers both success and failure (doLast would not run on
+    // failure); never masks the original result, never runs when skipped.
+    gradle.taskGraph.afterTask(closureOf<Task> {
+        if (this == thisTask && !state.skipped) reinstallAfterTests()
+    })
 }
 
 kotlin {
