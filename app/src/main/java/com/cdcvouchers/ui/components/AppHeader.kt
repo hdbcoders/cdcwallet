@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,8 +19,11 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,8 +49,14 @@ import com.cdcvouchers.ui.theme.PlexMonoFontFamily
  * The redesign's app header (mockup): hamburger with a Settings/About
  * dropdown on the left, and on the right the `文A` language toggle with an
  * inline dropdown plus the Archived pill carrying a gold count badge.
- * Replaces the old Material3 TopAppBar + navigation drawer.
+ *
+ * The frame is a Material3 TopAppBar (spec 04's "[hamburger] title
+ * [Translate] [Archived]" layout) with the mockup's bespoke controls in its
+ * slots. The bar is transparent so the theme background (painted full-bleed
+ * by MainActivity) shows through, and the default windowInsets keep the
+ * header clear of the status bar in both light and dark modes.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppHeader(
     currentLanguage: AppLanguage,
@@ -63,161 +71,160 @@ fun AppHeader(
     var menuOpen by remember { mutableStateOf(false) }
     var langOpen by remember { mutableStateOf(false) }
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Left: hamburger with dropdown.
-        Box {
-            IconBtn(
-                contentDescription = stringResource(R.string.menu),
-                modifier = Modifier.testTag("header-menu"),
-                onClick = { menuOpen = true },
-            ) {
-                Column(
-                    modifier = Modifier.width(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(3.5.dp),
+    TopAppBar(
+        modifier = modifier,
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+        title = {},
+        navigationIcon = {
+            Box(modifier = Modifier.padding(start = 14.dp)) {
+                IconBtn(
+                    contentDescription = stringResource(R.string.menu),
+                    modifier = Modifier.testTag("header-menu"),
+                    onClick = { menuOpen = true },
                 ) {
-                    repeat(3) { i ->
-                        Box(
-                            modifier = Modifier
-                                .height(1.6.dp)
-                                .width(if (i == 1) 11.dp else 16.dp)
-                                .background(c.textSecondary, RoundedCornerShape(2.dp)),
-                        )
+                    Column(
+                        modifier = Modifier.width(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(3.5.dp),
+                    ) {
+                        repeat(3) { i ->
+                            Box(
+                                modifier = Modifier
+                                    .height(1.6.dp)
+                                    .width(if (i == 1) 11.dp else 16.dp)
+                                    .background(c.textSecondary, RoundedCornerShape(2.dp)),
+                            )
+                        }
                     }
                 }
-            }
-            DropdownMenu(
-                expanded = menuOpen,
-                onDismissRequest = { menuOpen = false },
-                shape = RoundedCornerShape(14.dp),
-                containerColor = c.surfaceRaised,
-                border = BorderStroke(1.dp, c.hairline),
-            ) {
-                DropdownMenuItem(
-                    text = { MenuLabel(stringResource(R.string.settings)) },
-                    leadingIcon = {
-                        Icon(Icons.Filled.Settings, contentDescription = null, tint = c.textSecondary)
-                    },
-                    onClick = {
-                        menuOpen = false
-                        onSettingsClick()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { MenuLabel(stringResource(R.string.about_app)) },
-                    leadingIcon = {
-                        Icon(Icons.Filled.Info, contentDescription = null, tint = c.textSecondary)
-                    },
-                    onClick = {
-                        menuOpen = false
-                        onAboutClick()
-                    },
-                )
-            }
-        }
-
-        // Right: language toggle + archived pill.
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(9.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box {
-                IconBtn(
-                    contentDescription = stringResource(R.string.select_language),
-                    modifier = Modifier.testTag("header-language"),
-                    onClick = { langOpen = true },
-                ) {
-                    Text(
-                        text = "文A",
-                        fontFamily = PlexMonoFontFamily,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 13.sp,
-                        color = c.textSecondary,
-                    )
-                }
                 DropdownMenu(
-                    expanded = langOpen,
-                    onDismissRequest = { langOpen = false },
+                    expanded = menuOpen,
+                    onDismissRequest = { menuOpen = false },
                     shape = RoundedCornerShape(14.dp),
                     containerColor = c.surfaceRaised,
                     border = BorderStroke(1.dp, c.hairline),
                 ) {
-                    AppLanguage.entries.forEach { lang ->
-                        val selected = lang == currentLanguage
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = languageLabel(lang),
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (selected) c.gold else c.textPrimary,
-                                )
-                            },
-                            trailingIcon = if (selected) {
-                                {
-                                    Icon(
-                                        Icons.Filled.Check,
-                                        contentDescription = null,
-                                        tint = c.gold,
-                                        modifier = Modifier.size(15.dp),
+                    DropdownMenuItem(
+                        text = { MenuLabel(stringResource(R.string.settings)) },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Settings, contentDescription = null, tint = c.textSecondary)
+                        },
+                        onClick = {
+                            menuOpen = false
+                            onSettingsClick()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { MenuLabel(stringResource(R.string.about_app)) },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Info, contentDescription = null, tint = c.textSecondary)
+                        },
+                        onClick = {
+                            menuOpen = false
+                            onAboutClick()
+                        },
+                    )
+                }
+            }
+        },
+        actions = {
+            Row(
+                modifier = Modifier.padding(end = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box {
+                    IconBtn(
+                        contentDescription = stringResource(R.string.select_language),
+                        modifier = Modifier.testTag("header-language"),
+                        onClick = { langOpen = true },
+                    ) {
+                        Text(
+                            text = "文A",
+                            fontFamily = PlexMonoFontFamily,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp,
+                            color = c.textSecondary,
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = langOpen,
+                        onDismissRequest = { langOpen = false },
+                        shape = RoundedCornerShape(14.dp),
+                        containerColor = c.surfaceRaised,
+                        border = BorderStroke(1.dp, c.hairline),
+                    ) {
+                        AppLanguage.entries.forEach { lang ->
+                            val selected = lang == currentLanguage
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = languageLabel(lang),
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (selected) c.gold else c.textPrimary,
                                     )
-                                }
-                            } else null,
-                            onClick = {
-                                langOpen = false
-                                onLanguageSelected(lang)
-                            },
+                                },
+                                trailingIcon = if (selected) {
+                                    {
+                                        Icon(
+                                            Icons.Filled.Check,
+                                            contentDescription = null,
+                                            tint = c.gold,
+                                            modifier = Modifier.size(15.dp),
+                                        )
+                                    }
+                                } else null,
+                                onClick = {
+                                    langOpen = false
+                                    onLanguageSelected(lang)
+                                },
+                            )
+                        }
+                    }
+                }
+
+                // Archived pill (gold count badge).
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(c.surfaceRaised)
+                        .clickable(onClick = onArchivedClick)
+                        .padding(start = 11.dp, end = 7.dp, top = 7.dp, bottom = 7.dp)
+                        .testTag("header-archived"),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Icon(
+                        Icons.Filled.Archive,
+                        contentDescription = null,
+                        tint = c.textSecondary,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.archived),
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = c.textSecondary,
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(c.gold)
+                            .padding(horizontal = 5.dp, vertical = 2.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = archivedCount.toString(),
+                            fontFamily = PlexMonoFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = Color(0xFF17130A),
+                            modifier = Modifier.testTag("archived-count"),
                         )
                     }
                 }
             }
-
-            // Archived pill (gold count badge).
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(c.surfaceRaised)
-                    .clickable(onClick = onArchivedClick)
-                    .padding(start = 11.dp, end = 7.dp, top = 7.dp, bottom = 7.dp)
-                    .testTag("header-archived"),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Icon(
-                    Icons.Filled.Archive,
-                    contentDescription = null,
-                    tint = c.textSecondary,
-                    modifier = Modifier.size(14.dp),
-                )
-                Text(
-                    text = stringResource(R.string.archived),
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = c.textSecondary,
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(c.gold)
-                        .padding(horizontal = 5.dp, vertical = 2.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = archivedCount.toString(),
-                        fontFamily = PlexMonoFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp,
-                        color = Color(0xFF17130A),
-                        modifier = Modifier.testTag("archived-count"),
-                    )
-                }
-            }
-        }
-    }
+        },
+    )
 }
 
 @Composable
