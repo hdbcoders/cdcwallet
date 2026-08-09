@@ -168,7 +168,7 @@ class VoucherArchiveFlowInstrumentedTest {
         return last as T
     }
     @Test
-    fun archiveFromMenuHidesRowAndShowsUndoSnackbar() {
+    fun archiveFromMenuHidesRowWithoutUndoSnackbar() {
         val repository = RoomVoucherRepository(database)
         runBlocking {
             repository.insert(voucher("a1", "Link One"))
@@ -182,8 +182,10 @@ class VoucherArchiveFlowInstrumentedTest {
         composeRule.onNodeWithText("Delete").assertIsDisplayed()
         composeRule.onNodeWithText("Archive").performClick()
 
-        // Spec 05 §5.2: snackbar with Undo; row leaves the main list without a dialog.
-        composeRule.onNodeWithText("Undo").assertIsDisplayed()
+        // Spec 05 §5.2 (product change 2026-08-09): archive is single-tap with
+        // no dialog and no undo snackbar; the row leaves the main list and is
+        // reversible from the Archived screen.
+        composeRule.onNodeWithText("Undo").assertDoesNotExist()
         composeRule.onNodeWithText("Link One").assertDoesNotExist()
         composeRule.onNodeWithText("Link Two").assertIsDisplayed()
         composeRule.onNodeWithTag("archived-count", useUnmergedTree = true).assertTextEquals("1")
@@ -234,49 +236,6 @@ class VoucherArchiveFlowInstrumentedTest {
             "https://example.com/arch1",
             clipboard.primaryClip?.getItemAt(0)?.text?.toString(),
         )
-    }
-
-    @Test
-    fun undoSnackbarAutoDismissesWithoutInteraction() {
-        val repository = RoomVoucherRepository(database)
-        runBlocking { repository.insert(voucher("a1", "Link One")) }
-        listContent(repository)
-
-        composeRule.onNodeWithContentDescription("More options for Link One").performClick()
-        composeRule.onNodeWithText("Archive").performClick()
-
-        composeRule.onNodeWithText("Undo").assertIsDisplayed()
-
-        // Regression: M3 showSnackbar defaults action snackbars to Indefinite, so
-        // the Undo snackbar stayed on screen forever. Now set explicitly to Short
-        // (4s): still visible shortly before, gone after 5s with no interaction.
-        composeRule.mainClock.advanceTimeBy(3_000)
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText("Undo").assertIsDisplayed()
-
-        composeRule.mainClock.advanceTimeBy(2_000)
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText("Undo").assertDoesNotExist()
-    }
-
-    @Test
-    fun undoRestoresRowToMainList() {
-        val repository = RoomVoucherRepository(database)
-        runBlocking {
-            repository.insert(voucher("a1", "Link One"))
-        }
-        listContent(repository)
-
-        composeRule.onNodeWithContentDescription("More options for Link One").performClick()
-        composeRule.onNodeWithText("Archive").performClick()
-        composeRule.onNodeWithText("Undo").performClick()
-
-        waitFor {
-            val row = runBlocking { repository.findByToken("a1") }
-            if (row != null && !row.isArchived) row else null
-        }
-        composeRule.onNodeWithText("Link One").assertIsDisplayed()
-        composeRule.onNodeWithTag("archived-count", useUnmergedTree = true).assertTextEquals("0")
     }
 
     @Test

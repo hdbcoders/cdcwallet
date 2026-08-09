@@ -54,19 +54,15 @@ class VoucherListViewModelTest {
         ExtractionCoordinator(repo, ExtractionEngine())
 
     @Test
-    fun archiveEmitsArchivedUndoAfterPersisting() = runTest(dispatcher) {
+    fun archivePersistsRow() = runTest(dispatcher) {
         val repo = FakeVoucherRepository()
         repo.bulkInsert(listOf(voucher("v1")))
         val vm = VoucherListViewModel(repo, coordinator(repo))
-
-        val events = mutableListOf<ListEvent>()
-        backgroundScope.launch { vm.events.collect { events.add(it) } }
 
         vm.archive(voucher("v1"))
         runCurrent()
 
         assertTrue(repo.snapshot().single { it.id == "v1" }.isArchived)
-        assertEquals(listOf(ListEvent.ArchivedUndo("v1")), events)
     }
 
     @Test

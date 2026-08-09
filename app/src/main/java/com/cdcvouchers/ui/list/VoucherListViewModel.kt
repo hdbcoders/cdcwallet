@@ -8,18 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.extraction.ExtractionCoordinator
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-sealed interface ListEvent {
-    data class ArchivedUndo(val voucherId: String) : ListEvent
-}
 
 class VoucherListViewModel(
     private val repository: VoucherRepository,
@@ -46,9 +40,6 @@ class VoucherListViewModel(
     var pendingDelete by mutableStateOf<VoucherGroup?>(null)
         private set
 
-    private val _events = Channel<ListEvent>(Channel.BUFFERED)
-    val events = _events.receiveAsFlow()
-
     fun setMenu(id: String?) { menuForId = id }
 
     fun requestDelete(voucher: VoucherGroup) { pendingDelete = voucher }
@@ -57,7 +48,6 @@ class VoucherListViewModel(
     fun archive(voucher: VoucherGroup) {
         viewModelScope.launch {
             repository.archive(voucher.id)
-            _events.send(ListEvent.ArchivedUndo(voucher.id))
         }
     }
 

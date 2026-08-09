@@ -20,10 +20,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,8 +56,8 @@ import kotlinx.coroutines.launch
  * dropdown + language toggle + Archived pill), the fixed gold BalanceHero,
  * ticket-style rows with the ⋮ overflow menu, and a dashed "Add Voucher" row
  * at the bottom. Behavior is unchanged from the previous Material3 chrome:
- * sorting, badge states, duplicate-add highlight scroll, archive undo
- * snackbar, and the language picker (now the header's dropdown).
+ * sorting, badge states, duplicate-add highlight scroll, and the language
+ * picker (now the header's dropdown).
  */
 @Composable
 fun VoucherListScreen(
@@ -86,14 +82,11 @@ fun VoucherListScreen(
     val reduceMotion = rememberReduceMotion()
     val sorted = remember(vouchers) { sortActive(vouchers) }
     val summary = remember(sorted) { summarizeActive(sorted) }
-    val snackbarHostState = remember { SnackbarHostState() }
     val clipboardManager = LocalClipboardManager.current
     // Toast on Copy URL (REQ-10 feedback): the activity context is wrapped
     // with the active app locale, so the message follows the app language.
     val context = LocalContext.current
     val linkCopiedLabel = stringResource(R.string.link_copied)
-    val archivedLabel = stringResource(R.string.archived)
-    val undoLabel = stringResource(R.string.undo)
     // Scroll + flash the row requested by a duplicate-add (spec 03 §3.2 step 2).
     val listState = rememberLazyListState()
     var highlightedId by remember { mutableStateOf<String?>(null) }
@@ -111,21 +104,6 @@ fun VoucherListScreen(
         } else {
             // Row not present (e.g. archived) — nothing to highlight.
             onHighlightConsumed()
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        vm.events.collect { event ->
-            when (event) {
-                is ListEvent.ArchivedUndo -> {
-                    val result = snackbarHostState.showSnackbar(
-                        archivedLabel,
-                        actionLabel = undoLabel,
-                        duration = SnackbarDuration.Short,
-                    )
-                    if (result == SnackbarResult.ActionPerformed) vm.restore(event.voucherId)
-                }
-            }
         }
     }
 
@@ -233,15 +211,6 @@ fun VoucherListScreen(
                 }
             }
         }
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(
-                    bottom = 12.dp +
-                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
-                ),
-        )
     }
 
     vm.pendingDelete?.let { voucher ->
