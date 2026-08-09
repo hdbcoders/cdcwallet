@@ -258,7 +258,8 @@ private fun daysLeftText(badge: BadgeState.Active): String = when {
     else -> stringResource(R.string.badge_no_expiry)
 }
 
-/** Red soft banner for expired / fully-redeemed vouchers (mockup). */
+/** Red soft banner for expired / fully-redeemed vouchers. Mockup: plain text,
+ *  no icon. */
 @Composable
 private fun StatusBanner(text: String) {
     val c = LocalRedesignColors.current
@@ -270,31 +271,13 @@ private fun StatusBanner(text: String) {
             .padding(bottom = 16.dp)
             .fillMaxWidth(),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Text(
+            text = text,
+            fontSize = 13.5.sp,
+            fontWeight = FontWeight.Medium,
+            color = c.textPrimary,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Outlined.Warning,
-                    contentDescription = null,
-                    tint = c.danger,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-            Text(
-                text = text,
-                fontSize = 13.5.sp,
-                fontWeight = FontWeight.Medium,
-                color = c.textPrimary,
-            )
-        }
+        )
     }
 }
 
