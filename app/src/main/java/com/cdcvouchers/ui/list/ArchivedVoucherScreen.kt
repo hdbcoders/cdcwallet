@@ -9,8 +9,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +36,7 @@ import com.cdcvouchers.data.VoucherRepository
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.extraction.ExtractionCoordinator
 import com.cdcvouchers.ui.components.TicketCard
+import com.cdcvouchers.ui.theme.LocalRedesignColors
 import com.cdcvouchers.ui.theme.rememberReduceMotion
 
 /**
@@ -108,8 +113,12 @@ fun ArchivedVoucherScreen(
                             Modifier.animateItem()
                         },
                     ) {
+                        val c = LocalRedesignColors.current
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.copy_url)) },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Link, contentDescription = null, tint = c.textSecondary)
+                            },
                             onClick = {
                                 vm.setMenu(null)
                                 clipboardManager.setText(AnnotatedString(voucher.url))
@@ -122,13 +131,25 @@ fun ArchivedVoucherScreen(
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.restore)) },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Restore, contentDescription = null, tint = c.textSecondary)
+                            },
                             onClick = {
                                 vm.setMenu(null)
                                 vm.restore(voucher.id)
                             },
                         )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            color = c.hairline,
+                        )
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.delete)) },
+                            text = {
+                                Text(stringResource(R.string.delete), color = c.danger)
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Delete, contentDescription = null, tint = c.danger)
+                            },
                             onClick = {
                                 vm.setMenu(null)
                                 vm.requestDelete(voucher)
