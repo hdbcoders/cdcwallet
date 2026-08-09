@@ -68,6 +68,12 @@ class ExtractionEngine(
      * only by tests that must keep their interception working.
      */
     private val fallbackInjectionDelegate: WebViewClient? = null,
+    /**
+     * Per-extraction timeout (spec 02 §2.7 fail-soft). Production keeps the
+     * 10s default; tests that must observe a successful extraction pass a
+     * larger budget so slow emulator load doesn't abort them.
+     */
+    private val extractionTimeoutMs: Long = EXTRACTION_TIMEOUT_MS,
 ) : VoucherExtractor {
 
     /**
@@ -200,7 +206,7 @@ class ExtractionEngine(
         )
         webView.loadUrl(url)
         return try {
-            withTimeout(EXTRACTION_TIMEOUT_MS) { deferred.await() }
+            withTimeout(extractionTimeoutMs) { deferred.await() }
         } catch (e: TimeoutCancellationException) {
             ExtractionResult.Failure(ExtractionResult.FailureReason.TIMEOUT)
         } finally {

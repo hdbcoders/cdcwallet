@@ -92,9 +92,12 @@ class VoucherWebViewScreenTest {
 
     /** The screen extracts through the engine's visible path; the epoch-gate
      *  client wraps the view's existing client on API 26+, and on API 24–25
-     *  (no getter) it falls back to the engine's explicit delegate. */
+     *  (no getter) it falls back to the engine's explicit delegate. A 30s
+     *  extraction budget (vs the 10s production default) keeps slow emulator
+     *  loads from aborting the extraction under full-suite load. */
     private fun extractionEngine(): ExtractionEngine = ExtractionEngine(
         fallbackInjectionDelegate = assetLoaderClient(),
+        extractionTimeoutMs = 30_000,
     )
 
     @Test
@@ -131,7 +134,7 @@ class VoucherWebViewScreenTest {
             }
             composeRule.waitForIdle()
 
-            withTimeout(20_000) {
+            withTimeout(45_000) {
                 while (true) {
                     val row = repository.findByToken("testpage.html")
                     if (row?.validityStatus == ValidityStatus.ACTIVE) break

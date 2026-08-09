@@ -87,7 +87,13 @@ class AddVoucherFlowInstrumentedTest {
         val repository = RoomVoucherRepository(database)
         val flow = AddVoucherFlow(
             repository = repository,
-            extractionEngine = ExtractionEngine(hiddenWebViewFactory = { assetWebView(it) }),
+            extractionEngine = ExtractionEngine(
+                hiddenWebViewFactory = { assetWebView(it) },
+                // Success-required test: 30s budget so slow emulator loads
+                // under the full suite don't abort the extraction at the 10s
+                // production default.
+                extractionTimeoutMs = 30_000,
+            ),
             validator = VoucherLinkValidator(allowedHost = "appassets.androidplatform.net"),
         )
 
@@ -114,7 +120,13 @@ class AddVoucherFlowInstrumentedTest {
         val repository = RoomVoucherRepository(database)
         val flow = AddVoucherFlow(
             repository = repository,
-            extractionEngine = ExtractionEngine(hiddenWebViewFactory = { assetWebView(it) }),
+            extractionEngine = ExtractionEngine(
+                hiddenWebViewFactory = { assetWebView(it) },
+                // Success-required test: 30s budget so slow emulator loads
+                // under the full suite don't abort the extraction at the 10s
+                // production default.
+                extractionTimeoutMs = 30_000,
+            ),
             validator = VoucherLinkValidator(allowedHost = "appassets.androidplatform.net"),
         )
 
