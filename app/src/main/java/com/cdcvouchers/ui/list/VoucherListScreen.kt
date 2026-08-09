@@ -73,6 +73,8 @@ fun VoucherListScreen(
     onLanguageSelected: (AppLanguage) -> Unit,
     modifier: Modifier = Modifier,
     onToggleTheme: () -> Unit = {},
+    heroCollapsed: Boolean = false,
+    onToggleHeroCollapsed: () -> Unit = {},
 ) {
     val vm: VoucherListViewModel = viewModel(
         initializer = { VoucherListViewModel(repository, extractionCoordinator) },
@@ -103,6 +105,8 @@ fun VoucherListScreen(
             )
             BalanceHero(
                 summary = summary,
+                collapsed = heroCollapsed,
+                onToggle = onToggleHeroCollapsed,
                 modifier = Modifier.padding(horizontal = 18.dp, vertical = 4.dp),
             )
             LazyColumn(

@@ -20,6 +20,7 @@
     <string name="restore">Pulihkan</string>
     <string name="empty_list">Belum ada pautan baucar — tambah dengan butang +.</string>
     <string name="remaining_balance">Baki Tertinggal</string>
+    <string name="balance">Baki:</string>
     <string name="more_categories">+%1$d lagi</string>
     <plurals name="archived_count">
         <item quantity="one">Diarkibkan (%1$d)</item>

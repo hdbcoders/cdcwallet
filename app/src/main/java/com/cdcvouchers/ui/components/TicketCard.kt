@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalLayoutApi::class)
+
 package com.cdcvouchers.ui.components
 
 import androidx.compose.foundation.BorderStroke
@@ -8,6 +10,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,7 +39,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cdcvouchers.R
@@ -91,6 +94,9 @@ fun TicketCard(
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             // Title row.
+            // Title row: the weighted name wraps within the space beside the
+            // kebab (never ellipsized, never pushing the kebab off the line —
+            // the kebab stays pinned to the card's right edge).
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -103,8 +109,6 @@ fun TicketCard(
                     fontFamily = FrauncesDisplayFontFamily,
                     color = c.textPrimary,
                     lineHeight = 20.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
                 Box {
@@ -163,13 +167,16 @@ fun TicketCard(
 }
 
 /** Expiry row: green ✓ + days-left (fine), amber/red warning (soon/urgent),
- *  red warning + status text (expired / fully used). */
+ *  red warning + status text (expired / fully used). FlowRow: status and
+ *  expiry wrap to their own lines instead of ellipsizing at large font
+ *  scales. */
 @Composable
 private fun ExpiryRow(badge: BadgeState, expiryText: String?) {
     val c = LocalRedesignColors.current
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    FlowRow(
+        itemVerticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
         modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 8.dp),
     ) {
         when (badge) {
@@ -220,7 +227,6 @@ private fun ExpiryRow(badge: BadgeState, expiryText: String?) {
                 fontSize = 12.5.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = statusColor,
-                maxLines = 1,
             )
         }
         expiryText?.let {
@@ -228,9 +234,6 @@ private fun ExpiryRow(badge: BadgeState, expiryText: String?) {
                 text = "· $it",
                 fontSize = 12.5.sp,
                 color = c.textSecondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false),
             )
         }
     }

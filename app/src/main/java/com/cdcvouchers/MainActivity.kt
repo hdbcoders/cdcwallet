@@ -194,6 +194,8 @@ private fun AppNavHost(
                     onSettingsClick = { navController.navigate("settings") },
                     onAboutClick = { navController.navigate("about") },
                     onToggleTheme = { container.themeModeStore.toggle() },
+                    heroCollapsed = container.heroCollapseStore.collapsed,
+                    onToggleHeroCollapsed = { container.heroCollapseStore.toggle() },
                     languageStore = container.languageStore,
                     onLanguageSelected = onLanguageSelected,
                 )
@@ -233,6 +235,8 @@ private fun AppNavHost(
                             onSettingsClick = { navController.navigate("settings") },
                     onAboutClick = { navController.navigate("about") },
                             onToggleTheme = { container.themeModeStore.toggle() },
+                            heroCollapsed = container.heroCollapseStore.collapsed,
+                            onToggleHeroCollapsed = { container.heroCollapseStore.toggle() },
                             languageStore = container.languageStore,
                             onLanguageSelected = onLanguageSelected,
                         )
