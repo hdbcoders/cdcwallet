@@ -129,6 +129,10 @@ fun BalanceHero(summary: ListSummary, modifier: Modifier = Modifier) {
                             ),
                             fontSize = 12.sp,
                             color = c.textSecondary,
+                            // Never wrap the meta (long locales like Tamil
+                            // would break the hero onto multiple lines).
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }

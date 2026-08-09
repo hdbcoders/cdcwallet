@@ -30,8 +30,8 @@
         <item quantity="other">மொத்தம் %1$d வவுச்சர் இணைப்புகள்</item>
     </plurals>
     <plurals name="hero_links">
-        <item quantity="one">%1$d வவுச்சர் இணைப்பு</item>
-        <item quantity="other">%1$d வவுச்சர் இணைப்புகள்</item>
+        <item quantity="one">%1$d இணைப்பு</item>
+        <item quantity="other">%1$d இணைப்புகள்</item>
     </plurals>
 
     <string name="no_archived">இன்னும் காப்பகப்படுத்தப்பட்ட வவுச்சர்கள் இல்லை</string>
