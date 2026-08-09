@@ -165,9 +165,9 @@ class VoucherListScreenTest {
         // Category breakdown rows (top 3 by value) render in the right column.
         // Use onFirst() because category names also appear on voucher cards.
         for (part in listOf(
-            "groceries",
-            "heartland",
-            "supermarket",
+            "Groceries",
+            "Heartland",
+            "Supermarket",
         )) {
             composeRule.onAllNodesWithText(part, substring = true).onFirst().assertIsDisplayed()
         }

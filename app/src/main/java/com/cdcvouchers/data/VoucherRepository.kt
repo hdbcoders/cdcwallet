@@ -3,9 +3,19 @@ package com.cdcvouchers.data
 import androidx.room.withTransaction
 import com.cdcvouchers.data.db.AppDatabase
 import com.cdcvouchers.data.db.VoucherDao
+import com.cdcvouchers.data.model.CategoryBalance
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.data.model.VoucherRefreshData
 import kotlinx.coroutines.flow.Flow
+
+/** Category names are normalized on every write: trimmed, first letter
+ *  capitalized ("supermarket" -> "Supermarket"), so rows are consistent
+ *  regardless of source (extraction, import, dev seed). */
+private fun List<CategoryBalance>.normalizedCategories(): List<CategoryBalance> =
+    map { it.copy(category = it.category.trim().replaceFirstChar { c -> c.uppercase() }) }
+
+private fun VoucherGroup.withNormalizedCategories(): VoucherGroup =
+    copy(categoryBalances = categoryBalances.normalizedCategories())
 
 /**
  * Repository surface (spec 01 §1.3). Other packages call this interface, never
@@ -60,7 +70,7 @@ class RoomVoucherRepository(
     override fun observeById(id: String): Flow<VoucherGroup?> = dao.observeById(id)
 
     override suspend fun insert(voucher: VoucherGroup): Boolean = try {
-        dao.insert(voucher)
+        dao.insert(voucher.withNormalizedCategories())
         true
     } catch (e: android.database.sqlite.SQLiteConstraintException) {
         false
@@ -72,7 +82,7 @@ class RoomVoucherRepository(
             campaignName = data.campaignName,
             validityStatus = data.validityStatus,
             expiryDate = data.expiryDate,
-            categoryBalances = data.categoryBalances,
+            categoryBalances = data.categoryBalances.normalizedCategories(),
             lastRefreshedAt = data.lastRefreshedAt,
         )
     }
@@ -101,23 +111,26 @@ class RoomVoucherRepository(
     override suspend fun replaceAll(vouchers: List<VoucherGroup>) {
         database.withTransaction {
             dao.deleteAll()
-            if (vouchers.isNotEmpty()) dao.insertAll(vouchers)
+            if (vouchers.isNotEmpty()) {
+                dao.insertAll(vouchers.map { it.withNormalizedCategories() })
+            }
         }
     }
 
     override suspend fun bulkInsert(vouchers: List<VoucherGroup>): Int {
         if (vouchers.isEmpty()) return 0
+        val normalized = vouchers.map { it.withNormalizedCategories() }
         return try {
             database.withTransaction {
-                dao.insertAll(vouchers)
+                dao.insertAll(normalized)
             }
-            vouchers.size
+            normalized.size
         } catch (e: android.database.sqlite.SQLiteConstraintException) {
             // Defensive backstop (same semantics as insert): a duplicate token
             // must not crash a bulk import. Room rolls back the aborted batch
             // transaction, so fall back to per-row inserts in fresh
             // transactions — valid rows still land; duplicates are skipped.
-            vouchers.count { voucher ->
+            normalized.count { voucher ->
                 try {
                     database.withTransaction { dao.insert(voucher) }
                     true
