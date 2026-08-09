@@ -4,6 +4,7 @@ package com.cdcvouchers.ui.theme
 
 import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -74,6 +75,12 @@ fun AppTheme(mode: ThemeMode, content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalAppIsDark provides dark,
         LocalRedesignColors provides redesign,
+        // M3's LocalContentColor defaults to Color.Black and MaterialTheme does
+        // not provide it (only Surface does); this app's screens are custom
+        // layouts with no root Surface, so implicit text colors would render
+        // black — invisible in dark mode. Provide the theme's primary text
+        // color at the root like a Surface would.
+        LocalContentColor provides redesign.textPrimary,
     ) {
         MaterialTheme(
             colorScheme = if (dark) DarkScheme else LightScheme,
