@@ -108,6 +108,41 @@ private val FrauncesFontFamily = FontFamily(
 )
 
 /**
+ * Fraunces at the display optical size (opsz 42) — for large display text
+ * like the hero balance. Browsers apply font-optical-sizing automatically
+ * (opsz ≈ rendered size); Android does not, and the font's fvar default is
+ * opsz=9 (the text cut), so large text needs the axis pinned explicitly to
+ * render like the mockup. Keep the base family at the text cut for small
+ * type; use this family only at display sizes.
+ */
+internal val FrauncesDisplayFontFamily = FontFamily(
+    Font(
+        R.font.fraunces_variable,
+        weight = FontWeight.Normal,
+        variationSettings = FontVariation.Settings(
+            FontVariation.weight(400),
+            FontVariation.Setting("opsz", 42f),
+        ),
+    ),
+    Font(
+        R.font.fraunces_variable,
+        weight = FontWeight.Medium,
+        variationSettings = FontVariation.Settings(
+            FontVariation.weight(500),
+            FontVariation.Setting("opsz", 42f),
+        ),
+    ),
+    Font(
+        R.font.fraunces_variable,
+        weight = FontWeight.SemiBold,
+        variationSettings = FontVariation.Settings(
+            FontVariation.weight(600),
+            FontVariation.Setting("opsz", 42f),
+        ),
+    ),
+)
+
+/**
  * Inter — the redesign's body typeface (labels, meta, banners). Same variable
  * font handling as Fraunces.
  */

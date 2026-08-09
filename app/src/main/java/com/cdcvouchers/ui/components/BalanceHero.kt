@@ -31,6 +31,7 @@ import com.cdcvouchers.R
 import com.cdcvouchers.data.model.CategoryBalance
 import com.cdcvouchers.ui.list.ListSummary
 import com.cdcvouchers.ui.list.formatSgd
+import com.cdcvouchers.ui.theme.FrauncesDisplayFontFamily
 import com.cdcvouchers.ui.theme.LocalAppIsDark
 import com.cdcvouchers.ui.theme.LocalRedesignColors
 import com.cdcvouchers.ui.theme.PlexMonoFontFamily
@@ -85,6 +86,7 @@ fun BalanceHero(summary: ListSummary, modifier: Modifier = Modifier) {
                             text = "$",
                             fontSize = 21.sp,
                             fontWeight = FontWeight.Medium,
+                            fontFamily = FrauncesDisplayFontFamily,
                             color = c.gold,
                             modifier = Modifier.padding(end = 2.dp),
                         )
@@ -92,6 +94,7 @@ fun BalanceHero(summary: ListSummary, modifier: Modifier = Modifier) {
                             text = formatSgd(summary.total).removePrefix("$"),
                             fontSize = 42.sp,
                             fontWeight = FontWeight.Medium,
+                            fontFamily = FrauncesDisplayFontFamily,
                             color = c.textPrimary,
                             lineHeight = 42.sp,
                             letterSpacing = (-0.8).sp,
@@ -192,7 +195,7 @@ private fun CategoryMiniRow(balance: CategoryBalance, dark: Boolean) {
         }
         Text(
             text = formatSgd(balance.remainingValue),
-            fontFamily = PlexMonoFontFamily,
+            fontFamily = FrauncesDisplayFontFamily,
             fontSize = 18.75.sp,
             fontWeight = FontWeight.SemiBold,
             color = c.textPrimary,

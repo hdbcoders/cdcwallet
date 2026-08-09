@@ -45,8 +45,8 @@ import com.cdcvouchers.ui.list.Urgency
 import com.cdcvouchers.ui.list.badgeState
 import com.cdcvouchers.ui.list.formatSgd
 import com.cdcvouchers.ui.theme.LocalAppIsDark
+import com.cdcvouchers.ui.theme.FrauncesDisplayFontFamily
 import com.cdcvouchers.ui.theme.LocalRedesignColors
-import com.cdcvouchers.ui.theme.PlexMonoFontFamily
 import com.cdcvouchers.ui.theme.categoryVisuals
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
@@ -102,6 +102,7 @@ fun TicketCard(
                     text = voucher.campaignName,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Medium,
+                    fontFamily = FrauncesDisplayFontFamily,
                     color = c.textPrimary,
                     lineHeight = 20.sp,
                     maxLines = 1,
@@ -336,7 +337,7 @@ private fun CategoryPills(voucher: VoucherGroup, modifier: Modifier = Modifier) 
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Medium,
                     color = c.textPrimary,
-                    fontFamily = PlexMonoFontFamily,
+                    fontFamily = FrauncesDisplayFontFamily,
                 )
             }
         }
