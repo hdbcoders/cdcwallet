@@ -50,7 +50,7 @@
     <string name="delete_title">இந்த வவுச்சர் இணைப்பை நீக்கவா?</string>
     <string name="delete_body">நீக்கிய பிறகு இந்த இணைப்பை மீண்டும் பெற முடியாமல் போகலாம்.</string>
 
-    <string name="expires">%1$s அன்று காலாவதியாகிறது</string>
+    <string name="expires">காலாவதி: %1$s</string>
     <string name="more_options">%1$sக்கான மேலும் விருப்பங்கள்</string>
     <string name="expired_footer">இந்த வவுச்சர் இணைப்பு காலாவதியாகிவிட்டது</string>
     <string name="no_balance_banner">இந்த வவுச்சர் இணைப்பில் மேலும் இருப்பு இல்லை</string>
