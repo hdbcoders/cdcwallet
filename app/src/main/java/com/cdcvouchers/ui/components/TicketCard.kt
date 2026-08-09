@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.DropdownMenu
@@ -185,11 +186,13 @@ private fun ExpiryRow(badge: BadgeState, expiryText: String?) {
                             .background(c.ok, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = "✓",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                        // Icon, not a "✓" text glyph: the glyph sits high in
+                        // its line box (no descender), so it looked off-center.
+                        Icon(
+                            Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(11.dp),
                         )
                     }
                 }
