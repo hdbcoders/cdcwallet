@@ -47,7 +47,7 @@
     <string name="paste_link">Paste voucher link</string>
     <string name="add">Add</string>
     <string name="add_invalid">This doesn\'t look like a RedeemSG voucher link.</string>
-    <string name="add_duplicate">This link is already in your list.</string>
+    <string name="add_duplicate">Link not added. Voucher already in your list.</string>
     <string name="add_added">Added — %1$s</string>
     <string name="add_added_unverified">Added — couldn\'t verify it yet; tap the entry to check later.</string>
 

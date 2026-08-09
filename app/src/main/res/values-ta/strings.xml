@@ -40,7 +40,7 @@
     <string name="paste_link">வவுச்சர் இணைப்பை ஒட்டவும்</string>
     <string name="add">சேர்</string>
     <string name="add_invalid">இது RedeemSG வவுச்சர் இணைப்பாகத் தெரியவில்லை.</string>
-    <string name="add_duplicate">இந்த இணைப்பு ஏற்கனவே உங்கள் பட்டியலில் உள்ளது.</string>
+    <string name="add_duplicate">இணைப்பு சேர்க்கப்படவில்லை. வவுச்சர் ஏற்கனவே உங்கள் பட்டியலில் உள்ளது.</string>
     <string name="add_added">சேர்க்கப்பட்டது — %1$s</string>
     <string name="add_added_unverified">சேர்க்கப்பட்டது — இன்னும் சரிபார்க்க முடியவில்லை; பிறகு பார்க்க உள்ளீட்டைத் தட்டவும்.</string>
 

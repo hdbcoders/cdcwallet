@@ -173,11 +173,6 @@ private fun AppNavHost(
     // load, never a return to the list (the back-arrow bug).
     var listLoadedOnce by rememberSaveable { mutableStateOf(false) }
 
-    // Duplicate-add highlight (spec 03 §3.2 step 2): set when the add flow
-    // detects an existing entry; the list scrolls to + flashes that row, then
-    // clears it via onHighlightConsumed.
-    var highlightRequest by remember { mutableStateOf<String?>(null) }
-
     NavHost(
         navController = navController,
         startDestination = "list",
@@ -191,8 +186,6 @@ private fun AppNavHost(
                 VoucherListScreen(
                     repository = container.repository,
                     extractionCoordinator = container.extractionCoordinator,
-                    highlightVoucherId = highlightRequest,
-                    onHighlightConsumed = { highlightRequest = null },
                     onAddClick = { navController.navigate("add") },
                     onOpenVoucher = { voucher ->
                         navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
@@ -232,8 +225,6 @@ private fun AppNavHost(
                         VoucherListScreen(
                             repository = container.repository,
                             extractionCoordinator = container.extractionCoordinator,
-                            highlightVoucherId = highlightRequest,
-                            onHighlightConsumed = { highlightRequest = null },
                             onAddClick = { navController.navigate("add") },
                             onOpenVoucher = { voucher ->
                                 navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
@@ -309,12 +300,6 @@ private fun AppNavHost(
                 flow = flow,
                 initialUrl = entry.arguments?.getString("url"),
                 onBack = { navController.popBackStack() },
-                onDuplicate = { voucherId ->
-                    // Spec 03 §3.2 step 2: the link already exists — return to
-                    // the list and highlight the existing entry.
-                    highlightRequest = voucherId
-                    navController.popBackStack()
-                },
             )
         }
         composable(

@@ -32,7 +32,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -67,7 +66,6 @@ fun TicketCard(
     onMenuExpandedChange: (Boolean) -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isHighlighted: Boolean = false,
     menuContent: @Composable ColumnScope.() -> Unit,
 ) {
     val c = LocalRedesignColors.current
@@ -82,14 +80,13 @@ fun TicketCard(
 
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = if (isHighlighted) c.goldSoft else c.surface,
+        color = c.surface,
         border = BorderStroke(
             1.dp,
-            if (isHighlighted) c.gold else c.hairline,
+            c.hairline,
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (isHighlighted) Modifier.testTag("highlighted-${voucher.id}") else Modifier)
             .clickable(onClick = onClick),
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {

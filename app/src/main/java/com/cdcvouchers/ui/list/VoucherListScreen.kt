@@ -22,12 +22,9 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -47,16 +44,13 @@ import com.cdcvouchers.ui.components.TicketCard
 import com.cdcvouchers.ui.theme.AppLanguage
 import com.cdcvouchers.ui.theme.LanguageStore
 import com.cdcvouchers.ui.theme.rememberReduceMotion
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 
 /**
  * Main voucher list (spec 04, 05) in the redesign: custom header (hamburger
  * dropdown + language toggle + Archived pill), the fixed gold BalanceHero,
  * ticket-style rows with the ⋮ overflow menu, and a dashed "Add Voucher" row
  * at the bottom. Behavior is unchanged from the previous Material3 chrome:
- * sorting, badge states, duplicate-add highlight scroll, and the language
+ * sorting, badge states, and the language
  * picker (now the header's dropdown).
  */
 @Composable
@@ -71,8 +65,6 @@ fun VoucherListScreen(
     languageStore: LanguageStore,
     onLanguageSelected: (AppLanguage) -> Unit,
     modifier: Modifier = Modifier,
-    highlightVoucherId: String? = null,
-    onHighlightConsumed: () -> Unit = {},
     onToggleTheme: () -> Unit = {},
 ) {
     val vm: VoucherListViewModel = viewModel(
@@ -88,25 +80,8 @@ fun VoucherListScreen(
     // with the active app locale, so the message follows the app language.
     val context = LocalContext.current
     val linkCopiedLabel = stringResource(R.string.link_copied)
-    // Scroll + flash the row requested by a duplicate-add (spec 03 §3.2 step 2).
+    // The LazyColumn scrolls via this state (overflow-menu / row animations).
     val listState = rememberLazyListState()
-    var highlightedId by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(highlightVoucherId, sorted) {
-        val target = highlightVoucherId ?: return@LaunchedEffect
-        val index = sorted.indexOfFirst { it.id == target }
-        if (index >= 0) {
-            highlightedId = target
-            listState.animateScrollToItem(index)
-            onHighlightConsumed()
-            // Brief flash, then clear the highlight.
-            delay(1800)
-            highlightedId = null
-        } else {
-            // Row not present (e.g. archived) — nothing to highlight.
-            onHighlightConsumed()
-        }
-    }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -151,7 +126,6 @@ fun VoucherListScreen(
                         TicketCard(
                             voucher = voucher,
                             menuExpanded = vm.menuForId == voucher.id,
-                            isHighlighted = voucher.id == highlightedId,
                             onClick = { onOpenVoucher(voucher) },
                             onMenuExpandedChange = { open ->
                                 vm.setMenu(if (open) voucher.id else null)

@@ -40,7 +40,7 @@
     <string name="paste_link">粘贴礼券链接</string>
     <string name="add">添加</string>
     <string name="add_invalid">这看起来不是 RedeemSG 礼券链接。</string>
-    <string name="add_duplicate">此链接已在您的列表中。</string>
+    <string name="add_duplicate">链接未添加。该礼券已在您的列表中。</string>
     <string name="add_added">已添加 — %1$s</string>
     <string name="add_added_unverified">已添加 — 暂时无法验证；点击条目稍后查看。</string>
 

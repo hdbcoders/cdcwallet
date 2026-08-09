@@ -40,7 +40,6 @@ fun AddVoucherScreen(
     flow: AddVoucherFlow,
     initialUrl: String? = null,
     onBack: () -> Unit = {},
-    onDuplicate: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -50,15 +49,6 @@ fun AddVoucherScreen(
 
     LaunchedEffect(Unit) {
         initialUrl?.let { vm.setInitialUrl(it) }
-    }
-
-    // Duplicate detected (spec 03 §3.2 step 2): surface the existing voucher's
-    // id so navigation can return to the list and highlight it.
-    LaunchedEffect(vm.duplicateEvent) {
-        (vm.duplicateEvent as? AddUiEvent.Duplicate)?.let {
-            onDuplicate(it.voucherId)
-            vm.consumeDuplicate()
-        }
     }
 
     Scaffold(

@@ -40,7 +40,7 @@
     <string name="paste_link">Tampal pautan baucar</string>
     <string name="add">Tambah</string>
     <string name="add_invalid">Ini bukan pautan baucar RedeemSG.</string>
-    <string name="add_duplicate">Pautan ini sudah ada dalam senarai anda.</string>
+    <string name="add_duplicate">Pautan tidak ditambah. Baucar sudah ada dalam senarai anda.</string>
     <string name="add_added">Ditambah — %1$s</string>
     <string name="add_added_unverified">Ditambah — belum dapat disahkan; ketik untuk semak kemudian.</string>
 
