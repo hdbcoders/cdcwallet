@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -88,7 +89,9 @@ fun BalanceHero(summary: ListSummary, modifier: Modifier = Modifier) {
                             fontWeight = FontWeight.Medium,
                             fontFamily = FrauncesDisplayFontFamily,
                             color = c.gold,
-                            modifier = Modifier.padding(end = 2.dp),
+                            modifier = Modifier
+                                .padding(end = 2.dp)
+                                .offset(y = (-1.9).dp),
                         )
                         Text(
                             text = formatSgd(summary.total).removePrefix("$"),
@@ -100,6 +103,11 @@ fun BalanceHero(summary: ListSummary, modifier: Modifier = Modifier) {
                             letterSpacing = (-0.8).sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                            // Optical nudge: the Fraunces '$' draws its stem
+                            // ~4px below its body, so the digits are shifted
+                            // down ~12px to sit on the '$'s line — reads as
+                            // aligned.
+                            modifier = Modifier.offset(y = 4.6.dp),
                         )
                     }
                     Row(
