@@ -174,20 +174,20 @@ private fun CategoryMiniRow(balance: CategoryBalance, dark: Boolean) {
         ) {
             Box(
                 modifier = Modifier
-                    .size(27.dp)
-                    .background(visuals.color, RoundedCornerShape(9.dp)),
+                    .size(21.6.dp)
+                    .background(visuals.color, RoundedCornerShape(7.2.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     visuals.icon,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(15.dp),
+                    modifier = Modifier.size(12.dp),
                 )
             }
             Text(
                 text = balance.category,
-                fontSize = 16.5.sp,
+                fontSize = 13.2.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = c.textSecondary,
                 maxLines = 1,
@@ -196,7 +196,7 @@ private fun CategoryMiniRow(balance: CategoryBalance, dark: Boolean) {
         Text(
             text = formatSgd(balance.remainingValue),
             fontFamily = FrauncesDisplayFontFamily,
-            fontSize = 18.75.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
             color = c.textPrimary,
             maxLines = 1,
