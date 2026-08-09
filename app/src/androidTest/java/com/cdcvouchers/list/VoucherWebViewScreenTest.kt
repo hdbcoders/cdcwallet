@@ -142,10 +142,12 @@ class VoucherWebViewScreenTest {
             val updated = repository.findByToken("testpage.html")
             assertEquals(ValidityStatus.ACTIVE, updated?.validityStatus)
             assertEquals("CDC Vouchers 2026", updated?.campaignName)
+            // Category names are canonicalized to capitalized form on every
+            // repository write (see VoucherRepository.normalizedCategories).
             assertEquals(
                 listOf(
-                    CategoryBalance("heartland", BigDecimal("50")),
-                    CategoryBalance("supermarket", BigDecimal("25.5")),
+                    CategoryBalance("Heartland", BigDecimal("50")),
+                    CategoryBalance("Supermarket", BigDecimal("25.5")),
                 ),
                 updated?.categoryBalances,
             )
