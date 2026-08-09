@@ -97,7 +97,7 @@ fun TicketCard(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(start = 18.dp, end = 10.dp, top = 13.dp, bottom = 9.dp),
+                modifier = Modifier.padding(start = 18.dp, end = 10.dp, top = 10.dp, bottom = 7.dp),
             ) {
                 Text(
                     text = voucher.campaignName,
@@ -159,7 +159,7 @@ fun TicketCard(
             } else if (fullyRedeemed || badge is BadgeState.NoBalance) {
                 StatusBanner(text = stringResource(R.string.no_balance_banner))
             } else {
-                CategoryPills(voucher, Modifier.padding(horizontal = 18.dp, vertical = 11.dp))
+                CategoryPills(voucher, Modifier.padding(horizontal = 18.dp, vertical = 8.dp))
             }
         }
     }
@@ -173,7 +173,7 @@ private fun ExpiryRow(badge: BadgeState, expiryText: String?) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 11.dp),
+        modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 8.dp),
     ) {
         when (badge) {
             is BadgeState.Active -> when (badge.urgency) {
@@ -268,7 +268,7 @@ private fun StatusBanner(text: String) {
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .padding(horizontal = 18.dp)
-            .padding(bottom = 16.dp)
+            .padding(bottom = 14.dp)
             .fillMaxWidth(),
     ) {
         Text(
@@ -276,7 +276,7 @@ private fun StatusBanner(text: String) {
             fontSize = 13.5.sp,
             fontWeight = FontWeight.Medium,
             color = c.textPrimary,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         )
     }
 }

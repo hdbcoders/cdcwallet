@@ -134,7 +134,7 @@ fun VoucherListScreen(
                     bottom = 26.dp +
                         WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
                 ),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 if (sorted.isEmpty()) {
                     item(key = "empty") {
