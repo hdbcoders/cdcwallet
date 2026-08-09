@@ -3,7 +3,7 @@
 package com.cdcvouchers.ui.theme
 
 import android.content.Context
-import androidx.compose.foundation.isSystemInDarkTheme
+import android.content.res.Configuration
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -23,8 +23,13 @@ import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import com.cdcvouchers.R
 
-/** User-facing theme choice; SYSTEM is the default and matches today's behavior. */
-enum class ThemeMode { SYSTEM, LIGHT, DARK }
+/**
+ * User-facing theme choice. The app never tracks the system after the first
+ * launch: the system default is baked into a concrete mode on first run (see
+ * [resolveInitialMode]), and [ThemeModeStore.toggle] flips between the two
+ * modes afterwards.
+ */
+enum class ThemeMode { LIGHT, DARK }
 
 /**
  * The app's *effective* dark state, as decided by AppTheme — never use
@@ -34,27 +39,54 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 val LocalAppIsDark = staticCompositionLocalOf { false }
 
 /**
+ * Pure decision for the app's first concrete theme mode — the system default
+ * is inherited exactly once. An explicit stored choice wins; otherwise (first
+ * launch, or a legacy "system"/unknown value from before the SYSTEM option
+ * was removed) the user's dark/light system setting is snapshotted.
+ */
+internal fun resolveInitialMode(isSystemDark: Boolean, stored: String?): ThemeMode =
+    when (stored) {
+        "light" -> ThemeMode.LIGHT
+        "dark" -> ThemeMode.DARK
+        else -> if (isSystemDark) ThemeMode.DARK else ThemeMode.LIGHT
+    }
+
+/**
  * Persists the theme choice in SharedPreferences (same pattern as
  * SqlCipherPassphraseStore). The mode is held in Compose snapshot state so a
- * Settings change recomposes the whole app instantly.
+ * theme change recomposes the whole app instantly.
  */
 class ThemeModeStore(context: Context) {
 
     private val prefs = context.applicationContext
         .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    var mode by mutableStateOf(load())
+    var mode by mutableStateOf(ThemeMode.LIGHT)
         private set
 
-    private fun load(): ThemeMode = when (prefs.getString(KEY_MODE, null)) {
-        "light" -> ThemeMode.LIGHT
-        "dark" -> ThemeMode.DARK
-        else -> ThemeMode.SYSTEM
+    init {
+        // First launch (or a legacy "Follow system" install): snapshot the
+        // system dark/light default into a concrete persisted mode, then stop
+        // following the system — the hamburger toggle is the only way to
+        // change it afterwards.
+        val stored = prefs.getString(KEY_MODE, null)
+        mode = resolveInitialMode(isSystemDark(context), stored)
+        if (stored == null || stored == "system") {
+            prefs.edit().putString(KEY_MODE, mode.name.lowercase()).apply()
+        }
     }
+
+    /** Flips LIGHT ↔ DARK. */
+    fun toggle() = setThemeMode(if (mode == ThemeMode.LIGHT) ThemeMode.DARK else ThemeMode.LIGHT)
 
     fun setThemeMode(newMode: ThemeMode) {
         mode = newMode
         prefs.edit().putString(KEY_MODE, newMode.name.lowercase()).apply()
+    }
+
+    private fun isSystemDark(context: Context): Boolean {
+        val uiMode = context.resources.configuration.uiMode
+        return (uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     }
 
     private companion object {
@@ -66,11 +98,7 @@ class ThemeModeStore(context: Context) {
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun AppTheme(mode: ThemeMode, content: @Composable () -> Unit) {
-    val dark = when (mode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-    }
+    val dark = mode == ThemeMode.DARK
     val redesign = if (dark) DarkRedesignColors else LightRedesignColors
     CompositionLocalProvider(
         LocalAppIsDark provides dark,

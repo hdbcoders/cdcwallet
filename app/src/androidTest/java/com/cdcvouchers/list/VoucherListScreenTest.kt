@@ -322,6 +322,7 @@ class VoucherListScreenTest {
         // The hamburger (top-left) opens the navigation drawer; the gear is
         // no longer in the top bar — Settings and About App live in the drawer.
         composeRule.onNodeWithContentDescription("Menu").performClick()
+        composeRule.onNodeWithText("Dark Mode").assertIsDisplayed()
         composeRule.onNodeWithText("Settings").assertIsDisplayed()
         composeRule.onNodeWithText("About App").assertIsDisplayed()
         composeRule.onNodeWithText("About App").performClick()

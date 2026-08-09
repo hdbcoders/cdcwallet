@@ -15,7 +15,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -42,13 +44,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cdcvouchers.R
 import com.cdcvouchers.ui.theme.AppLanguage
+import com.cdcvouchers.ui.theme.LocalAppIsDark
 import com.cdcvouchers.ui.theme.LocalRedesignColors
 import com.cdcvouchers.ui.theme.PlexMonoFontFamily
 
 /**
- * The redesign's app header (mockup): hamburger with a Settings/About
- * dropdown on the left, and on the right the `文A` language toggle with an
- * inline dropdown plus the Archived pill carrying a gold count badge.
+ * The redesign's app header (mockup): hamburger with a Dark/Light Mode
+ * toggle plus Settings/About dropdown on the left, and on the right the
+ * `文A` language toggle with an inline dropdown plus the Archived pill
+ * carrying a gold count badge.
  *
  * The frame is a Material3 TopAppBar (spec 04's "[hamburger] title
  * [Translate] [Archived]" layout) with the mockup's bespoke controls in its
@@ -65,6 +69,7 @@ fun AppHeader(
     onArchivedClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onAboutClick: () -> Unit,
+    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val c = LocalRedesignColors.current
@@ -103,6 +108,30 @@ fun AppHeader(
                     containerColor = c.surfaceRaised,
                     border = BorderStroke(1.dp, c.hairline),
                 ) {
+                    val dark = LocalAppIsDark.current
+                    DropdownMenuItem(
+                        // Theme toggle (spec change): the menu shows the mode
+                        // the user can switch TO — "Dark Mode" when light,
+                        // "Light Mode" when dark.
+                        text = {
+                            MenuLabel(
+                                stringResource(
+                                    if (dark) R.string.light_mode else R.string.dark_mode,
+                                ),
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                if (dark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                                contentDescription = null,
+                                tint = c.textSecondary,
+                            )
+                        },
+                        onClick = {
+                            menuOpen = false
+                            onToggleTheme()
+                        },
+                    )
                     DropdownMenuItem(
                         text = { MenuLabel(stringResource(R.string.settings)) },
                         leadingIcon = {

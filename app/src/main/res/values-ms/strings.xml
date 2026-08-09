@@ -65,11 +65,8 @@
         <item quantity="other">%1$d hari lagi</item>
     </plurals>
 
-    <string name="appearance">Penampilan</string>
-    <string name="follow_system">Ikut sistem</string>
-    <string name="theme_light">Cerah</string>
-    <string name="theme_dark">Gelap</string>
-    <string name="appearance_desc">Rupa aplikasi. Ikut sistem memadankan tetapan telefon anda.</string>
+    <string name="dark_mode">Mod Gelap</string>
+    <string name="light_mode">Mod Cerah</string>
 
     <string name="language">Bahasa</string>
     <!-- Nama bahasa sentiasa dalam skrip masing-masing. -->

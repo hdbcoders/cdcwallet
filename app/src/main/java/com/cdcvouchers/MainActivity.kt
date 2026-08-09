@@ -200,6 +200,7 @@ private fun AppNavHost(
                     onArchivedClick = { navController.navigate("archived") },
                     onSettingsClick = { navController.navigate("settings") },
                     onAboutClick = { navController.navigate("about") },
+                    onToggleTheme = { container.themeModeStore.toggle() },
                     languageStore = container.languageStore,
                     onLanguageSelected = onLanguageSelected,
                 )
@@ -240,6 +241,7 @@ private fun AppNavHost(
                             onArchivedClick = { navController.navigate("archived") },
                             onSettingsClick = { navController.navigate("settings") },
                     onAboutClick = { navController.navigate("about") },
+                            onToggleTheme = { container.themeModeStore.toggle() },
                             languageStore = container.languageStore,
                             onLanguageSelected = onLanguageSelected,
                         )
@@ -275,7 +277,6 @@ private fun AppNavHost(
             SettingsScreen(
                 backupFlow = container.backupFlow,
                 repository = container.repository,
-                themeModeStore = container.themeModeStore,
                 onBack = { navController.popBackStack() },
             )
         }

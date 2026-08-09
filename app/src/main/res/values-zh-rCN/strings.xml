@@ -65,11 +65,8 @@
         <item quantity="other">剩 %1$d 天</item>
     </plurals>
 
-    <string name="appearance">外观</string>
-    <string name="follow_system">跟随系统</string>
-    <string name="theme_light">浅色</string>
-    <string name="theme_dark">深色</string>
-    <string name="appearance_desc">应用的外观。跟随系统会匹配您手机的设置。</string>
+    <string name="dark_mode">深色模式</string>
+    <string name="light_mode">浅色模式</string>
 
     <string name="language">语言</string>
     <!-- 语言名称始终以各自文字显示。 -->

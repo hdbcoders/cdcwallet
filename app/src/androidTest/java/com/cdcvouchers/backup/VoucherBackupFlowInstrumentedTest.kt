@@ -25,7 +25,6 @@ import com.cdcvouchers.data.model.ValidityStatus
 import com.cdcvouchers.data.model.VoucherBackupPayload
 import com.cdcvouchers.data.model.VoucherGroup
 import com.cdcvouchers.ui.settings.SettingsScreen
-import com.cdcvouchers.ui.theme.ThemeModeStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -110,7 +109,6 @@ class VoucherBackupFlowInstrumentedTest {
                 SettingsScreen(
                     backupFlow = flow,
                     repository = repository,
-                    themeModeStore = ThemeModeStore(appContext),
                     onBack = {},
                     backupBytesProvider = bytesProvider,
                 )

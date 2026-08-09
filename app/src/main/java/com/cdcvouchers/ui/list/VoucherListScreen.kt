@@ -73,6 +73,7 @@ fun VoucherListScreen(
     modifier: Modifier = Modifier,
     highlightVoucherId: String? = null,
     onHighlightConsumed: () -> Unit = {},
+    onToggleTheme: () -> Unit = {},
 ) {
     val vm: VoucherListViewModel = viewModel(
         initializer = { VoucherListViewModel(repository, extractionCoordinator) },
@@ -116,6 +117,7 @@ fun VoucherListScreen(
                 onArchivedClick = onArchivedClick,
                 onSettingsClick = onSettingsClick,
                 onAboutClick = onAboutClick,
+                onToggleTheme = onToggleTheme,
             )
             BalanceHero(
                 summary = summary,

@@ -65,11 +65,8 @@
         <item quantity="other">%1$d நாட்கள் உள்ளன</item>
     </plurals>
 
-    <string name="appearance">தோற்றம்</string>
-    <string name="follow_system">கணினியைப் பின்பற்று</string>
-    <string name="theme_light">வெளிச்சம்</string>
-    <string name="theme_dark">இருள்</string>
-    <string name="appearance_desc">பயன்பாட்டின் தோற்றம். கணினியைப் பின்பற்றுவது உங்கள் தொலைபேசி அமைப்பைப் பொருத்தும்.</string>
+    <string name="dark_mode">இருண்ட முறை</string>
+    <string name="light_mode">ஒளி முறை</string>
 
     <string name="language">மொழி</string>
     <!-- மொழிப் பெயர்கள் எப்போதும் அவற்றின் சொந்த எழுத்துகளில். -->

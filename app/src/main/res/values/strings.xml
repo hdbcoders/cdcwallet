@@ -76,12 +76,9 @@
         <item quantity="other">%1$d days left</item>
     </plurals>
 
-    <!-- Settings: appearance. -->
-    <string name="appearance">Appearance</string>
-    <string name="follow_system">Follow system</string>
-    <string name="theme_light">Light</string>
-    <string name="theme_dark">Dark</string>
-    <string name="appearance_desc">How the app looks. Follow system matches your phone\'s setting.</string>
+    <!-- Hamburger menu: theme toggle. -->
+    <string name="dark_mode">Dark Mode</string>
+    <string name="light_mode">Light Mode</string>
 
     <!-- Settings: language. -->
     <string name="language">Language</string>

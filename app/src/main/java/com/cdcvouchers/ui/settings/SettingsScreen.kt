@@ -51,8 +51,6 @@ import com.cdcvouchers.data.backup.BackupFlow
 import com.cdcvouchers.data.model.VoucherBackupPayload
 import com.cdcvouchers.ui.components.AppDialogSurface
 import com.cdcvouchers.ui.components.DialogButtonRow
-import com.cdcvouchers.ui.theme.ThemeMode
-import com.cdcvouchers.ui.theme.ThemeModeStore
 import kotlinx.coroutines.flow.collect
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -70,7 +68,6 @@ import java.time.format.DateTimeFormatter
 fun SettingsScreen(
     backupFlow: BackupFlow,
     repository: VoucherRepository,
-    themeModeStore: ThemeModeStore,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     backupBytesProvider: (() -> ByteArray?)? = null,
@@ -144,30 +141,6 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = stringResource(R.string.appearance),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            ModeOption(
-                label = stringResource(R.string.follow_system),
-                selected = themeModeStore.mode == ThemeMode.SYSTEM,
-                onClick = { themeModeStore.setThemeMode(ThemeMode.SYSTEM) },
-            )
-            ModeOption(
-                label = stringResource(R.string.theme_light),
-                selected = themeModeStore.mode == ThemeMode.LIGHT,
-                onClick = { themeModeStore.setThemeMode(ThemeMode.LIGHT) },
-            )
-            ModeOption(
-                label = stringResource(R.string.theme_dark),
-                selected = themeModeStore.mode == ThemeMode.DARK,
-                onClick = { themeModeStore.setThemeMode(ThemeMode.DARK) },
-            )
-            Text(
-                text = stringResource(R.string.appearance_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
             Text(
                 text = stringResource(R.string.backup),
                 style = MaterialTheme.typography.titleMedium,
