@@ -6,6 +6,8 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -118,6 +120,13 @@ class DuplicateAddScreenTest {
                 flow = flow(repository),
                 onBack = { backCalled = true },
             )
+        }
+
+        // The paste field is auto-focused on arrival so the user can type or
+        // paste without an extra tap.
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(isFocused() and hasText("Paste voucher link"))
+                .fetchSemanticsNodes().isNotEmpty()
         }
 
         composeRule.onNodeWithText("Paste voucher link").performTextInput(url)

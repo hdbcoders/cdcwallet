@@ -8,6 +8,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import java.io.File
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -246,8 +247,17 @@ class VoucherBackupFlowInstrumentedTest {
 
     private fun importWithPassword(password: String) {
         composeRule.onNodeWithText("Import backup").performClick()
+        waitUntilPasswordFocused()
         composeRule.onNodeWithTag("backup_password").performTextInput(password)
         composeRule.onNodeWithText("Import").performClick()
+    }
+
+    /** The backup password field auto-focuses on dialog mount (retry loop up to ~0.5s). */
+    private fun waitUntilPasswordFocused(timeoutMillis: Long = 2_000) {
+        composeRule.waitUntil(timeoutMillis) {
+            composeRule.onNodeWithTag("backup_password")
+                .fetchSemanticsNode().config[SemanticsProperties.Focused]
+        }
     }
 
     /** Decrypt runs on Dispatchers.IO (P1 item 3) — wait for the async result
@@ -451,6 +461,7 @@ class VoucherBackupFlowInstrumentedTest {
 
         // Redo and confirm Replace: data matches the backup exactly.
         composeRule.onNodeWithText("Import backup").performClick()
+        waitUntilPasswordFocused()
         composeRule.onNodeWithTag("backup_password").performTextInput("backup-passphrase")
         composeRule.onNodeWithText("Import").performClick()
         waitUntilNodeAppears(summaryText(payload))
@@ -507,6 +518,7 @@ class VoucherBackupFlowInstrumentedTest {
         settingsContent(repository) { null }
 
         composeRule.onNodeWithText("Export backup").performClick()
+        waitUntilPasswordFocused()
         composeRule.onNodeWithTag("backup_password").performTextInput("backup-passphrase")
         composeRule.onNodeWithTag("backup_confirm_password").performTextInput("backup-passphrase")
         composeRule.onNodeWithText("Export").performClick()

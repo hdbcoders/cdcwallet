@@ -20,13 +20,18 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcwallet.R
 import com.cdcwallet.addflow.AddVoucherFlow
+import kotlinx.coroutines.delay
 
 /**
  * Paste/share add screen (spec 03). Runs the exact add sequence; the in-flight
@@ -46,9 +51,24 @@ fun AddVoucherScreen(
     val vm: AddVoucherViewModel = viewModel(
         initializer = { AddVoucherViewModel(flow, context.applicationContext) },
     )
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(Unit) {
         initialUrl?.let { vm.setInitialUrl(it) }
+        // Auto-activate the paste field on arrival so the user can type or
+        // paste without an extra tap. Skipped when a share intent already
+        // pre-filled the URL — there the user only needs to confirm, so we
+        // don't pop the keyboard over the Add button. A single requestFocus
+        // can be dropped while the node/window is still mounting, so retry
+        // briefly (mirrors DeleteVoucherDialog / BackupPasswordDialog).
+        if (initialUrl == null) {
+            repeat(10) {
+                focusRequester.requestFocus()
+                delay(50)
+            }
+            keyboardController?.show()
+        }
     }
 
     Scaffold(
@@ -71,7 +91,7 @@ fun AddVoucherScreen(
             OutlinedTextField(
                 value = vm.url,
                 onValueChange = vm::onUrlChange,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                 label = { Text(stringResource(R.string.paste_link)) },
                 singleLine = true,
                 enabled = vm.status !is AddUiStatus.Working,

@@ -43,8 +43,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -64,6 +67,7 @@ import com.cdcwallet.ui.components.DialogButtonRow
 import com.cdcwallet.ui.theme.AppFontScale
 import com.cdcwallet.ui.theme.FontScaleStore
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -372,6 +376,8 @@ private fun BackupPasswordDialog(
     var password by remember { mutableStateOf("") }
     var confirmation by remember { mutableStateOf("") }
     val valid = password.isNotEmpty() && (!requireConfirmation || password == confirmation)
+    val passwordFocus = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     AppDialogSurface(onDismissRequest = onDismiss) {
         Text(
@@ -398,7 +404,7 @@ private fun BackupPasswordDialog(
             label = { Text(stringResource(R.string.backup_password)) },
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().testTag("backup_password"),
+            modifier = Modifier.fillMaxWidth().testTag("backup_password").focusRequester(passwordFocus),
         )
         if (requireConfirmation) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -419,6 +425,18 @@ private fun BackupPasswordDialog(
             onConfirm = { onConfirm(password) },
             confirmEnabled = valid,
         )
+    }
+    // M3 Dialog doesn't reliably land initial focus on the password field
+    // (mirrors DeleteVoucherDialog — the request can be stolen during dialog
+    // mount). Retry briefly (up to ~0.5s) until it sticks, then surface the
+    // keyboard so the user can type without an extra tap. Applies to both the
+    // export (password + confirm) and import (password) dialogs.
+    LaunchedEffect(Unit) {
+        repeat(10) {
+            passwordFocus.requestFocus()
+            delay(50)
+        }
+        keyboardController?.show()
     }
 }
 
