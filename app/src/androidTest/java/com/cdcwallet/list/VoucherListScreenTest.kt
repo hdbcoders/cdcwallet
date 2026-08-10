@@ -161,7 +161,6 @@ class VoucherListScreenTest {
         // amount into separate Text nodes (mockup), so assert per-node.
         composeRule.onNodeWithText("REMAINING BALANCE").assertIsDisplayed()
         composeRule.onNodeWithText("92.5").assertIsDisplayed()
-        composeRule.onNodeWithText("4 voucher links").assertIsDisplayed()
         // Category breakdown rows (top 3 by value) render in the right column.
         // Use onFirst() because category names also appear on voucher cards.
         for (part in listOf(

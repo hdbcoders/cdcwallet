@@ -167,7 +167,7 @@ class BalanceHeroAdaptiveTest {
     }
 
     @Test
-    fun narrowCardWrapsCategoryRowsAndMetaWithoutTruncation() {
+    fun narrowCardWrapsCategoryRowsWithoutTruncation() {
         composeRule.setContent {
             MaterialTheme {
                 Box(modifier = Modifier.width(160.dp)) {
@@ -181,9 +181,8 @@ class BalanceHeroAdaptiveTest {
         assertOnSeparateLines("Heartland", "$1,000")
         assertNotTruncated("Heartland")
         assertNotTruncated("$1,000")
-        // The big total and the meta wrap rather than truncate.
+        // The big total wraps rather than truncates.
         assertNotTruncated("1,234.5")
-        assertNotTruncated("3 voucher links")
     }
 
     @Test
@@ -220,7 +219,6 @@ class BalanceHeroAdaptiveTest {
         }
         composeRule.onNodeWithText("REMAINING BALANCE", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText("1,234.5", useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithText("3 voucher links", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText("Heartland", useUnmergedTree = true).assertIsDisplayed()
         // Row 1: eyebrow left, amount right on the same line.
         assertSameLine("REMAINING BALANCE", "1,234.5")
@@ -230,8 +228,6 @@ class BalanceHeroAdaptiveTest {
             "amount should sit right of the eyebrow (eyebrow.right=${eyebrow.right}, amount.left=${amount.left})",
             amount.left > eyebrow.right,
         )
-        // Row 2: the meta below the eyebrow.
-        assertOnSeparateLines("REMAINING BALANCE", "3 voucher links")
         // Categories below the amount (stacked).
         assertOnSeparateLines("1,234.5", "Heartland")
     }

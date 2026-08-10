@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +32,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -54,23 +51,22 @@ import com.cdcwallet.ui.theme.rememberReduceMotion
 
 /**
  * The redesign's balance hero (mockup): gold gradient card pinned above the
- * list. Left shows the eyebrow, the big serif total (gold `$`) and the
- * "N voucher links" meta; right shows up to three category mini-rows (tinted
- * square icon + name + mono amount). The rest is left to [+N more].
+ * list. Left shows the eyebrow and the big serif total (gold `$`); right
+ * shows up to three category mini-rows (tinted square icon + name + mono
+ * amount). The rest is left to [+N more].
  *
  * The whole card is tappable ([onToggle]) and collapses to a compact state
  * showing just "Balance:" + the total. All text that used to ellipsize/truncate
- * (total, meta, category rows) is now FlowRow-based: items share a line while
+ * (total, category rows) is now FlowRow-based: items share a line while
  * they fit and wrap to their own line when they would intersect — nothing is
  * ever cut off, at any font scale.
  *
  * Responsive stacking: when the effective font scale (system × app, capped)
  * is at or above [BALANCE_STACK_THRESHOLD] (1.5), the expanded card switches
  * from the two-column layout to a stacked top+bottom one — the eyebrow sits
- * left with the total right-aligned on the same row, the "N voucher links"
- * meta goes on a second row below, and the category rows become full-width
- * beneath — so long category names never squeeze into mid-word breaks at
- * large text sizes. The collapsed state is unaffected.
+ * left with the total right-aligned on the same row, and the category rows
+ * become full-width beneath — so long category names never squeeze into
+ * mid-word breaks at large text sizes. The collapsed state is unaffected.
  */
 @Composable
 fun BalanceHero(
@@ -239,11 +235,10 @@ private fun ExpandedBalance(
 }
 
 /**
- * The balance half of the expanded hero: eyebrow, total amount, and the
- * "N voucher links" meta. Two-column mode ([stacked] = false) keeps today's
- * left column (all three stacked, left-aligned). Stacked mode spans the
- * card: the eyebrow sits left with the amount right-aligned on the same
- * row, and the meta in a second row below the eyebrow.
+ * The balance half of the expanded hero: the eyebrow and the total amount.
+ * Two-column mode ([stacked] = false) keeps today's left column (both
+ * stacked, left-aligned). Stacked mode spans the card: the eyebrow sits
+ * left with the amount right-aligned on the same row.
  */
 @Composable
 private fun BalanceBlock(
@@ -255,8 +250,8 @@ private fun BalanceBlock(
 ) {
     Column(modifier = modifier) {
         if (stacked) {
-            // Row 1: eyebrow left, amount right (they wrap to separate rows
-            // only if they would collide at extreme sizes).
+            // Eyebrow left, amount right (they wrap to separate rows only
+            // if they would collide at extreme sizes).
             FlowRow(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalArrangement = Arrangement.spacedBy(0.dp),
@@ -266,12 +261,9 @@ private fun BalanceBlock(
                 Eyebrow(eyebrowColor)
                 Amount(summary, c)
             }
-            // Row 2: meta below the eyebrow.
-            MetaRow(summary, c)
         } else {
             Eyebrow(eyebrowColor)
             Amount(summary, c)
-            MetaRow(summary, c)
         }
     }
 }
@@ -323,34 +315,6 @@ private fun Amount(summary: ListSummary, c: RedesignColors) {
             // body, so the digits are shifted down ~12px to sit on the '$'s
             // line — reads as aligned.
             modifier = Modifier.offset(y = 4.6.dp),
-        )
-    }
-}
-
-/** The "N voucher links" meta line: icon + text as FlowRow items so the
- *  text wraps instead of ellipsizing. */
-@Composable
-private fun MetaRow(summary: ListSummary, c: RedesignColors) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp),
-        itemVerticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(top = 8.dp),
-    ) {
-        Icon(
-            Icons.Outlined.Link,
-            contentDescription = null,
-            modifier = Modifier.size(13.dp),
-            tint = c.textSecondary.copy(alpha = 0.7f),
-        )
-        Text(
-            text = pluralStringResource(
-                R.plurals.hero_links,
-                summary.linkCount,
-                summary.linkCount,
-            ),
-            fontSize = 12.sp,
-            color = c.textSecondary,
         )
     }
 }
