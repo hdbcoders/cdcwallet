@@ -3,9 +3,9 @@
     <!-- API 31+ splash: the OS draws the app logo over the themed background
          and holds it until setKeepOnScreenCondition releases it (the list's
          first DB read). postSplashScreenTheme hands off to the real theme. -->
-    <style name="Theme.CDCVouchers.Starting" parent="Theme.SplashScreen">
+    <style name="Theme.CDCWallet.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#F6F9FB</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo_circle</item>
-        <item name="postSplashScreenTheme">@style/Theme.CDCVouchers</item>
+        <item name="postSplashScreenTheme">@style/Theme.CDCWallet</item>
     </style>
 </resources>

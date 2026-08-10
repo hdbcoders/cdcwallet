@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "com.cdcvouchers"
+    namespace = "com.cdcwallet"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.cdcvouchers"
+        applicationId = "com.cdcwallet"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

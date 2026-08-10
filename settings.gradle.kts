@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "CDCVouchers"
+rootProject.name = "CDCWallet"
 include(":app")
