@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.room.Room
@@ -128,6 +129,20 @@ class VoucherBackupFlowInstrumentedTest {
     private fun waitUntilNodeAppears(text: String, timeoutMillis: Long = 10_000) {
         composeRule.waitUntil(timeoutMillis) {
             composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    /** The busy dialog must show while a backup operation runs — PBKDF2 gives
+     *  a real (sub-second) window to catch it in. */
+    private fun waitUntilProgressAppears(timeoutMillis: Long = 5_000) {
+        composeRule.waitUntil(timeoutMillis) {
+            composeRule.onAllNodesWithTag("backup-progress").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun waitUntilProgressGone(timeoutMillis: Long = 5_000) {
+        composeRule.waitUntil(timeoutMillis) {
+            composeRule.onAllNodesWithTag("backup-progress").fetchSemanticsNodes().isEmpty()
         }
     }
 
@@ -324,5 +339,55 @@ class VoucherBackupFlowInstrumentedTest {
             assertEquals(setOf("FromBackup1", "FromBackup2"), rows.map { it.token }.toSet())
             assertEquals(1, rows.count { it.isArchived })
         }
+    }
+
+    @Test
+    fun importShowsProgressDialogThenSummary() {
+        val repository = RoomVoucherRepository(database)
+        val payload = VoucherBackupPayload(
+            createdAt = Instant.now(),
+            // Two vouchers: the summary plural renders "2 vouchers", which is
+            // what summaryText() builds (a single voucher would render the
+            // singular form and never match).
+            vouchers = listOf(
+                voucher("TokenOne", "CDC Vouchers 2026"),
+                voucher("TokenTwo", "SG60", archived = true),
+            ),
+        )
+        val bytes = service.encryptPayload(payload, "backup-passphrase")
+        settingsContent(repository) { bytes }
+
+        importWithPassword("backup-passphrase")
+
+        // The decrypt window is real (PBKDF2) — the progress dialog must
+        // appear with the import message…
+        waitUntilProgressAppears()
+        composeRule.onNodeWithText("Decrypting & Importing backup").assertIsDisplayed()
+        // …then resolves into the summary dialog and the progress is gone.
+        waitUntilNodeAppears(summaryText(payload))
+        composeRule.onNodeWithText(summaryText(payload)).assertIsDisplayed()
+        waitUntilProgressGone()
+    }
+
+    @Test
+    fun exportShowsProgressDialogThenSnackbar() {
+        if (Build.VERSION.SDK_INT in 24..27) {
+            InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(
+                "pm grant ${appContext.packageName} android.permission.WRITE_EXTERNAL_STORAGE",
+            )
+        }
+        val repository = RoomVoucherRepository(database)
+        runBlocking { repository.insert(voucher("TokenOne", "CDC Vouchers 2026")) }
+        settingsContent(repository) { null }
+
+        composeRule.onNodeWithText("Export backup").performClick()
+        composeRule.onNodeWithTag("backup_password").performTextInput("backup-passphrase")
+        composeRule.onNodeWithTag("backup_confirm_password").performTextInput("backup-passphrase")
+        composeRule.onNodeWithText("Export").performClick()
+
+        waitUntilProgressAppears()
+        composeRule.onNodeWithText("Encrypting and Exporting backup").assertIsDisplayed()
+        waitUntilNodeAppears("Backup saved to Downloads")
+        waitUntilProgressGone()
     }
 }

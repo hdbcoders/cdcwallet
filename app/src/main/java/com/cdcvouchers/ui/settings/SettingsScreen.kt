@@ -16,6 +16,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -218,6 +219,39 @@ fun SettingsScreen(
             onReplace = { vm.onReplaceConfirmed() },
             onCancel = { vm.onReplaceDismissed() },
         )
+    }
+
+    // Non-dismissable progress while a backup operation runs (decrypt/
+    // merge/replace on import, encrypt + file write on export). The ViewModel
+    // caps every operation at 10s, so the dialog can never hang forever.
+    state.busyPhase?.let { phase ->
+        BusyProgressDialog(
+            message = stringResource(
+                when (phase) {
+                    BusyPhase.IMPORTING -> R.string.importing_backup
+                    BusyPhase.EXPORTING -> R.string.exporting_backup
+                },
+            ),
+        )
+    }
+}
+
+@Composable
+private fun BusyProgressDialog(message: String) {
+    AppDialogSurface(onDismissRequest = {}) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.testTag("backup-progress"),
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
     }
 }
 

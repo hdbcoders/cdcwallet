@@ -93,8 +93,10 @@
     <!-- Settings: backup (spec 06). -->
     <string name="backup">Backup</string>
     <string name="export_backup">Export backup</string>
+    <string name="exporting_backup">Encrypting and Exporting backup</string>
     <string name="export_desc">Saves an encrypted copy of all your voucher links to Downloads. You\'ll set a password — remember it, it can\'t be recovered.</string>
     <string name="import_backup">Import backup</string>
+    <string name="importing_backup">Decrypting &amp; Importing backup</string>
     <string name="import_desc">Restores from a backup file you exported before. Nothing is downloaded during import.</string>
     <string name="export">Export</string>
     <string name="import_confirm">Import</string>

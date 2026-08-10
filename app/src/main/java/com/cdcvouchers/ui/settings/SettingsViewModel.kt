@@ -24,16 +24,23 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 enum class PasswordDialogTarget { IMPORT }
 
 enum class ImportMode { MERGE, REPLACE }
+
+/** Which backup operation is running and blocking the UI behind a progress
+ *  dialog. Import covers decrypt + merge/replace; export covers encrypt +
+ *  file write. */
+enum class BusyPhase { IMPORTING, EXPORTING }
 
 data class SettingsUiState(
     val exportDialogOpen: Boolean = false,
     val passwordDialogFor: PasswordDialogTarget? = null,
     val summaryPayload: VoucherBackupPayload? = null,
     val pendingReplace: VoucherBackupPayload? = null,
+    val busyPhase: BusyPhase? = null,
 )
 
 sealed interface SettingsEvent {
@@ -96,13 +103,20 @@ class SettingsViewModel(
     }
 
     private fun exportBackup(password: String) {
+        _uiState.update { it.copy(busyPhase = BusyPhase.EXPORTING) }
         viewModelScope.launch {
-            val ok = runCatching { backupFlow.export(appContext, password) }.isSuccess
-            _events.trySend(
-                SettingsEvent.Snackbar(
-                    if (ok) R.string.snackbar_backup_saved else R.string.snackbar_save_failed,
-                ),
-            )
+            try {
+                val ok = runCatching {
+                    withTimeout(BACKUP_OP_TIMEOUT_MS) { backupFlow.export(appContext, password) }
+                }.isSuccess
+                _events.trySend(
+                    SettingsEvent.Snackbar(
+                        if (ok) R.string.snackbar_backup_saved else R.string.snackbar_save_failed,
+                    ),
+                )
+            } finally {
+                _uiState.update { it.copy(busyPhase = null) }
+            }
         }
     }
 
@@ -129,15 +143,21 @@ class SettingsViewModel(
     fun onImportPasswordConfirmed(password: String) {
         val bytes = pendingImportBytes ?: return
         pendingImportBytes = null
-        _uiState.update { it.copy(passwordDialogFor = null) }
+        _uiState.update { it.copy(passwordDialogFor = null, busyPhase = BusyPhase.IMPORTING) }
         viewModelScope.launch {
-            val payload = withContext(Dispatchers.IO) {
-                runCatching { backupFlow.decryptBackup(bytes, password) }.getOrNull()
-            }
-            if (payload == null) {
-                _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
-            } else {
-                _uiState.update { it.copy(summaryPayload = payload) }
+            try {
+                val payload = withContext(Dispatchers.IO) {
+                    runCatching {
+                        withTimeout(BACKUP_OP_TIMEOUT_MS) { backupFlow.decryptBackup(bytes, password) }
+                    }.getOrNull()
+                }
+                if (payload == null) {
+                    _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
+                } else {
+                    _uiState.update { it.copy(summaryPayload = payload) }
+                }
+            } finally {
+                _uiState.update { it.copy(busyPhase = null) }
             }
         }
     }
@@ -151,15 +171,26 @@ class SettingsViewModel(
         val payload = _uiState.value.summaryPayload ?: return
         _uiState.update { it.copy(summaryPayload = null) }
         when (mode) {
-            ImportMode.MERGE -> viewModelScope.launch {
-                val imported = backupFlow.importMerge(payload)
-                _events.trySend(
-                    SettingsEvent.Snackbar(
-                        R.plurals.snackbar_imported_count,
-                        formatArgs = listOf(imported),
-                        pluralCount = imported,
-                    ),
-                )
+            ImportMode.MERGE -> {
+                _uiState.update { it.copy(busyPhase = BusyPhase.IMPORTING) }
+                viewModelScope.launch {
+                    try {
+                        val imported = withTimeout(BACKUP_OP_TIMEOUT_MS) {
+                            backupFlow.importMerge(payload)
+                        }
+                        _events.trySend(
+                            SettingsEvent.Snackbar(
+                                R.plurals.snackbar_imported_count,
+                                formatArgs = listOf(imported),
+                                pluralCount = imported,
+                            ),
+                        )
+                    } catch (e: Exception) {
+                        _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
+                    } finally {
+                        _uiState.update { it.copy(busyPhase = null) }
+                    }
+                }
             }
             ImportMode.REPLACE -> _uiState.update { it.copy(pendingReplace = payload) }
         }
@@ -169,13 +200,26 @@ class SettingsViewModel(
 
     fun onReplaceConfirmed() {
         val payload = _uiState.value.pendingReplace ?: return
-        _uiState.update { it.copy(pendingReplace = null) }
+        _uiState.update { it.copy(pendingReplace = null, busyPhase = BusyPhase.IMPORTING) }
         viewModelScope.launch {
-            runCatching { backupFlow.importReplace(payload) }
-                .onSuccess { _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_backup_imported)) }
-                .onFailure { _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_import_failed)) }
+            try {
+                withTimeout(BACKUP_OP_TIMEOUT_MS) { backupFlow.importReplace(payload) }
+                _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_backup_imported))
+            } catch (e: Exception) {
+                _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_import_failed))
+            } finally {
+                _uiState.update { it.copy(busyPhase = null) }
+            }
         }
     }
 
     fun onReplaceDismissed() { _uiState.update { it.copy(pendingReplace = null) } }
+
+    private companion object {
+        /** Hard cap on any backup op (decrypt/export/merge/replace): PBKDF2 at
+         *  600k iterations is the dominant cost (~1–2s worst case), so 10s is
+         *  generous headroom — fail-soft clears the progress dialog and shows
+         *  the operation's error message instead of hanging forever. */
+        const val BACKUP_OP_TIMEOUT_MS = 10_000L
+    }
 }
