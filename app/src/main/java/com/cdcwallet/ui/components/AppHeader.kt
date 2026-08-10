@@ -6,7 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,6 +25,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -39,11 +42,14 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cdcwallet.R
 import com.cdcwallet.ui.theme.AppLanguage
+import com.cdcwallet.ui.theme.AppScaledContent
 import com.cdcwallet.ui.theme.LocalAppIsDark
 import com.cdcwallet.ui.theme.LocalRedesignColors
 import com.cdcwallet.ui.theme.PlexMonoFontFamily
@@ -108,50 +114,55 @@ fun AppHeader(
                     containerColor = c.surfaceRaised,
                     border = BorderStroke(1.dp, c.hairline),
                 ) {
-                    val dark = LocalAppIsDark.current
-                    DropdownMenuItem(
-                        // Theme toggle (spec change): the menu shows the mode
-                        // the user can switch TO — "Dark Mode" when light,
-                        // "Light Mode" when dark.
-                        text = {
-                            MenuLabel(
-                                stringResource(
-                                    if (dark) R.string.light_mode else R.string.dark_mode,
-                                ),
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                if (dark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
-                                contentDescription = null,
-                                tint = c.textSecondary,
-                            )
-                        },
-                        onClick = {
-                            menuOpen = false
-                            onToggleTheme()
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { MenuLabel(stringResource(R.string.settings)) },
-                        leadingIcon = {
-                            Icon(Icons.Filled.Settings, contentDescription = null, tint = c.textSecondary)
-                        },
-                        onClick = {
-                            menuOpen = false
-                            onSettingsClick()
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { MenuLabel(stringResource(R.string.about_app)) },
-                        leadingIcon = {
-                            Icon(Icons.Filled.Info, contentDescription = null, tint = c.textSecondary)
-                        },
-                        onClick = {
-                            menuOpen = false
-                            onAboutClick()
-                        },
-                    )
+                    // DropdownMenu content lives in a popup window whose
+                    // density ignores the app font scale — re-apply it so
+                    // menu text scales with the text-size setting.
+                    AppScaledContent {
+                        val dark = LocalAppIsDark.current
+                        DropdownMenuItem(
+                            // Theme toggle (spec change): the menu shows the mode
+                            // the user can switch TO — "Dark Mode" when light,
+                            // "Light Mode" when dark.
+                            text = {
+                                MenuLabel(
+                                    stringResource(
+                                        if (dark) R.string.light_mode else R.string.dark_mode,
+                                    ),
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    if (dark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                                    contentDescription = null,
+                                    tint = c.textSecondary,
+                                )
+                            },
+                            onClick = {
+                                menuOpen = false
+                                onToggleTheme()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { MenuLabel(stringResource(R.string.settings)) },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Settings, contentDescription = null, tint = c.textSecondary)
+                            },
+                            onClick = {
+                                menuOpen = false
+                                onSettingsClick()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { MenuLabel(stringResource(R.string.about_app)) },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Info, contentDescription = null, tint = c.textSecondary)
+                            },
+                            onClick = {
+                                menuOpen = false
+                                onAboutClick()
+                            },
+                        )
+                    }
                 }
             }
         },
@@ -166,13 +177,31 @@ fun AppHeader(
                         contentDescription = stringResource(R.string.select_language),
                         modifier = Modifier.testTag("header-language"),
                         onClick = { langOpen = true },
+                        // Grows with the "文A" text (min 34dp) and pads the
+                        // glyphs internally so they don't touch the button's
+                        // edges; icon-only buttons keep the default fixed 34dp.
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                     ) {
                         Text(
                             text = "文A",
-                            fontFamily = PlexMonoFontFamily,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 13.sp,
                             color = c.textSecondary,
+                            // The CJK glyph's line box carries large vertical
+                            // padding; drop it so the button height tracks the
+                            // glyphs and the contentPadding is the visible
+                            // breathing room.
+                            style = LocalTextStyle.current.copy(
+                                fontFamily = PlexMonoFontFamily,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 13.sp,
+                                // 1em line: the CJK fallback's default line
+                                // box is ~1.4em, which would make the button
+                                // much taller than the glyphs. Pin it to the
+                                // font size so the button height tracks the
+                                // text and the contentPadding is the visible
+                                // breathing room.
+                                lineHeight = 13.sp,
+                                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                            ),
                         )
                     }
                     DropdownMenu(
@@ -182,31 +211,33 @@ fun AppHeader(
                         containerColor = c.surfaceRaised,
                         border = BorderStroke(1.dp, c.hairline),
                     ) {
-                        AppLanguage.entries.forEach { lang ->
-                            val selected = lang == currentLanguage
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = languageLabel(lang),
-                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (selected) c.gold else c.textPrimary,
-                                    )
-                                },
-                                trailingIcon = if (selected) {
-                                    {
-                                        Icon(
-                                            Icons.Filled.Check,
-                                            contentDescription = null,
-                                            tint = c.gold,
-                                            modifier = Modifier.size(15.dp),
+                        AppScaledContent {
+                            AppLanguage.entries.forEach { lang ->
+                                val selected = lang == currentLanguage
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = languageLabel(lang),
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (selected) c.gold else c.textPrimary,
                                         )
-                                    }
-                                } else null,
-                                onClick = {
-                                    langOpen = false
-                                    onLanguageSelected(lang)
-                                },
-                            )
+                                    },
+                                    trailingIcon = if (selected) {
+                                        {
+                                            Icon(
+                                                Icons.Filled.Check,
+                                                contentDescription = null,
+                                                tint = c.gold,
+                                                modifier = Modifier.size(15.dp),
+                                            )
+                                        }
+                                    } else null,
+                                    onClick = {
+                                        langOpen = false
+                                        onLanguageSelected(lang)
+                                    },
+                                )
+                            }
                         }
                     }
                 }
@@ -275,21 +306,31 @@ private fun MenuLabel(text: String) {
     )
 }
 
-/** Mockup icon button: 34dp, 10dp corners, raised surface + hairline border. */
+/** Header icon button: rounded, raised surface + hairline border. Fixed at
+ *  [minSize] unless [contentPadding] makes the content larger — icon-only
+ *  buttons keep the default 34dp; text-bearing buttons (the language
+ *  switcher) grow with their text at large font scales. */
 @Composable
 private fun IconBtn(
     contentDescription: String,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
+    minSize: Dp = 34.dp,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
     content: @Composable () -> Unit,
 ) {
     val c = LocalRedesignColors.current
     Box(
         modifier = modifier
-            .size(34.dp)
+            // clip/background/clickable OUTSIDE the padding so the visible
+            // button includes the contentPadding — a background inside
+            // padding would only paint the unpadded text area and the glyphs
+            // would hug the surface edges.
             .clip(RoundedCornerShape(10.dp))
             .background(c.surfaceRaised)
             .clickable(onClick = onClick)
+            .defaultMinSize(minWidth = minSize, minHeight = minSize)
+            .padding(contentPadding)
             .semantics { this.contentDescription = contentDescription },
         contentAlignment = Alignment.Center,
     ) {

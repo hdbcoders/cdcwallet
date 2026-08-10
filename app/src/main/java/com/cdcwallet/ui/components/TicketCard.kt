@@ -50,6 +50,7 @@ import com.cdcwallet.ui.list.formatSgd
 import com.cdcwallet.ui.theme.LocalAppIsDark
 import com.cdcwallet.ui.theme.FrauncesDisplayFontFamily
 import com.cdcwallet.ui.theme.LocalRedesignColors
+import com.cdcwallet.ui.theme.AppScaledContent
 import com.cdcwallet.ui.theme.categoryVisuals
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
@@ -130,7 +131,12 @@ fun TicketCard(
                         containerColor = c.surfaceRaised,
                         border = BorderStroke(1.dp, c.hairline),
                     ) {
-                        menuContent()
+                        // DropdownMenu content lives in a popup window whose
+                        // density ignores the app font scale — re-apply it so
+                        // the kebab menu items scale with the text-size setting.
+                        AppScaledContent {
+                            menuContent()
+                        }
                     }
                 }
             }

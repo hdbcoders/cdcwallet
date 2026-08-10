@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.cdcwallet.ui.theme.AppScaledContent
 
 /** Shared dialog chrome: centered surface, 28dp corners, 24dp padding. */
 @Composable
@@ -28,8 +29,12 @@ fun AppDialogSurface(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
-        Surface(shape = RoundedCornerShape(28.dp), tonalElevation = 6.dp) {
-            Column(modifier = Modifier.padding(24.dp), content = content)
+        // Dialog content lives in a separate window whose density ignores
+        // the app font scale — re-apply it so dialog text scales too.
+        AppScaledContent {
+            Surface(shape = RoundedCornerShape(28.dp), tonalElevation = 6.dp) {
+                Column(modifier = Modifier.padding(24.dp), content = content)
+            }
         }
     }
 }
