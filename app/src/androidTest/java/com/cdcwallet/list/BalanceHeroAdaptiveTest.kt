@@ -187,6 +187,56 @@ class BalanceHeroAdaptiveTest {
     }
 
     @Test
+    fun expandedHeroStaysSideBySideBelowStackThreshold() {
+        // Effective font scale 1.25 (< 1.5): the mockup's two-column layout.
+        composeRule.setContent {
+            MaterialTheme {
+                CompositionLocalProvider(
+                    LocalDensity provides Density(LocalDensity.current.density, fontScale = 1.25f),
+                ) {
+                    BalanceHero(summary = summary, collapsed = false, onToggle = {})
+                }
+            }
+        }
+        composeRule.onNodeWithText("1,234.5", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("REMAINING BALANCE", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Heartland", useUnmergedTree = true).assertIsDisplayed()
+        // Side-by-side: the left column's first element (eyebrow) and the
+        // right column's first category row start on the same top band.
+        assertSameLine("REMAINING BALANCE", "Heartland")
+    }
+
+    @Test
+    fun expandedHeroStacksAboveStackThreshold() {
+        // Effective font scale 1.5 (>= 1.5): the stacked top+bottom layout.
+        composeRule.setContent {
+            MaterialTheme {
+                CompositionLocalProvider(
+                    LocalDensity provides Density(LocalDensity.current.density, fontScale = 1.5f),
+                ) {
+                    BalanceHero(summary = summary, collapsed = false, onToggle = {})
+                }
+            }
+        }
+        composeRule.onNodeWithText("REMAINING BALANCE", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("1,234.5", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("3 voucher links", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Heartland", useUnmergedTree = true).assertIsDisplayed()
+        // Row 1: eyebrow left, amount right on the same line.
+        assertSameLine("REMAINING BALANCE", "1,234.5")
+        val eyebrow = textNode("REMAINING BALANCE")
+        val amount = textNode("1,234.5")
+        assertTrue(
+            "amount should sit right of the eyebrow (eyebrow.right=${eyebrow.right}, amount.left=${amount.left})",
+            amount.left > eyebrow.right,
+        )
+        // Row 2: the meta below the eyebrow.
+        assertOnSeparateLines("REMAINING BALANCE", "3 voucher links")
+        // Categories below the amount (stacked).
+        assertOnSeparateLines("1,234.5", "Heartland")
+    }
+
+    @Test
     fun storePersistsCollapsedStateAcrossInstances() {
         val store = HeroCollapseStore(appContext)
         assertFalse("default is expanded", store.collapsed)
