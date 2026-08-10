@@ -198,11 +198,11 @@ class BalanceHeroAdaptiveTest {
             }
         }
         composeRule.onNodeWithText("1,234.5", useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithText("REMAINING BALANCE", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("BALANCE", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText("Heartland", useUnmergedTree = true).assertIsDisplayed()
         // Side-by-side: the left column's first element (eyebrow) and the
         // right column's first category row start on the same top band.
-        assertSameLine("REMAINING BALANCE", "Heartland")
+        assertSameLine("BALANCE", "Heartland")
     }
 
     @Test
@@ -217,12 +217,12 @@ class BalanceHeroAdaptiveTest {
                 }
             }
         }
-        composeRule.onNodeWithText("REMAINING BALANCE", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("BALANCE", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText("1,234.5", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText("Heartland", useUnmergedTree = true).assertIsDisplayed()
         // Row 1: eyebrow left, amount right on the same line.
-        assertSameLine("REMAINING BALANCE", "1,234.5")
-        val eyebrow = textNode("REMAINING BALANCE")
+        assertSameLine("BALANCE", "1,234.5")
+        val eyebrow = textNode("BALANCE")
         val amount = textNode("1,234.5")
         assertTrue(
             "amount should sit right of the eyebrow (eyebrow.right=${eyebrow.right}, amount.left=${amount.left})",

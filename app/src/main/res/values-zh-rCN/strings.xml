@@ -19,7 +19,7 @@
     <string name="archive">存档</string>
     <string name="restore">恢复</string>
     <string name="empty_list">还没有礼券链接 — 点 + 按钮添加。</string>
-    <string name="remaining_balance">剩余金额</string>
+    <string name="balance_eyebrow">余额</string>
     <string name="balance">余额：</string>
     <string name="more_categories">另有 %1$d 个</string>
     <plurals name="archived_count">

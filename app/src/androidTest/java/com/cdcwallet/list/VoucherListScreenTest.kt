@@ -159,7 +159,7 @@ class VoucherListScreenTest {
         // Spec 04 §4.3: total excludes the UNVERIFIED entry from value and count.
         // The hero renders the eyebrow in uppercase and splits "$" from the
         // amount into separate Text nodes (mockup), so assert per-node.
-        composeRule.onNodeWithText("REMAINING BALANCE").assertIsDisplayed()
+        composeRule.onNodeWithText("BALANCE").assertIsDisplayed()
         composeRule.onNodeWithText("92.5").assertIsDisplayed()
         // Category breakdown rows (top 3 by value) render in the right column.
         // Use onFirst() because category names also appear on voucher cards.

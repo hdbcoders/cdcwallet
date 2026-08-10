@@ -23,7 +23,7 @@
     <string name="archive">Archive</string>
     <string name="restore">Restore</string>
     <string name="empty_list">No voucher links yet — add one with the + button.</string>
-    <string name="remaining_balance">Remaining Balance</string>
+    <string name="balance_eyebrow">Balance</string>
     <string name="balance">Balance:</string>
     <string name="more_categories">+%1$d more</string>
     <plurals name="archived_count">

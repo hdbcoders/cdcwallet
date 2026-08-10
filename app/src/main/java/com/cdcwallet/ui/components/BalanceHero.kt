@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cdcwallet.R
@@ -258,26 +259,29 @@ private fun BalanceBlock(
                 itemVerticalAlignment = Alignment.Bottom,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Eyebrow(eyebrowColor)
+                // 18sp: the stacked row pairs the label with the 42sp amount,
+                // so it needs to hold its own beside the number.
+                Eyebrow(eyebrowColor, 18.sp)
                 Amount(summary, c)
             }
         } else {
-            Eyebrow(eyebrowColor)
+            Eyebrow(eyebrowColor, 12.sp)
             Amount(summary, c)
         }
     }
 }
 
-/** The "REMAINING BALANCE" eyebrow. 9.5sp + 1.0sp tracking (mockup was
- *  10.5sp/1.6sp): at large app font scales the monospace glyphs plus wide
- *  tracking overflow narrow columns and break mid-word; the smaller base
- *  keeps the label wrapping at word boundaries while looking identical at 1×. */
+/** The "BALANCE" eyebrow (uppercase, Plex Mono) with 1.0sp tracking. The
+ *  size varies by layout: the stacked mode shares a row with the 42sp
+ *  amount, so it uses the larger [fontSize] (18sp) to hold its own beside
+ *  the number; the two-column mode keeps the smaller 12sp eyebrow above the
+ *  amount. */
 @Composable
-private fun Eyebrow(eyebrowColor: Color) {
+private fun Eyebrow(eyebrowColor: Color, fontSize: TextUnit) {
     Text(
-        text = stringResource(R.string.remaining_balance).uppercase(),
+        text = stringResource(R.string.balance_eyebrow).uppercase(),
         fontFamily = PlexMonoFontFamily,
-        fontSize = 9.5.sp,
+        fontSize = fontSize,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 1.0.sp,
         color = eyebrowColor,
