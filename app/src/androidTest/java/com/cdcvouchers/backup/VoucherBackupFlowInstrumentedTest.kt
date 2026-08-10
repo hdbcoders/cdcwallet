@@ -1,7 +1,12 @@
 package com.cdcvouchers.backup
 
+import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import java.io.File
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -17,6 +22,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.cdcvouchers.data.RoomVoucherRepository
 import com.cdcvouchers.data.backup.BackupException
+import com.cdcvouchers.data.backup.BackupFileStore
 import com.cdcvouchers.data.backup.BackupFlow
 import com.cdcvouchers.data.backup.BackupService
 import com.cdcvouchers.data.db.AppDatabase
@@ -60,6 +66,15 @@ class VoucherBackupFlowInstrumentedTest {
     private lateinit var database: AppDatabase
     private val service = BackupService()
 
+    /** Bytes of the user's pre-existing `cdcvoucher.backup` (if any), snapshotted
+     *  before the test. The app's own export deletes previous exports first
+     *  (spec 06 §6.2: one predictable file), so the tests would otherwise
+     *  replace it — the tearDown restores these bytes verbatim. */
+    private var preExistingBackupBytes: ByteArray? = null
+
+    /** Start of the test run, used to identify files THIS run created. */
+    private var testStartMillis = 0L
+
     @Before
     fun setUp() {
         SqlCipherNative.load()
@@ -67,11 +82,117 @@ class VoucherBackupFlowInstrumentedTest {
             .openHelperFactory(SupportOpenHelperFactory("test-passphrase".toByteArray()))
             .allowMainThreadQueries()
             .build()
+        testStartMillis = System.currentTimeMillis()
+        preExistingBackupBytes = readCurrentBackupBytes()
     }
 
     @After
     fun tearDown() {
         database.close()
+        deleteBackupsCreatedThisRun()
+        restorePreExistingBackup()
+    }
+
+    /** The export tests write real files to Downloads. Delete exactly the files
+     *  THIS run created (MediaStore DATE_ADDED / file mtime >= test start) —
+     *  never anything that was already there. */
+    private fun deleteBackupsCreatedThisRun() {
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val resolver = appContext.contentResolver
+                // Collect IDs first, then delete: deleting rows while the
+                // cursor iterates makes moveToNext skip entries.
+                val ids = mutableListOf<Long>()
+                resolver.query(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    arrayOf(MediaStore.MediaColumns._ID),
+                    "${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ? AND " +
+                        "${MediaStore.MediaColumns.DATE_ADDED} >= ?",
+                    arrayOf("cdcvoucher%", (testStartMillis / 1000).toString()),
+                    null,
+                )?.use { cursor ->
+                    while (cursor.moveToNext()) ids.add(cursor.getLong(0))
+                }
+                ids.forEach { id ->
+                    resolver.delete(
+                        ContentUris.withAppendedId(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            id,
+                        ),
+                        null,
+                        null,
+                    )
+                }
+            } else {
+                val dir = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS,
+                )
+                dir.listFiles {
+                    it.name.startsWith("cdcvoucher") && it.lastModified() >= testStartMillis
+                }?.forEach { it.delete() }
+            }
+        }
+    }
+
+    /** Bytes of the current `cdcvoucher.backup`, or null when absent. */
+    private fun readCurrentBackupBytes(): ByteArray? = runCatching {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = appContext.contentResolver
+            var result: ByteArray? = null
+            resolver.query(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.MediaColumns._ID),
+                "${MediaStore.MediaColumns.DISPLAY_NAME} = ?",
+                arrayOf(BackupFileStore.FILE_NAME),
+                null,
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    resolver.openInputStream(
+                        ContentUris.withAppendedId(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            cursor.getLong(0),
+                        ),
+                    )?.use { result = it.readBytes() }
+                }
+            }
+            result
+        } else {
+            val file = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                BackupFileStore.FILE_NAME,
+            )
+            if (file.exists()) file.readBytes() else null
+        }
+    }.getOrNull()
+
+    /** Put the pre-existing backup back byte-for-byte (the app's export
+     *  deleted it before writing its own). */
+    private fun restorePreExistingBackup() {
+        val bytes = preExistingBackupBytes ?: return
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val resolver = appContext.contentResolver
+                resolver.delete(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    "${MediaStore.MediaColumns.DISPLAY_NAME} = ?",
+                    arrayOf(BackupFileStore.FILE_NAME),
+                )
+                val values = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, BackupFileStore.FILE_NAME)
+                    put(MediaStore.MediaColumns.MIME_TYPE, "application/octet-stream")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                }
+                val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                if (uri != null) {
+                    resolver.openOutputStream(uri)?.use { it.write(bytes) }
+                }
+            } else {
+                File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    BackupFileStore.FILE_NAME,
+                ).writeBytes(bytes)
+            }
+        }
     }
 
     private fun voucher(
