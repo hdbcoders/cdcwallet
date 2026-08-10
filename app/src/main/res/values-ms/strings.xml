@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Bahasa Melayu. Nama jenama "CDC Bookmark" tidak diterjemah. -->
-    <string name="app_name">CDC Bookmark</string>
+    <string name="app_name">CDC Wallet</string>
     <string name="menu">Menu</string>
     <string name="date_pattern">d MMM yyyy</string>
     <string name="back">Kembali</string>

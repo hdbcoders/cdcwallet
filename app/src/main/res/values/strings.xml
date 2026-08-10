@@ -2,7 +2,7 @@
 <resources>
     <!-- App-wide chrome. The product name stays "CDC Bookmark" in every
          locale (brand name, not translated). -->
-    <string name="app_name">CDC Bookmark</string>
+    <string name="app_name">CDC Wallet</string>
     <string name="menu">Menu</string>
     <!-- Date pattern for the app's dates ("Expires 12 Mar 2026", backup
          summary). Localized per locale — e.g. Chinese uses yyyy年M月d日. -->

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- தமிழ். பிராண்ட் பெயர் "CDC Bookmark" மொழிபெயர்க்கப்படவில்லை. -->
-    <string name="app_name">CDC Bookmark</string>
+    <string name="app_name">CDC Wallet</string>
     <string name="menu">மெனு</string>
     <string name="date_pattern">d MMM yyyy</string>
     <string name="back">பின்</string>

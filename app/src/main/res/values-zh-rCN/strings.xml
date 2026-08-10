@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 简体中文（新加坡通用简体）。品牌名 "CDC Bookmark" 不翻译。 -->
-    <string name="app_name">CDC Bookmark</string>
+    <string name="app_name">CDC Wallet</string>
     <string name="menu">菜单</string>
     <string name="date_pattern">yyyy年M月d日</string>
     <string name="back">返回</string>
