@@ -179,9 +179,14 @@ private fun ExpandedBalance(
             Text(
                 text = stringResource(R.string.remaining_balance).uppercase(),
                 fontFamily = PlexMonoFontFamily,
-                fontSize = 10.5.sp,
+                // 9.5sp + 1.0sp tracking (mockup was 10.5sp/1.6sp): at large
+                // app font scales the monospace glyphs plus wide tracking
+                // overflow the left column and break "REMAINING" mid-word;
+                // the smaller base keeps the label wrapping at word
+                // boundaries at 2× while looking identical at 1×.
+                fontSize = 9.5.sp,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.6.sp,
+                letterSpacing = 1.0.sp,
                 color = eyebrowColor,
             )
             // Amount: the `$` and the number are separate FlowRow items so an
@@ -244,14 +249,15 @@ private fun ExpandedBalance(
 
         // Right: category mini rows (top 3 by value). Shares the card
         // width with the balance side (reference: icon group starts
-        // ~mid-card, amounts at the card's right edge). Wider than the
-        // left so the scaled-up rows (27dp icon + label + amount)
-        // fit on one line without wrapping.
+        // ~mid-card, amounts at the card's right edge). Weighted 1.6:1 so a
+        // long category name ("Supermarket", ~11 chars) still fits one line
+        // at the largest app font scale without a mid-word break, while the
+        // left column keeps enough width for the eyebrow.
         Column(
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
-                .weight(1.4f)
+                .weight(1.6f)
                 .padding(top = 2.dp),
         ) {
             val top = summary.categoryTotals

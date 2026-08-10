@@ -287,14 +287,18 @@ private fun StatusBanner(text: String) {
     }
 }
 
-/** Category pill + amount columns for a voucher with remaining balance. */
+/** Category pill + amount columns for a voucher with remaining balance.
+ *  FlowRow-based: at large font scales the pills wrap to their own lines
+ *  (whole pill units) instead of squeezing a long name into a mid-word
+ *  break, matching the no-truncation rule in spec 04. */
 @Composable
 private fun CategoryPills(voucher: VoucherGroup, modifier: Modifier = Modifier) {
     val dark = LocalAppIsDark.current
     val c = LocalRedesignColors.current
-    Row(
+    FlowRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         voucher.categoryBalances.forEach { balance ->
             val visuals = categoryVisuals(balance.category, dark)
