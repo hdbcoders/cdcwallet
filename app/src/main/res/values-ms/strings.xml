@@ -77,6 +77,14 @@
     <string name="language_ta">தமிழ்</string>
     <string name="select_language">Pilih bahasa</string>
 
+    <!-- Settings: text size. -->
+    <string name="text_size">Saiz teks</string>
+    <string name="text_size_desc">Membesarkan semua teks dalam aplikasi, di atas saiz teks sistem anda.</string>
+    <string name="text_size_default">Lalai</string>
+    <string name="text_size_large">Besar</string>
+    <string name="text_size_extra_large">Sangat besar</string>
+    <string name="text_size_huge">Amat besar</string>
+
     <string name="backup">Sandaran</string>
     <string name="export_backup">Eksport sandaran</string>
     <string name="exporting_backup">Menyulit dan Mengeksport sandaran</string>

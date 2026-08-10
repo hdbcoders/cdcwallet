@@ -77,6 +77,14 @@
     <string name="language_ta">தமிழ்</string>
     <string name="select_language">மொழியைத் தேர்ந்தெடுக்கவும்</string>
 
+    <!-- Settings: text size. -->
+    <string name="text_size">உரை அளவு</string>
+    <string name="text_size_desc">பயன்பாட்டில் உள்ள அனைத்து உரைகளையும் பெரிதாக்குகிறது, உங்கள் கணினி உரை அளவுக்கு மேல்.</string>
+    <string name="text_size_default">இயல்புநிலை</string>
+    <string name="text_size_large">பெரியது</string>
+    <string name="text_size_extra_large">மிகப் பெரியது</string>
+    <string name="text_size_huge">மாபெரும்</string>
+
     <string name="backup">காப்புப்பிரதி</string>
     <string name="export_backup">காப்புப்பிரதியை ஏற்றுமதி செய்</string>
     <string name="exporting_backup">காப்புப்பிரதியை குறியாக்கி ஏற்றுமதி செய்கிறது</string>

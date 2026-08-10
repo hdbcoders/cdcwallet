@@ -90,6 +90,14 @@
     <string name="language_ta">தமிழ்</string>
     <string name="select_language">Select language</string>
 
+    <!-- Settings: text size (app-wide font scale). -->
+    <string name="text_size">Text size</string>
+    <string name="text_size_desc">Makes all text in the app larger, on top of your system text size.</string>
+    <string name="text_size_default">Default</string>
+    <string name="text_size_large">Large</string>
+    <string name="text_size_extra_large">Extra large</string>
+    <string name="text_size_huge">Huge</string>
+
     <!-- Settings: backup (spec 06). -->
     <string name="backup">Backup</string>
     <string name="export_backup">Export backup</string>

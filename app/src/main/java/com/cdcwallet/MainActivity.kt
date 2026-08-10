@@ -56,6 +56,7 @@ import com.cdcwallet.ui.settings.AboutScreen
 import com.cdcwallet.ui.settings.SettingsScreen
 import com.cdcwallet.ui.theme.AppLanguage
 import com.cdcwallet.ui.theme.AppTheme
+import com.cdcwallet.ui.theme.FontScaleStore
 import com.cdcwallet.ui.theme.rememberReduceMotion
 import com.cdcwallet.ui.theme.wrapWithLocale
 
@@ -121,7 +122,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val sharedUrl = intent?.getStringExtra(Intent.EXTRA_TEXT)
         setContent {
-            AppTheme(container.themeModeStore.mode) {
+            AppTheme(container.themeModeStore.mode, container.fontScaleStore.scale) {
                 // Keep the Android window background in sync with the effective
                 // Compose theme. The XML theme's white window background would
                 // otherwise flash through during pop transitions (both screens
@@ -143,6 +144,7 @@ class MainActivity : ComponentActivity() {
                     sharedUrl = sharedUrl,
                     isColdStart = savedInstanceState == null,
                     navController = navController,
+                    fontScaleStore = container.fontScaleStore,
                     onLanguageSelected = { language -> setAppLanguage(language) },
                 )
             }
@@ -157,6 +159,7 @@ private fun AppNavHost(
     sharedUrl: String?,
     isColdStart: Boolean,
     navController: NavHostController,
+    fontScaleStore: FontScaleStore,
     onLanguageSelected: (AppLanguage) -> Unit,
 ) {
     if (isColdStart && sharedUrl != null) {
@@ -272,6 +275,7 @@ private fun AppNavHost(
             SettingsScreen(
                 backupFlow = container.backupFlow,
                 repository = container.repository,
+                fontScaleStore = fontScaleStore,
                 onBack = { navController.popBackStack() },
             )
         }

@@ -77,6 +77,14 @@
     <string name="language_ta">தமிழ்</string>
     <string name="select_language">选择语言</string>
 
+    <!-- Settings: text size. -->
+    <string name="text_size">文字大小</string>
+    <string name="text_size_desc">放大应用内的所有文字，在系统文字大小之上叠加。</string>
+    <string name="text_size_default">默认</string>
+    <string name="text_size_large">大</string>
+    <string name="text_size_extra_large">特大</string>
+    <string name="text_size_huge">超大</string>
+
     <string name="backup">备份</string>
     <string name="export_backup">导出备份</string>
     <string name="exporting_backup">正在加密并导出备份</string>
