@@ -13,6 +13,7 @@ import com.cdcwallet.data.db.SqlCipherPassphraseStore
 import com.cdcwallet.extraction.ExtractionCoordinator
 import com.cdcwallet.extraction.ExtractionEngine
 import com.cdcwallet.ui.components.HeroCollapseStore
+import com.cdcwallet.ui.theme.FontScaleStore
 import com.cdcwallet.ui.theme.LanguageStore
 import com.cdcwallet.ui.theme.ThemeModeStore
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
@@ -47,6 +48,10 @@ class AppContainer(context: Context) {
 
     val themeModeStore: ThemeModeStore by lazy {
         ThemeModeStore(appContext)
+    }
+
+    val fontScaleStore: FontScaleStore by lazy {
+        FontScaleStore(appContext)
     }
 
     val languageStore: LanguageStore by lazy {

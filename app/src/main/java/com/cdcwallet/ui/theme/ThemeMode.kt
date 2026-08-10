@@ -16,11 +16,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import com.cdcwallet.R
 
 /**
@@ -97,10 +99,24 @@ class ThemeModeStore(context: Context) {
 
 @OptIn(ExperimentalTextApi::class)
 @Composable
-fun AppTheme(mode: ThemeMode, content: @Composable () -> Unit) {
+fun AppTheme(
+    mode: ThemeMode,
+    fontScale: AppFontScale = AppFontScale.DEFAULT,
+    content: @Composable () -> Unit,
+) {
     val dark = mode == ThemeMode.DARK
     val redesign = if (dark) DarkRedesignColors else LightRedesignColors
+    // App-level text size: every `sp` in the app (typography roles and the
+    // hardcoded sizes in components) is scaled by the chosen multiplier on
+    // top of the system font scale, capped at MAX_TOTAL_FONT_SCALE so
+    // fixed-height chrome never clips at extreme compound scales. `dp`
+    // layouts are untouched. The whole UI recomposes instantly when the
+    // store's scale changes.
+    val base = LocalDensity.current
+    val scaled = Density(base.density, effectiveFontScale(base.fontScale, fontScale.multiplier))
     CompositionLocalProvider(
+        LocalDensity provides scaled,
+        LocalAppFontScale provides fontScale,
         LocalAppIsDark provides dark,
         LocalRedesignColors provides redesign,
         // M3's LocalContentColor defaults to Color.Black and MaterialTheme does
