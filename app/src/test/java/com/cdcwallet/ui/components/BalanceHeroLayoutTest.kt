@@ -4,29 +4,36 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Pure decision behind the expanded hero's responsive layout: below the
- * threshold it keeps the two-column (left + right) mockup layout; at or
- * above it, the card stacks (top + bottom) so the category rows get full
- * width at large text sizes.
+ * Pure decision behind the expanded hero's responsive layout: the card
+ * keeps the two-column (left + right) mockup layout while every category
+ * row fits in the category column; as soon as ANY row would intersect with
+ * its own balance (needs more width than the column provides), the card
+ * stacks (top + bottom) so the rows get full width.
  */
 class BalanceHeroLayoutTest {
 
     @Test
-    fun belowThresholdKeepsSideBySideLayout() {
-        assertEquals(false, shouldStackBalanceHero(1.0f))
-        assertEquals(false, shouldStackBalanceHero(1.25f))
-        assertEquals(false, shouldStackBalanceHero(1.49f))
+    fun allRowsFittingColumnWidthKeepSideBySideLayout() {
+        assertEquals(false, shouldStackBalanceHero(400f, listOf(100f, 200f, 300f)))
+        assertEquals(false, shouldStackBalanceHero(400f, listOf(400f)))
+        assertEquals(false, shouldStackBalanceHero(400f, emptyList()))
     }
 
     @Test
-    fun atOrAboveThresholdStacks() {
-        assertEquals(true, shouldStackBalanceHero(1.5f))
-        assertEquals(true, shouldStackBalanceHero(1.75f))
-        assertEquals(true, shouldStackBalanceHero(2.0f))
+    fun anyRowWiderThanColumnWidthStacks() {
+        assertEquals(true, shouldStackBalanceHero(400f, listOf(100f, 401f)))
+        assertEquals(true, shouldStackBalanceHero(400f, listOf(401f, 100f)))
+        assertEquals(true, shouldStackBalanceHero(400f, listOf(100f, 200f, 401f)))
     }
 
     @Test
-    fun thresholdMatchesTheSpecifiedValue() {
-        assertEquals(1.5f, BALANCE_STACK_THRESHOLD, 0f)
+    fun singleRowAtExactColumnWidthStaysSideBySide() {
+        // Equality is a fit: the row shares the line exactly.
+        assertEquals(false, shouldStackBalanceHero(400f, listOf(400f)))
+    }
+
+    @Test
+    fun noCategoriesNeverStacks() {
+        assertEquals(false, shouldStackBalanceHero(400f, emptyList()))
     }
 }

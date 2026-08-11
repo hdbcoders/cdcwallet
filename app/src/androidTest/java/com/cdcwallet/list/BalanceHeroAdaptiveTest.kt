@@ -186,15 +186,12 @@ class BalanceHeroAdaptiveTest {
     }
 
     @Test
-    fun expandedHeroStaysSideBySideBelowStackThreshold() {
-        // Effective font scale 1.25 (< 1.5): the mockup's two-column layout.
+    fun expandedHeroStaysSideBySideWhenCategoryRowsFit() {
+        // Short category names fit in the two-column category column, so the
+        // mockup's left + right layout is kept.
         composeRule.setContent {
             MaterialTheme {
-                CompositionLocalProvider(
-                    LocalDensity provides Density(LocalDensity.current.density, fontScale = 1.25f),
-                ) {
-                    BalanceHero(summary = summary, collapsed = false, onToggle = {})
-                }
+                BalanceHero(summary = summary, collapsed = false, onToggle = {})
             }
         }
         composeRule.onNodeWithText("1,234.5", useUnmergedTree = true).assertIsDisplayed()
@@ -206,20 +203,25 @@ class BalanceHeroAdaptiveTest {
     }
 
     @Test
-    fun expandedHeroStacksAboveStackThreshold() {
-        // Effective font scale 1.5 (>= 1.5): the stacked top+bottom layout.
+    fun expandedHeroStacksWhenACategoryRowWouldIntersectItsBalance() {
+        // A long category name needs more width than the two-column category
+        // column provides → the card stacks so rows get the full width.
+        val longSummary = summary.copy(
+            categoryTotals = listOf(
+                CategoryBalance(
+                    "Community Development Council Supermarket Voucher",
+                    BigDecimal("1000.00"),
+                ),
+                CategoryBalance("Climate", BigDecimal("234.50")),
+            ),
+        )
         composeRule.setContent {
             MaterialTheme {
-                CompositionLocalProvider(
-                    LocalDensity provides Density(LocalDensity.current.density, fontScale = 1.5f),
-                ) {
-                    BalanceHero(summary = summary, collapsed = false, onToggle = {})
-                }
+                BalanceHero(summary = longSummary, collapsed = false, onToggle = {})
             }
         }
         composeRule.onNodeWithText("BALANCE", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText("1,234.5", useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithText("Heartland", useUnmergedTree = true).assertIsDisplayed()
         // Row 1: eyebrow left, amount right on the same line.
         assertSameLine("BALANCE", "1,234.5")
         val eyebrow = textNode("BALANCE")
@@ -229,7 +231,7 @@ class BalanceHeroAdaptiveTest {
             amount.left > eyebrow.right,
         )
         // Categories below the amount (stacked).
-        assertOnSeparateLines("1,234.5", "Heartland")
+        assertOnSeparateLines("1,234.5", "Community Development Council Supermarket Voucher")
     }
 
     @Test

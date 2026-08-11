@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -33,8 +34,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,13 +64,16 @@ import com.cdcwallet.ui.theme.rememberReduceMotion
  * (total, category rows) is now FlowRow-based: items share a line while
  * they fit and wrap to their own line when they would intersect — nothing is
  * ever cut off, at any font scale.
- *
- * Responsive stacking: when the effective font scale (system × app, capped)
- * is at or above [BALANCE_STACK_THRESHOLD] (1.5), the expanded card switches
- * from the two-column layout to a stacked top+bottom one — the eyebrow sits
- * left with the total right-aligned on the same row, and the category rows
- * become full-width beneath — so long category names never squeeze into
- * mid-word breaks at large text sizes. The collapsed state is unaffected.
+ */
+
+/**
+ * Responsive stacking (replaces the old font-scale threshold): the expanded
+ * card switches from the two-column (left + right) mockup layout to a
+ * stacked (top + bottom) one when ANY category row would intersect with its
+ * own balance — i.e. when [icon + name + amount] needs more horizontal room
+ * than the two-column category column provides. Stacking gives the category
+ * rows full card width, so nothing ever squeezes into mid-word breaks at
+ * any font scale.
  */
 @Composable
 fun BalanceHero(
@@ -168,15 +174,17 @@ private fun CollapsedBalance(summary: ListSummary, c: RedesignColors) {
     }
 }
 
-/** Effective font scale at which the expanded hero switches from the
- *  two-column (left + right) mockup layout to a stacked (top + bottom)
- *  layout, so the categories keep full width at large text sizes. */
-internal const val BALANCE_STACK_THRESHOLD = 1.5f
-
-/** Pure decision: stack the expanded hero when the effective font scale
- *  (system × app, capped) is at or above [BALANCE_STACK_THRESHOLD]. */
-internal fun shouldStackBalanceHero(effectiveFontScale: Float): Boolean =
-    effectiveFontScale >= BALANCE_STACK_THRESHOLD
+/**
+ * Stack the expanded hero when ANY category row would intersect with its own
+ * balance — the [icon + name + amount] unit needs more horizontal room than
+ * the two-column category column provides (the FlowRow inside
+ * [CategoryMiniRow] would wrap the amount onto a second line). Stacking
+ * gives every category row the full card width instead.
+ */
+internal fun shouldStackBalanceHero(
+    categoryColumnWidthPx: Float,
+    categoryRowRequiredWidthsPx: List<Float>,
+): Boolean = categoryRowRequiredWidthsPx.any { it > categoryColumnWidthPx }
 
 @Composable
 private fun ExpandedBalance(
@@ -185,11 +193,43 @@ private fun ExpandedBalance(
     dark: Boolean,
     eyebrowColor: Color,
 ) {
-    // Effective font scale = system × app, capped (AppTheme provides it via
-    // LocalDensity). Above the threshold the hero stacks so the category
-    // rows get full width; below it the mockup's two-column layout is kept.
-    val stacked = shouldStackBalanceHero(LocalDensity.current.fontScale)
-    Crossfade(
+    val density = LocalDensity.current
+    val textMeasurer = rememberTextMeasurer()
+    // Measure with the same effective styles CategoryMiniRow renders with:
+    // the name inherits LocalTextStyle (theme body → Inter), the amount is
+    // explicitly Fraunces. TextMeasurer uses the same font resolver, so the
+    // widths match what Text actually draws.
+    val nameStyle = LocalTextStyle.current.copy(
+        fontSize = 13.2.sp,
+        fontWeight = FontWeight.SemiBold,
+    )
+    val amountStyle = TextStyle(
+        fontFamily = FrauncesDisplayFontFamily,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.SemiBold,
+    )
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        // Two-column layout: balance column weight 1, categories weight 1.6,
+        // separated by 14dp — that is the width each row must fit into.
+        val spacingPx = with(density) { 14.dp.toPx() }
+        val iconAndGapPx = with(density) { (21.6.dp + 6.dp).toPx() }
+        val categoryColumnWidthPx =
+            (with(density) { maxWidth.toPx() } - spacingPx) * (1.6f / 2.6f)
+        val requiredWidthsPx = summary.categoryTotals
+            .sortedByDescending { it.remainingValue }
+            .take(3)
+            .map { balance ->
+                val nameWidth = textMeasurer
+                    .measure(AnnotatedString(balance.category), nameStyle).size.width.toFloat()
+                val amountWidth = textMeasurer
+                    .measure(
+                        AnnotatedString(formatSgd(balance.remainingValue)),
+                        amountStyle,
+                    ).size.width.toFloat()
+                iconAndGapPx + nameWidth + amountWidth
+            }
+        val stacked = shouldStackBalanceHero(categoryColumnWidthPx, requiredWidthsPx)
+        Crossfade(
         targetState = stacked,
         animationSpec = if (rememberReduceMotion()) tween(0) else tween(220),
         label = "balance-hero-layout",
@@ -233,6 +273,7 @@ private fun ExpandedBalance(
             }
         }
     }
+}
 }
 
 /**
