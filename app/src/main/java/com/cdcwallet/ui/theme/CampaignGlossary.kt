@@ -47,16 +47,49 @@ fun localizeCategory(raw: String, language: AppLanguage): String =
 
 /**
  * Localizes a scraped campaign name for display. Tokenizes the raw name,
- * maps each known token through the campaign glossary, and reassembles in
- * the target language's word order. Unknown tokens pass through raw.
+ * mapping known tokens through the campaign glossary with
+ * **longest-match-first** priority: at each position the longest glossary
+ * key that matches (case-insensitively, whole-word) is consumed as one
+ * token, so a phrase like "Climate Vouchers" beats its component word
+ * "Vouchers"; shorter keys and unmatched words pass through raw.
  *
  * The campaign token map is currently empty, so this is a pass-through
- * until translations are added — the tokenization + reassembly machinery
- * is what future entries plug into.
+ * until translations are added — the tokenizer is what future entries
+ * plug into.
  */
-fun localizeCampaignName(raw: String, language: AppLanguage): String {
-    if (CampaignGlossary.campaignTokens.isEmpty()) return raw
-    return raw.split(' ').joinToString(" ") { token ->
-        CampaignGlossary.campaignTokens[token.trim()]?.forLanguage(language) ?: token
+fun localizeCampaignName(raw: String, language: AppLanguage): String =
+    tokenizeWithGlossary(raw, language, CampaignGlossary.campaignTokens)
+
+/**
+ * Maximal-munch tokenizer: walks the whitespace-separated words and, at
+ * each position, tries the longest [glossary] key first (whole-word,
+ * case-insensitive). A matching key consumes its word count and emits the
+ * translation; otherwise one raw word passes through. Phrase keys always
+ * beat their component words because they are tried first.
+ */
+internal fun tokenizeWithGlossary(
+    raw: String,
+    language: AppLanguage,
+    glossary: Map<String, Entry>,
+): String {
+    if (glossary.isEmpty()) return raw
+    val words = raw.split(' ')
+    val keys = glossary.keys.sortedByDescending { it.length }
+    val out = mutableListOf<String>()
+    var i = 0
+    while (i < words.size) {
+        val key = keys.firstOrNull { candidate ->
+            val keyWords = candidate.split(' ')
+            keyWords.size <= words.size - i &&
+                keyWords.indices.all { j -> words[i + j].equals(keyWords[j], ignoreCase = true) }
+        }
+        if (key != null) {
+            out += glossary.getValue(key).forLanguage(language)
+            i += key.split(' ').size
+        } else {
+            out += words[i]
+            i++
+        }
     }
+    return out.joinToString(" ")
 }

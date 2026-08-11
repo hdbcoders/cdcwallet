@@ -43,4 +43,73 @@ class CampaignGlossaryTest {
         assertEquals("CDC Vouchers 2026 (June)", localizeCampaignName("CDC Vouchers 2026 (June)", AppLanguage.TA))
         assertEquals("CDC Vouchers 2026 (June)", localizeCampaignName("CDC Vouchers 2026 (June)", AppLanguage.EN))
     }
+
+    // --- Longest-match-first tokenization (the phrase-vs-word rule) ---
+    // Exercises the internal tokenizer with a synthetic glossary because the
+    // production campaignTokens map is still empty. The scenario: both
+    // "Climate Vouchers" (a phrase) and "Vouchers" (a single word) are terms.
+
+    private val phrasePlusWordGlossary = mapOf(
+        "climate vouchers" to Entry("Climate Vouchers", "气候券", "Baucar Iklim", "காலநிலை வவச்சர்கள்"),
+        "vouchers" to Entry("Vouchers", "券", "Baucar", "வவச்சர்கள்"),
+    )
+
+    @Test
+    fun phraseBeatsItsComponentWord() {
+        // The full phrase "Climate Vouchers" matches as one token — the
+        // shorter "Vouchers" key must NOT fire inside it.
+        assertEquals(
+            "气候券 ($100)",
+            tokenizeWithGlossary("Climate Vouchers ($100)", AppLanguage.ZH, phrasePlusWordGlossary),
+        )
+        assertEquals(
+            "Baucar Iklim ($100)",
+            tokenizeWithGlossary("Climate Vouchers ($100)", AppLanguage.MS, phrasePlusWordGlossary),
+        )
+    }
+
+    @Test
+    fun componentWordStillMatchesWhenPhraseDoesNotApply() {
+        // "Vouchers" alone (no "Climate" prefix) still translates via the
+        // single-word key — the phrase key simply doesn't match here.
+        assertEquals(
+            "券",
+            tokenizeWithGlossary("Vouchers", AppLanguage.ZH, phrasePlusWordGlossary),
+        )
+        assertEquals(
+            "Baucar",
+            tokenizeWithGlossary("Vouchers", AppLanguage.MS, phrasePlusWordGlossary),
+        )
+    }
+
+    @Test
+    fun phraseMatchingIsCaseInsensitive() {
+        assertEquals(
+            "气候券 ($100)",
+            tokenizeWithGlossary("climate VOUCHERS ($100)", AppLanguage.ZH, phrasePlusWordGlossary),
+        )
+        assertEquals(
+            "气候券 ($100)",
+            tokenizeWithGlossary("CLIMATE VOUCHERS ($100)", AppLanguage.ZH, phrasePlusWordGlossary),
+        )
+    }
+
+    @Test
+    fun unmatchedPartsPassThroughRaw() {
+        // The phrase matches and translates; the unmatched fragment stays
+        // exactly as authored.
+        assertEquals(
+            "气候券 (Extra)",
+            tokenizeWithGlossary("Climate Vouchers (Extra)", AppLanguage.ZH, phrasePlusWordGlossary),
+        )
+    }
+
+    @Test
+    fun nameWithNoKnownTokensPassesThroughEntirely() {
+        // No glossary key matches any word — the whole name stays raw.
+        assertEquals(
+            "ABC Programme (Bonus)",
+            tokenizeWithGlossary("ABC Programme (Bonus)", AppLanguage.ZH, phrasePlusWordGlossary),
+        )
+    }
 }
