@@ -140,6 +140,7 @@ fun summarizeActive(vouchers: List<VoucherGroup>): ListSummary {
     return ListSummary(
         total = total,
         categoryTotals = byCategory.map { (category, value) -> CategoryBalance(category, value) }
+            .filter { it.remainingValue.signum() != 0 }
             .sortedBy { it.category },
         linkCount = known.size,
     )

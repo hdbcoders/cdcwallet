@@ -406,6 +406,37 @@ class VoucherListLogicTest {
     }
 
     @Test
+    fun zeroBalanceCategoriesAreFilteredOutOfSummary() {
+        // A category that sums to $0 (e.g. an "unused" voucher group with
+        // zero value) must not appear in the hero's category rows — the
+        // total stays correct, the category list drops the $0 entry.
+        val summary = summarizeActive(
+            listOf(
+                voucher(
+                    "a",
+                    ValidityStatus.ACTIVE,
+                    today.plusDays(1),
+                    listOf(
+                        CategoryBalance("heartland", BigDecimal("50")),
+                        CategoryBalance("groceries", BigDecimal("0.00")),
+                    ),
+                ),
+                voucher(
+                    "b",
+                    ValidityStatus.ACTIVE,
+                    today.plusDays(2),
+                    listOf(CategoryBalance("groceries", BigDecimal("0.00"))),
+                ),
+            ),
+        )
+        assertEquals(BigDecimal("50.00"), summary.total)
+        assertEquals(
+            listOf(CategoryBalance("heartland", BigDecimal("50"))),
+            summary.categoryTotals,
+        )
+    }
+
+    @Test
     fun emptyListSummarizesToZero() {
         val summary = summarizeActive(emptyList())
         assertEquals(BigDecimal.ZERO, summary.total)
