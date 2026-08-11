@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import java.util.Locale
 
 /**
@@ -24,6 +25,15 @@ enum class AppLanguage(val locale: Locale) {
     MS(Locale("ms")),
     TA(Locale("ta")),
 }
+
+/**
+ * The currently active app language, provided by [AppTheme] from the
+ * [LanguageStore]. Composable display-time localizers (e.g.
+ * [localizeCategory]) read this instead of `LocalConfiguration`, because the
+ * activity wraps its resources via `attachBaseContext` — the composition
+ * local is the explicit, reliable source.
+ */
+val LocalAppLanguage = staticCompositionLocalOf { AppLanguage.EN }
 
 /**
  * Persists the in-app language choice in SharedPreferences (same pattern as

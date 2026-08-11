@@ -21,6 +21,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -57,6 +58,7 @@ import com.cdcwallet.ui.settings.SettingsScreen
 import com.cdcwallet.ui.theme.AppLanguage
 import com.cdcwallet.ui.theme.AppTheme
 import com.cdcwallet.ui.theme.FontScaleStore
+import com.cdcwallet.ui.theme.LocalAppLanguage
 import com.cdcwallet.ui.theme.rememberReduceMotion
 import com.cdcwallet.ui.theme.wrapWithLocale
 
@@ -123,6 +125,9 @@ class MainActivity : ComponentActivity() {
         val sharedUrl = intent?.getStringExtra(Intent.EXTRA_TEXT)
         setContent {
             AppTheme(container.themeModeStore.mode, container.fontScaleStore.scale) {
+                CompositionLocalProvider(
+                    LocalAppLanguage provides container.languageStore.language,
+                ) {
                 // Keep the Android window background in sync with the effective
                 // Compose theme. The XML theme's white window background would
                 // otherwise flash through during pop transitions (both screens
@@ -147,6 +152,7 @@ class MainActivity : ComponentActivity() {
                     fontScaleStore = container.fontScaleStore,
                     onLanguageSelected = { language -> setAppLanguage(language) },
                 )
+                }
             }
         }
     }

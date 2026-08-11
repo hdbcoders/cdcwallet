@@ -47,10 +47,12 @@ import com.cdcwallet.ui.list.ListSummary
 import com.cdcwallet.ui.list.formatSgd
 import com.cdcwallet.ui.theme.FrauncesDisplayFontFamily
 import com.cdcwallet.ui.theme.LocalAppIsDark
+import com.cdcwallet.ui.theme.LocalAppLanguage
 import com.cdcwallet.ui.theme.LocalRedesignColors
 import com.cdcwallet.ui.theme.PlexMonoFontFamily
 import com.cdcwallet.ui.theme.RedesignColors
 import com.cdcwallet.ui.theme.categoryVisuals
+import com.cdcwallet.ui.theme.localizeCategory
 import com.cdcwallet.ui.theme.rememberReduceMotion
 
 /**
@@ -227,8 +229,11 @@ private fun ExpandedBalance(
             .sortedByDescending { it.remainingValue }
             .take(3)
             .map { balance ->
+                // Measure the DISPLAYED (localized) name — the geometric
+                // stacking decision must match what CategoryMiniRow renders.
+                val displayedName = localizeCategory(balance.category, LocalAppLanguage.current)
                 val nameWidth = textMeasurer
-                    .measure(AnnotatedString(balance.category), nameStyle).size.width.toFloat()
+                    .measure(AnnotatedString(displayedName), nameStyle).size.width.toFloat()
                 val amountWidth = textMeasurer
                     .measure(
                         AnnotatedString(formatSgd(balance.remainingValue)),
@@ -443,7 +448,7 @@ private fun CategoryMiniRow(balance: CategoryBalance, dark: Boolean) {
                 )
             }
             Text(
-                text = balance.category,
+                text = localizeCategory(balance.category, LocalAppLanguage.current),
                 fontSize = 13.2.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = c.textSecondary,

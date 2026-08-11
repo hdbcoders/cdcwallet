@@ -36,6 +36,8 @@ import com.cdcwallet.R
 import com.cdcwallet.data.VoucherRepository
 import com.cdcwallet.extraction.ExtractionCoordinator
 import com.cdcwallet.extraction.ExtractionEngine
+import com.cdcwallet.ui.theme.LocalAppLanguage
+import com.cdcwallet.ui.theme.localizeCampaignName
 
 /**
  * Tap-to-open-and-refresh (spec 04 §4.4, call site C2 of 02 §2.4). The WebView
@@ -85,7 +87,7 @@ fun VoucherWebViewScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(voucher?.campaignName.orEmpty()) },
+                title = { Text(localizeCampaignName(voucher?.campaignName.orEmpty(), LocalAppLanguage.current)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))

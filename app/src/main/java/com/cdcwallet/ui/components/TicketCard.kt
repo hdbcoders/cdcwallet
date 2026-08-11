@@ -52,6 +52,9 @@ import com.cdcwallet.ui.theme.FrauncesDisplayFontFamily
 import com.cdcwallet.ui.theme.LocalRedesignColors
 import com.cdcwallet.ui.theme.AppScaledContent
 import com.cdcwallet.ui.theme.categoryVisuals
+import com.cdcwallet.ui.theme.LocalAppLanguage
+import com.cdcwallet.ui.theme.localizeCampaignName
+import com.cdcwallet.ui.theme.localizeCategory
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
 
@@ -104,7 +107,7 @@ fun TicketCard(
                 modifier = Modifier.padding(start = 18.dp, end = 10.dp, top = 10.dp, bottom = 7.dp),
             ) {
                 Text(
-                    text = voucher.campaignName,
+                    text = localizeCampaignName(voucher.campaignName, LocalAppLanguage.current),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Medium,
                     fontFamily = FrauncesDisplayFontFamily,
@@ -119,7 +122,10 @@ fun TicketCard(
                     ) {
                         Icon(
                             Icons.Default.MoreVert,
-                            contentDescription = stringResource(R.string.more_options, voucher.campaignName),
+                            contentDescription = stringResource(
+                                R.string.more_options,
+                                localizeCampaignName(voucher.campaignName, LocalAppLanguage.current),
+                            ),
                             tint = c.textTertiary,
                             modifier = Modifier.size(18.dp),
                         )
@@ -322,7 +328,7 @@ private fun CategoryPills(voucher: VoucherGroup, modifier: Modifier = Modifier) 
                                 .background(visuals.color, CircleShape),
                         )
                         Text(
-                            text = balance.category,
+                            text = localizeCategory(balance.category, LocalAppLanguage.current),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                         )
