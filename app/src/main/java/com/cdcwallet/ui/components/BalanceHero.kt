@@ -110,7 +110,7 @@ fun BalanceHero(
                 .padding(horizontal = 20.dp, vertical = if (collapsed) 6.dp else 18.dp),
         ) {
             if (collapsed) {
-                CollapsedBalance(summary, c)
+                CollapsedBalance(summary, c, eyebrowColor)
             } else {
                 ExpandedBalance(summary, c, dark, eyebrowColor)
             }
@@ -119,17 +119,25 @@ fun BalanceHero(
 }
 
 /**
- * Collapsed state: "Balance:" label on the left (vertically centered across
+ * Collapsed state: the eyebrow label on the left (vertically centered across
  * the full card height) and the total right-aligned via SpaceBetween. They
  * share one row while they fit; the amount unit wraps to its own row when
  * they would intersect (large font scales) — no ellipsis, no clipping.
+ *
+ * The label uses the same [eyebrowColor] as the expanded hero's eyebrow
+ * (warm gold #8A6220 in light mode), so the label reads identically in both
+ * card states.
  *
  * Both sizes come from typography roles (label = headlineMedium, amount =
  * headlineLarge), so the amount is the dominant element and the future
  * app-wide font-size feature scales both centrally.
  */
 @Composable
-private fun CollapsedBalance(summary: ListSummary, c: RedesignColors) {
+private fun CollapsedBalance(
+    summary: ListSummary,
+    c: RedesignColors,
+    eyebrowColor: Color,
+) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -148,7 +156,7 @@ private fun CollapsedBalance(summary: ListSummary, c: RedesignColors) {
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 1.2.sp,
                 ),
-                color = c.textSecondary,
+                color = eyebrowColor,
             )
         }
         Row(verticalAlignment = Alignment.Bottom) {
