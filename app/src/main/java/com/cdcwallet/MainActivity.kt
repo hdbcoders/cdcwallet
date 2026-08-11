@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
         // resolution uses the app language before the activity is created.
         // The store always resolves to one of the four concrete languages
         // (first launch: the system language when it is one of the four,
-        // otherwise English — see LanguageStore), so the wrap is
+        // otherwise English - see LanguageStore), so the wrap is
         // unconditional. Note: getApplication() is null here (Activity.attach
         // assigns it after attachBaseContext), so the app is read from the
         // base context.
@@ -109,7 +109,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // API 31+: install the OS splash and keep it on screen until the
-        // list's first DB read completes — the user never lands on an empty
+        // list's first DB read completes - the user never lands on an empty
         // list, and the splash doubles as the load mask (no Compose splash
         // needed on this path).
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -131,7 +131,7 @@ class MainActivity : ComponentActivity() {
                 // Keep the Android window background in sync with the effective
                 // Compose theme. The XML theme's white window background would
                 // otherwise flash through during pop transitions (both screens
-                // are mid-fade, so neither covers the window) — and in dark
+                // are mid-fade, so neither covers the window) - and in dark
                 // mode it would flash white on a dark surface.
                 val window = this@MainActivity.window
                 val bg = MaterialTheme.colorScheme.background
@@ -178,7 +178,7 @@ private fun AppNavHost(
 
     // One-shot: does the list's first DB load still need masking? Scoped here
     // (above the NavHost) so it survives back navigation and rotation but
-    // resets on a true process death — the splash masks only the initial
+    // resets on a true process death - the splash masks only the initial
     // load, never a return to the list (the back-arrow bug).
     var listLoadedOnce by rememberSaveable { mutableStateOf(false) }
 
@@ -191,7 +191,7 @@ private fun AppNavHost(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 // API 31+: the OS system splash (kept on screen by
                 // setKeepOnScreenCondition until the first DB read) masks the
-                // load — render the list directly, never an empty list.
+                // load - render the list directly, never an empty list.
                 VoucherListScreen(
                     repository = container.repository,
                     extractionCoordinator = container.extractionCoordinator,
@@ -210,9 +210,9 @@ private fun AppNavHost(
                 )
             } else {
                 // API < 31: no system splash, so the Compose splash masks the
-                // initial load — hold the logo until the first DB read
+                // initial load - hold the logo until the first DB read
                 // completes, then crossfade into the list. Uses the
-                // repository flow directly (no ViewModel) — the screen below
+                // repository flow directly (no ViewModel) - the screen below
                 // owns its own ViewModel. `listLoadedOnce` (rememberSaveable
                 // at AppNavHost scope) latches true after the initial load so
                 // returning to the list via back never re-shows the splash.
@@ -343,7 +343,7 @@ private fun AppNavHost(
     }
 }
 
-/** Navigation motion duration — short enough to feel snappy, long enough to read. */
+/** Navigation motion duration - short enough to feel snappy, long enough to read. */
 private const val NAV_TRANSITION_MS = 280
 
 /**

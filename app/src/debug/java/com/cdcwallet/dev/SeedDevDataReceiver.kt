@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
  *   adb shell am broadcast -a com.cdcwallet.action.CLEAR_DEV_DATA
  *
  * Every action runs via [goAsync] so the broadcast process stays alive until
- * the database operation actually completes — otherwise an immediate
+ * the database operation actually completes - otherwise an immediate
  * relaunch/force-stop could kill the delete before it finishes.
  */
 class SeedDevDataReceiver : BroadcastReceiver() {

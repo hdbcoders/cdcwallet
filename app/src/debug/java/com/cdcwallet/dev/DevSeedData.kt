@@ -96,7 +96,7 @@ object DevSeedData {
                 CategoryBalance("Supermarket", BigDecimal("150")),
             ),
         ),
-        // 7. REAL zero-balance RedeemSG test link — URL/token intentionally NOT
+        // 7. REAL zero-balance RedeemSG test link - URL/token intentionally NOT
         // stored in git (personal link, see local note in docs/ or AGENTS.md).
         // Restore the real URL locally if needed for tests:
         //   url   = "https://voucher.redeem.gov.sg/<TOKEN>?lang=en-US"

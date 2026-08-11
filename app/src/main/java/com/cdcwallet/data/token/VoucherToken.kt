@@ -19,7 +19,7 @@ object VoucherToken {
         url.substringBefore('?').substringBefore('#')
 
     /**
-     * The token segment of the normalized path — the last non-blank path segment.
+     * The token segment of the normalized path - the last non-blank path segment.
      * Returns null for URLs that don't parse or have no token segment.
      */
     fun tokenFromUrl(url: String): String? {

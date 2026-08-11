@@ -52,7 +52,7 @@ import java.time.LocalDate
  * snackbar, confirmation-gated delete with the exact shared dialog (Cancel
  * default-focused), the persistent Archived entry point with its own
  * Restore/Delete menu, archived rows remaining tappable (05 §5.4), and delete
- * racing an in-flight tap-refresh (02 §2.7) — the row must not be resurrected.
+ * racing an in-flight tap-refresh (02 §2.7) - the row must not be resurrected.
  */
 @RunWith(AndroidJUnit4::class)
 class VoucherArchiveFlowInstrumentedTest {
@@ -190,7 +190,7 @@ class VoucherArchiveFlowInstrumentedTest {
         composeRule.onNodeWithText("Link Two").assertIsDisplayed()
         composeRule.onNodeWithTag("archived-count", useUnmergedTree = true).assertTextEquals("1")
 
-        // Row still exists in the database, just flagged archived — not destroyed.
+        // Row still exists in the database, just flagged archived - not destroyed.
         waitFor {
             val row = runBlocking { repository.findByToken("a1") }
             if (row?.isArchived == true) row else null
@@ -282,7 +282,7 @@ class VoucherArchiveFlowInstrumentedTest {
             if (row == null) true else null
         }
         composeRule.onNodeWithText("Link One").assertDoesNotExist()
-        composeRule.onNodeWithText("No voucher links yet — add one with the + button.")
+        composeRule.onNodeWithText("No voucher links yet. Add one with the + button.")
             .assertIsDisplayed()
     }
 
@@ -296,7 +296,7 @@ class VoucherArchiveFlowInstrumentedTest {
         var openedId: String? = null
         archivedContent(repository) { openedId = it.id }
 
-        // Spec 05 §5.4: archiving must not disable the row's tap — it opens
+        // Spec 05 §5.4: archiving must not disable the row's tap - it opens
         // the real page in-app exactly like a main-list tap.
         composeRule.onNodeWithText("Archived One").performClick()
         composeRule.waitForIdle()

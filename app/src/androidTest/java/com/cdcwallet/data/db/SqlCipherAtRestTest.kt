@@ -21,7 +21,7 @@ import java.time.LocalDate
 
 /**
  * Spec 01 §1.6: opening the raw .db file outside the app with a plain SQLite
- * reader must fail — proves encryption at rest, not just that Room works.
+ * reader must fail - proves encryption at rest, not just that Room works.
  */
 @RunWith(AndroidJUnit4::class)
 class SqlCipherAtRestTest {

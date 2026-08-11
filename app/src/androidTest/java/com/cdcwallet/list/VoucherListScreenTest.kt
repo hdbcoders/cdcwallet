@@ -269,7 +269,7 @@ class VoucherListScreenTest {
                 )
             }
         }
-        composeRule.onNodeWithText("No voucher links yet — add one with the + button.")
+        composeRule.onNodeWithText("No voucher links yet. Add one with the + button.")
             .assertIsDisplayed()
     }
 
@@ -291,7 +291,7 @@ class VoucherListScreenTest {
             }
         }
         // The redesign's dashed "Add Voucher" row replaces the FAB: tapping it
-        // must route to the add flow (regression guard — the row previously
+        // must route to the add flow (regression guard - the row previously
         // rendered without a clickable).
         composeRule.onNodeWithText("Add Voucher").performScrollTo().performClick()
         composeRule.waitForIdle()
@@ -319,7 +319,7 @@ class VoucherListScreenTest {
             }
         }
         // The hamburger (top-left) opens the navigation drawer; the gear is
-        // no longer in the top bar — Settings and About App live in the drawer.
+        // no longer in the top bar - Settings and About App live in the drawer.
         composeRule.onNodeWithContentDescription("Menu").performClick()
         composeRule.onNodeWithText("Dark Mode").assertIsDisplayed()
         composeRule.onNodeWithText("Settings").assertIsDisplayed()

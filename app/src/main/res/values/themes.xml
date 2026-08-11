@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Base app theme — the post-splash theme. -->
+    <!-- Base app theme - the post-splash theme. -->
     <style name="Theme.CDCWallet" parent="android:Theme.Material.Light.NoActionBar" />
 
     <!-- Splash theme used by the activity. On API 31+ this is the OS splash

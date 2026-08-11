@@ -9,7 +9,7 @@ import javax.crypto.spec.SecretKeySpec
 
 /**
  * Single failure mode for backup decrypt/import (spec 06 §6.3): the same
- * generic message for wrong password, corrupted file, unsupported version —
+ * generic message for wrong password, corrupted file, unsupported version -
  * never distinguishing causes, which would leak probing information.
  */
 class BackupException(message: String) : Exception(message) {
@@ -22,7 +22,7 @@ class BackupException(message: String) : Exception(message) {
 /**
  * AES-256-GCM authenticated encryption with PBKDF2-HMAC-SHA256 key derivation
  * (spec 06 §6.4). File layout: 4-byte magic "CDCB" || 16-byte salt || 12-byte
- * IV || GCM ciphertext (+ 16-byte tag). The backup password is never stored —
+ * IV || GCM ciphertext (+ 16-byte tag). The backup password is never stored -
  * derivation happens per operation and is unrecoverable if forgotten.
  */
 object BackupCrypto {

@@ -25,7 +25,7 @@
     <string name="archived">已存档</string>
     <string name="archive">存档</string>
     <string name="restore">恢复</string>
-    <string name="empty_list">还没有礼券链接 — 点 + 按钮添加。</string>
+    <string name="empty_list">还没有礼券链接。点 + 按钮添加。</string>
     <string name="balance_eyebrow">余额</string>
     <string name="balance">余额</string>
     <string name="more_categories">另有 %1$d 个</string>
@@ -49,8 +49,8 @@
     <string name="add">添加</string>
     <string name="add_invalid">这看起来不是 RedeemSG 礼券链接。</string>
     <string name="add_duplicate">链接未添加。该礼券已在您的列表中。</string>
-    <string name="add_added">已添加 — %1$s</string>
-    <string name="add_added_unverified">已添加 — 暂时无法验证；点击条目稍后查看。</string>
+    <string name="add_added">已添加：%1$s</string>
+    <string name="add_added_unverified">已添加，但暂时无法验证；点击条目稍后查看。</string>
 
     <string name="detail_parse_error">网站数据解析失败</string>
     <string name="detail_network_error">无法加载网站</string>
@@ -95,7 +95,7 @@
     <string name="backup">备份</string>
     <string name="export_backup">导出备份</string>
     <string name="exporting_backup">正在加密并导出备份</string>
-    <string name="export_desc">将所有礼券链接的加密副本保存到“下载”。您需要设置一个密码 — 请记住它，无法找回。</string>
+    <string name="export_desc">将所有礼券链接的加密副本保存到“下载”。您需要设置一个密码。请记住它，无法找回。</string>
     <string name="import_backup">导入备份</string>
     <string name="importing_backup">正在解密并导入备份</string>
     <string name="import_desc">从之前导出的备份文件恢复。导入过程中不会下载任何内容。</string>
@@ -108,7 +108,7 @@
     </plurals>
     <string name="set_backup_password">设置备份密码</string>
     <string name="backup_password">备份密码</string>
-    <string name="password_encrypt_desc">此密码用于加密备份文件。它永远不会被存储 — 如果您忘记它，备份将无法打开。</string>
+    <string name="password_encrypt_desc">此密码用于加密备份文件。它永远不会被存储。如果您忘记它，备份将无法打开。</string>
     <string name="password_enter_desc">请输入此备份导出时使用的密码。</string>
     <string name="confirm_password">确认密码</string>
     <string name="merge_desc">合并只会添加您尚未拥有的链接。替换会删除当前保存的所有内容。</string>

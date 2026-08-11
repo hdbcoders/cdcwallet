@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 
 /**
  * Payload <-> encrypted-file codec (spec 06 §6.2/§6.4). The payload contains
- * only VoucherGroup rows — never WebView cache, cookies, or browser state
+ * only VoucherGroup rows - never WebView cache, cookies, or browser state
  * (there is none persisted, per 02 §2.7). Format version and creation
  * timestamp live inside the encrypted payload.
  */
@@ -21,7 +21,7 @@ class BackupService {
 
     /**
      * @throws BackupException with the generic message for wrong password,
-     * corrupted/truncated input, or an unsupported format version — the UI
+     * corrupted/truncated input, or an unsupported format version - the UI
      * must never distinguish between these.
      */
     fun decryptPayload(bytes: ByteArray, password: String): VoucherBackupPayload {

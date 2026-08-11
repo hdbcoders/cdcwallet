@@ -64,7 +64,7 @@ import com.cdcwallet.ui.theme.rememberReduceMotion
  * The whole card is tappable ([onToggle]) and collapses to a compact state
  * showing just "Balance:" + the total. All text that used to ellipsize/truncate
  * (total, category rows) is now FlowRow-based: items share a line while
- * they fit and wrap to their own line when they would intersect — nothing is
+ * they fit and wrap to their own line when they would intersect - nothing is
  * ever cut off, at any font scale.
  */
 
@@ -72,7 +72,7 @@ import com.cdcwallet.ui.theme.rememberReduceMotion
  * Responsive stacking (replaces the old font-scale threshold): the expanded
  * card switches from the two-column (left + right) mockup layout to a
  * stacked (top + bottom) one when ANY category row would intersect with its
- * own balance — i.e. when [icon + name + amount] needs more horizontal room
+ * own balance - i.e. when [icon + name + amount] needs more horizontal room
  * than the two-column category column provides. Stacking gives the category
  * rows full card width, so nothing ever squeezes into mid-word breaks at
  * any font scale.
@@ -124,7 +124,7 @@ fun BalanceHero(
  * Collapsed state: the eyebrow label on the left (vertically centered across
  * the full card height) and the total right-aligned via SpaceBetween. They
  * share one row while they fit; the amount unit wraps to its own row when
- * they would intersect (large font scales) — no ellipsis, no clipping.
+ * they would intersect (large font scales) - no ellipsis, no clipping.
  *
  * The label uses the same [eyebrowColor] as the expanded hero's eyebrow
  * (warm gold #8A6220 in light mode), so the label reads identically in both
@@ -150,7 +150,7 @@ private fun CollapsedBalance(
         CompositionLocalProvider(LocalTextStyle provides TextStyle.Default) {
             Text(
                 // Fixed role size (headlineMedium ≈ its current rendered
-                // size) so the label no longer tracks the amount's height —
+                // size) so the label no longer tracks the amount's height -
                 // the amount (headlineLarge) is now the dominant element.
                 text = stringResource(R.string.balance).uppercase(),
                 style = MaterialTheme.typography.headlineMedium.copy(
@@ -175,7 +175,7 @@ private fun CollapsedBalance(
             Text(
                 // Typography role so the upcoming font-size feature scales
                 // the amount centrally (AppTypography maps headlineLarge to
-                // Fraunces Medium, 32sp) — bigger than the label by design.
+                // Fraunces Medium, 32sp) - bigger than the label by design.
                 text = formatSgd(summary.total).removePrefix("$"),
                 style = MaterialTheme.typography.headlineLarge,
                 color = c.textPrimary,
@@ -186,7 +186,7 @@ private fun CollapsedBalance(
 
 /**
  * Stack the expanded hero when ANY category row would intersect with its own
- * balance — the [icon + name + amount] unit needs more horizontal room than
+ * balance - the [icon + name + amount] unit needs more horizontal room than
  * the two-column category column provides (the FlowRow inside
  * [CategoryMiniRow] would wrap the amount onto a second line). Stacking
  * gives every category row the full card width instead.
@@ -220,7 +220,7 @@ private fun ExpandedBalance(
     )
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         // Two-column layout: balance column weight 1, categories weight 1.6,
-        // separated by 14dp — that is the width each row must fit into.
+        // separated by 14dp - that is the width each row must fit into.
         val spacingPx = with(density) { 14.dp.toPx() }
         val iconAndGapPx = with(density) { (21.6.dp + 6.dp).toPx() }
         val categoryColumnWidthPx =
@@ -229,7 +229,7 @@ private fun ExpandedBalance(
             .sortedByDescending { it.remainingValue }
             .take(3)
             .map { balance ->
-                // Measure the DISPLAYED (localized) name — the geometric
+                // Measure the DISPLAYED (localized) name - the geometric
                 // stacking decision must match what CategoryMiniRow renders.
                 val displayedName = localizeCategory(balance.category, LocalAppLanguage.current)
                 val nameWidth = textMeasurer
@@ -371,7 +371,7 @@ private fun Amount(summary: ListSummary, c: RedesignColors) {
             letterSpacing = (-0.8).sp,
             // Optical nudge: the Fraunces '$' draws its stem ~4px below its
             // body, so the digits are shifted down ~12px to sit on the '$'s
-            // line — reads as aligned.
+            // line - reads as aligned.
             modifier = Modifier.offset(y = 4.6.dp),
         )
     }

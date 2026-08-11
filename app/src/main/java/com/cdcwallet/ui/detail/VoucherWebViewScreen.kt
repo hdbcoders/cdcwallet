@@ -41,14 +41,14 @@ import com.cdcwallet.ui.theme.localizeCampaignName
 
 /**
  * Tap-to-open-and-refresh (spec 04 §4.4, call site C2 of 02 §2.4). The WebView
- * shown to the user is the same instance that performs the extraction — never
+ * shown to the user is the same instance that performs the extraction - never
  * a second hidden WebView. On success the cached row updates and the list
  * recomposes when the user returns; on failure the row is marked stale via
- * `lastRefreshError` and a non-blocking banner appears — the WebView stays
+ * `lastRefreshError` and a non-blocking banner appears - the WebView stays
  * usable either way.
  *
  * The WebView is the engine's **long-lived instance** (02 §2.4 revision
- * 2026-08-03): this screen acquires it on entry and detaches it on exit —
+ * 2026-08-03): this screen acquires it on entry and detaches it on exit -
  * it never creates or destroys it. Every tap still reloads the URL (fresh
  * data, per 02 §2.7), so a re-tap of the same voucher is a reload. State
  * lives in [DetailViewModel], which survives rotation: re-attaching the same
@@ -123,7 +123,7 @@ fun VoucherWebViewScreen(
 
     DisposableEffect(Unit) {
         onDispose {
-            // Detach only — the engine owns the instance for the whole app
+            // Detach only - the engine owns the instance for the whole app
             // session (02 §2.4 revision 2026-08-03). No stopLoading: a load
             // started by a tap may complete after the user leaves, and
             // rotation must not kill an in-flight load.

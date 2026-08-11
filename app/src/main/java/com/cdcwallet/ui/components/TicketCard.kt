@@ -99,7 +99,7 @@ fun TicketCard(
         Column(modifier = Modifier.fillMaxWidth()) {
             // Title row.
             // Title row: the weighted name wraps within the space beside the
-            // kebab (never ellipsized, never pushing the kebab off the line —
+            // kebab (never ellipsized, never pushing the kebab off the line -
             // the kebab stays pinned to the card's right edge).
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -138,7 +138,7 @@ fun TicketCard(
                         border = BorderStroke(1.dp, c.hairline),
                     ) {
                         // DropdownMenu content lives in a popup window whose
-                        // density ignores the app font scale — re-apply it so
+                        // density ignores the app font scale - re-apply it so
                         // the kebab menu items scale with the text-size setting.
                         AppScaledContent {
                             menuContent()

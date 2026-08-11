@@ -19,7 +19,7 @@ import com.cdcwallet.ui.theme.AppLanguage
 
 /**
  * Standalone language picker (spec 07 §7.5): opened from the Translate button
- * in the main list's top bar. Lists the four app languages — the active one is
+ * in the main list's top bar. Lists the four app languages - the active one is
  * checked; tapping an entry applies it (persisted + activity recreate by the
  * caller) and dismisses the dialog.
  */

@@ -74,7 +74,7 @@ import java.time.format.DateTimeFormatter
 
 /**
  * Settings screen (spec 06): encrypted backup export to Downloads and import
- * via the system file picker. Import never touches the network — restored rows
+ * via the system file picker. Import never touches the network - restored rows
  * are plain cached entries from the payload. The `backupBytesProvider` seam
  * exists for instrumented tests (system picker is not drivable there);
  * production passes null and uses the real picker. Dialog/flow state lives in
@@ -106,7 +106,7 @@ fun SettingsScreen(
 
     // API 24-28 write to the public Downloads directory directly (scoped
     // storage starts at 29), which needs WRITE_EXTERNAL_STORAGE granted at
-    // runtime on API 23+ — request it before the first export on those
+    // runtime on API 23+ - request it before the first export on those
     // versions; API 29+ uses MediaStore and needs nothing.
     val exportPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -174,7 +174,7 @@ fun SettingsScreen(
             // touches pass through to the slider, so the thumb drags across
             // the whole track (radio buttons with their own tap gesture would
             // swallow the drag and make sliding impossible), while tapping a
-            // dot still selects that level — the slider jumps to the tapped
+            // dot still selects that level - the slider jumps to the tapped
             // position and snaps to the nearest stop. Both write the same
             // store, which recomposes the whole app instantly, including this
             // row's live "Aa" preview. The current level is announced to
@@ -223,7 +223,7 @@ fun SettingsScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         // Non-interactive (onClick = null) so the dot never
-                        // intercepts a drag — see the section comment above.
+                        // intercepts a drag - see the section comment above.
                         RadioButton(selected = level == currentScale, onClick = null)
                     }
                 }
@@ -235,7 +235,7 @@ fun SettingsScreen(
             ) {
                 // "Aa" at the current level's app-wide size: X.sp paints at
                 // X × LocalDensity.fontScale, so 14.sp renders exactly like
-                // 14sp text at the selected level — and grows/shrinks live
+                // 14sp text at the selected level - and grows/shrinks live
                 // as the slider moves.
                 Text(
                     text = "Aa",
@@ -427,7 +427,7 @@ private fun BackupPasswordDialog(
         )
     }
     // M3 Dialog doesn't reliably land initial focus on the password field
-    // (mirrors DeleteVoucherDialog — the request can be stolen during dialog
+    // (mirrors DeleteVoucherDialog - the request can be stolen during dialog
     // mount). Retry briefly (up to ~0.5s) until it sticks, then surface the
     // keyboard so the user can type without an extra tap. Applies to both the
     // export (password + confirm) and import (password) dialogs.

@@ -55,7 +55,7 @@ class CampaignGlossaryTest {
 
     @Test
     fun parenthesizedMonthTranslatesAndKeepsParens() {
-        // "CDC Vouchers 2026 (June)" — "Vouchers" and the parenthesized
+        // "CDC Vouchers 2026 (June)" - "Vouchers" and the parenthesized
         // month both translate; the parens around the month are preserved.
         assertEquals(
             "CDC 消费券 2026 (六月)",
@@ -69,7 +69,7 @@ class CampaignGlossaryTest {
             "CDC வவச்சர் 2026 (ஜூன்)",
             localizeCampaignName("CDC Vouchers 2026 (June)", AppLanguage.TA),
         )
-        // English is the source language — the name is returned unchanged.
+        // English is the source language - the name is returned unchanged.
         assertEquals(
             "CDC Vouchers 2026 (June)",
             localizeCampaignName("CDC Vouchers 2026 (June)", AppLanguage.EN),
@@ -178,7 +178,7 @@ class CampaignGlossaryTest {
 
     @Test
     fun phraseBeatsItsComponentWord() {
-        // The full phrase "Climate Vouchers" matches as one token — the
+        // The full phrase "Climate Vouchers" matches as one token - the
         // shorter "Vouchers" key must NOT fire inside it.
         assertEquals(
             "气候券 ($100)",
@@ -193,7 +193,7 @@ class CampaignGlossaryTest {
     @Test
     fun componentWordStillMatchesWhenPhraseDoesNotApply() {
         // "Vouchers" alone (no "Climate" prefix) still translates via the
-        // single-word key — the phrase key simply doesn't match here.
+        // single-word key - the phrase key simply doesn't match here.
         assertEquals(
             "券",
             tokenizeWithGlossary("Vouchers", AppLanguage.ZH, phrasePlusWordGlossary),
@@ -228,7 +228,7 @@ class CampaignGlossaryTest {
 
     @Test
     fun nameWithNoKnownTokensPassesThroughEntirely() {
-        // No glossary key matches any word — the whole name stays raw.
+        // No glossary key matches any word - the whole name stays raw.
         assertEquals(
             "ABC Programme (Bonus)",
             tokenizeWithGlossary("ABC Programme (Bonus)", AppLanguage.ZH, phrasePlusWordGlossary),

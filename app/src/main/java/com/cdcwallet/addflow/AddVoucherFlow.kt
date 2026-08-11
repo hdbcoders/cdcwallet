@@ -14,10 +14,10 @@ import java.util.UUID
  * Outcome of an add attempt (spec 03 §3.2).
  */
 sealed class AddVoucherResult {
-    /** Rejected at step 1 — not a plausible voucher link; nothing else ran. */
+    /** Rejected at step 1 - not a plausible voucher link; nothing else ran. */
     data object InvalidFormat : AddVoucherResult()
 
-    /** Rejected at step 2 — token already saved; no fetch was attempted. */
+    /** Rejected at step 2 - token already saved; no fetch was attempted. */
     data class Duplicate(val existing: VoucherGroup) : AddVoucherResult()
 
     /** Saved at step 4 with real extracted data. */
@@ -28,7 +28,7 @@ sealed class AddVoucherResult {
 }
 
 /**
- * Add-time orchestration (spec 03 §3.2) — the order is normative and deliberate:
+ * Add-time orchestration (spec 03 §3.2) - the order is normative and deliberate:
  * format check → duplicate check → fetch → save (verified or UNVERIFIED).
  *
  * The duplicate check uses Package 1's canonical case-sensitive token comparison

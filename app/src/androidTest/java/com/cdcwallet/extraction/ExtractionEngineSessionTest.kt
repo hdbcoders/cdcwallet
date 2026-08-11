@@ -26,7 +26,7 @@ import org.junit.runner.RunWith
  * singleton engine, so two overlapping extractions could remove the OTHER
  * call's script handler and leak its own. All teardown now happens inside
  * `extract()`'s `finally`, owned per-call. Same asset-loader pattern as
- * `ExtractionEngineTest` — synthetic pages, never real RedeemSG hosts.
+ * `ExtractionEngineTest` - synthetic pages, never real RedeemSG hosts.
  */
 @RunWith(AndroidJUnit4::class)
 class ExtractionEngineSessionTest {
@@ -39,7 +39,7 @@ class ExtractionEngineSessionTest {
 
     @Before
     fun setUp() {
-        // Must run on the main thread — WebView versions ≤ ~100 enforce this;
+        // Must run on the main thread - WebView versions ≤ ~100 enforce this;
         // newer ones tolerate it either way. Same pattern as VoucherApp.
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             WebView.setWebContentsDebuggingEnabled(true)

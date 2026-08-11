@@ -27,7 +27,7 @@ interface VoucherRepository {
     fun observeActiveCount(): Flow<Int>
     fun observeArchivedCount(): Flow<Int>
 
-    /** Single row by id, archived or not — detail screen needs it so tapping an
+    /** Single row by id, archived or not - detail screen needs it so tapping an
      *  archived voucher still opens it (spec 05 §5.4). Null when no row. */
     fun observeById(id: String): Flow<VoucherGroup?>
 
@@ -129,7 +129,7 @@ class RoomVoucherRepository(
             // Defensive backstop (same semantics as insert): a duplicate token
             // must not crash a bulk import. Room rolls back the aborted batch
             // transaction, so fall back to per-row inserts in fresh
-            // transactions — valid rows still land; duplicates are skipped.
+            // transactions - valid rows still land; duplicates are skipped.
             normalized.count { voucher ->
                 try {
                     database.withTransaction { dao.insert(voucher) }

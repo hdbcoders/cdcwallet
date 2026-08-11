@@ -58,7 +58,7 @@ fun AddVoucherScreen(
         initialUrl?.let { vm.setInitialUrl(it) }
         // Auto-activate the paste field on arrival so the user can type or
         // paste without an extra tap. Skipped when a share intent already
-        // pre-filled the URL — there the user only needs to confirm, so we
+        // pre-filled the URL - there the user only needs to confirm, so we
         // don't pop the keyboard over the Add button. A single requestFocus
         // can be dropped while the node/window is still mounting, so retry
         // briefly (mirrors DeleteVoucherDialog / BackupPasswordDialog).

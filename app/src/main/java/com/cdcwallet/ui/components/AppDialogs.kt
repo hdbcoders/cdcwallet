@@ -30,7 +30,7 @@ fun AppDialogSurface(
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
         // Dialog content lives in a separate window whose density ignores
-        // the app font scale — re-apply it so dialog text scales too.
+        // the app font scale - re-apply it so dialog text scales too.
         AppScaledContent {
             Surface(shape = RoundedCornerShape(28.dp), tonalElevation = 6.dp) {
                 Column(modifier = Modifier.padding(24.dp), content = content)

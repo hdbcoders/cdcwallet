@@ -34,14 +34,14 @@ import com.cdcwallet.R
 enum class ThemeMode { LIGHT, DARK }
 
 /**
- * The app's *effective* dark state, as decided by AppTheme — never use
+ * The app's *effective* dark state, as decided by AppTheme - never use
  * isSystemInDarkTheme() below AppTheme, since the user can force a mode that
  * differs from the system setting (which is what drives the system flag).
  */
 val LocalAppIsDark = staticCompositionLocalOf { false }
 
 /**
- * Pure decision for the app's first concrete theme mode — the system default
+ * Pure decision for the app's first concrete theme mode - the system default
  * is inherited exactly once. An explicit stored choice wins; otherwise (first
  * launch, or a legacy "system"/unknown value from before the SYSTEM option
  * was removed) the user's dark/light system setting is snapshotted.
@@ -69,7 +69,7 @@ class ThemeModeStore(context: Context) {
     init {
         // First launch (or a legacy "Follow system" install): snapshot the
         // system dark/light default into a concrete persisted mode, then stop
-        // following the system — the hamburger toggle is the only way to
+        // following the system - the hamburger toggle is the only way to
         // change it afterwards.
         val stored = prefs.getString(KEY_MODE, null)
         mode = resolveInitialMode(isSystemDark(context), stored)
@@ -122,7 +122,7 @@ fun AppTheme(
         // M3's LocalContentColor defaults to Color.Black and MaterialTheme does
         // not provide it (only Surface does); this app's screens are custom
         // layouts with no root Surface, so implicit text colors would render
-        // black — invisible in dark mode. Provide the theme's primary text
+        // black - invisible in dark mode. Provide the theme's primary text
         // color at the root like a Surface would.
         LocalContentColor provides redesign.textPrimary,
     ) {
@@ -139,7 +139,7 @@ fun AppTheme(
 /* ------------------------------------------------------------------ */
 
 /**
- * Fraunces — the redesign's display serif (voucher names, hero amount,
+ * Fraunces - the redesign's display serif (voucher names, hero amount,
  * section titles). Bundled as the Google Fonts variable font; the weight axis
  * is pinned per [FontWeight] via [FontVariation] so API 26+ renders true
  * weights while API 24/25 fall back to the default instance.
@@ -159,7 +159,7 @@ private val FrauncesFontFamily = FontFamily(
 )
 
 /**
- * Fraunces at the display optical size (opsz 42) — for large display text
+ * Fraunces at the display optical size (opsz 42) - for large display text
  * like the hero balance. Browsers apply font-optical-sizing automatically
  * (opsz ≈ rendered size); Android does not, and the font's fvar default is
  * opsz=9 (the text cut), so large text needs the axis pinned explicitly to
@@ -194,7 +194,7 @@ internal val FrauncesDisplayFontFamily = FontFamily(
 )
 
 /**
- * Inter — the redesign's body typeface (labels, meta, banners). Same variable
+ * Inter - the redesign's body typeface (labels, meta, banners). Same variable
  * font handling as Fraunces.
  */
 private val InterFontFamily = FontFamily(
@@ -217,7 +217,7 @@ private val InterFontFamily = FontFamily(
 )
 
 /**
- * IBM Plex Mono — the redesign's numeric/mono typeface (balances, counts,
+ * IBM Plex Mono - the redesign's numeric/mono typeface (balances, counts,
  * eyebrow labels, language button). Static weights bundled.
  */
 internal val PlexMonoFontFamily = FontFamily(
@@ -254,7 +254,7 @@ private val AppTypography: Typography = with(Typography()) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Color schemes — M3 roles mapped from the redesign tokens            */
+/* Color schemes - M3 roles mapped from the redesign tokens            */
 /* ------------------------------------------------------------------ */
 
 /** Light M3 scheme. Primary = gold (the redesign's accent for actions and
@@ -293,7 +293,7 @@ private val LightScheme = lightColorScheme(
     onErrorContainer = Color(0xFF5F0A10),
 )
 
-/** Dark M3 scheme — the second mockup: deep navy canvas, raised navy
+/** Dark M3 scheme - the second mockup: deep navy canvas, raised navy
  *  surfaces, gold accents, and the same danger/category hues. */
 private val DarkScheme = darkColorScheme(
     primary = DarkRedesignColors.gold,

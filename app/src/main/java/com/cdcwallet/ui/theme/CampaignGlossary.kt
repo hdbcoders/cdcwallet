@@ -26,7 +26,7 @@ data class Entry(val en: String, val zh: String, val ms: String, val ta: String)
  * adding a word or category is one map entry per language.
  *
  * Seeded with a single category (`supermarket`) and the twelve calendar
- * months as campaign tokens — the remaining categories and campaign tokens
+ * months as campaign tokens - the remaining categories and campaign tokens
  * are added as their translations are provided.
  */
 object CampaignGlossary {
@@ -38,7 +38,7 @@ object CampaignGlossary {
     )
 
     /**
-     * The twelve calendar months — campaign names carry them parenthesized
+     * The twelve calendar months - campaign names carry them parenthesized
      * (e.g. "CDC Vouchers 2026 (June)"), which the tokenizer matches
      * inside the parens and re-wraps on output. Keys are the English
      * month names, lower-case (matching is case-insensitive).
@@ -80,7 +80,7 @@ object CampaignGlossary {
  * Localizes a scraped category name for display. Case-insensitive exact
  * match against the glossary; unknown categories pass through raw (the
  * real page's name stays the source of truth). English is the source
- * language — it is returned unchanged.
+ * language - it is returned unchanged.
  */
 fun localizeCategory(raw: String, language: AppLanguage): String =
     if (language == AppLanguage.EN) raw

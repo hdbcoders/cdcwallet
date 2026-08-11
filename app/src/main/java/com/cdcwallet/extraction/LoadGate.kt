@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * epoch-notifier WebViewClient on the first `onPageStarted` of the load;
  * read from the WebView's JS thread, hence atomic. A payload can only be
  * delivered by a page whose document is alive, and the previous document
- * dies at the new navigation's commit — which is also when the gate opens —
+ * dies at the new navigation's commit - which is also when the gate opens -
  * so "drop while closed" admits exactly the current page's payload and
  * nothing else.
  */

@@ -79,7 +79,7 @@ class BackupFlowTest {
         repo.bulkInsert(listOf(voucher("X", id = "local-id")))
         val backupFlow = flow(repo)
 
-        // Same token, different id/url/name — the duplicate rule is token-based
+        // Same token, different id/url/name - the duplicate rule is token-based
         // (01 §1.4), so the incoming row must NOT be imported.
         val imported = backupFlow.importMerge(
             payload(voucher("X", id = "backup-id").copy(url = "https://example.com/other")),

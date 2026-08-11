@@ -22,7 +22,7 @@ sealed interface BadgeState {
     data object Expired : BadgeState
 
     /**
-     * ACTIVE entry whose remaining value is zero — nothing left to spend.
+     * ACTIVE entry whose remaining value is zero - nothing left to spend.
      * Rendered red with the same warning icon as Expired.
      */
     data object NoBalance : BadgeState
@@ -34,7 +34,7 @@ sealed interface BadgeState {
 enum class Urgency { URGENT, SOON, FINE }
 
 /**
- * Spec 04 §4.1: sort priority —
+ * Spec 04 §4.1: sort priority -
  *   1. UNVERIFIED pinned above all others (no expiry/balance to sort by),
  *   2. vouchers WITH balance remaining come before those with none,
  *   3. within each, soonest expiry first.
@@ -72,7 +72,7 @@ fun badgeState(voucher: VoucherGroup, today: LocalDate = LocalDate.now()): Badge
                 if (days < 0) {
                     BadgeState.Expired
                 } else if (totalRemaining(voucher) == BigDecimal.ZERO) {
-                    // Nothing left to spend — urgency to spend before expiry
+                    // Nothing left to spend - urgency to spend before expiry
                     // is moot; the real page reports the balance as zero.
                     BadgeState.NoBalance
                 } else {
@@ -89,13 +89,13 @@ fun badgeState(voucher: VoucherGroup, today: LocalDate = LocalDate.now()): Badge
 
 /**
  * Sum of unused-only remaining value (spec 04 §4.3 semantics): zero (or
- * empty — nothing unused) means the voucher has no balance left.
+ * empty - nothing unused) means the voucher has no balance left.
  */
 private fun totalRemaining(voucher: VoucherGroup): BigDecimal =
     voucher.categoryBalances.fold(BigDecimal.ZERO) { acc, b -> acc + b.remainingValue }
 
 /**
- * Spec 04 §4.2 accessibility: exactly one label per badge state — no
+ * Spec 04 §4.2 accessibility: exactly one label per badge state - no
  * fall-through (UNVERIFIED must never announce blank/default). The label is a
  * string-resource reference (localized); the days-left variant carries its
  * count so the caller can resolve the plural form.

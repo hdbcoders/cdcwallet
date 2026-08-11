@@ -218,7 +218,7 @@ class SettingsViewModel(
     private companion object {
         /** Hard cap on any backup op (decrypt/export/merge/replace): PBKDF2 at
          *  600k iterations is the dominant cost (~1–2s worst case), so 10s is
-         *  generous headroom — fail-soft clears the progress dialog and shows
+         *  generous headroom - fail-soft clears the progress dialog and shows
          *  the operation's error message instead of hanging forever. */
         const val BACKUP_OP_TIMEOUT_MS = 10_000L
     }

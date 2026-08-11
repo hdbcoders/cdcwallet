@@ -47,7 +47,7 @@ class ExtractionEngineTest {
 
     @Before
     fun setUp() {
-        // Must run on the main thread — WebView versions ≤ ~100 enforce this;
+        // Must run on the main thread - WebView versions ≤ ~100 enforce this;
         // newer ones tolerate it either way. Same pattern as VoucherApp.
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             WebView.setWebContentsDebuggingEnabled(true)
@@ -93,7 +93,7 @@ class ExtractionEngineTest {
     fun onlyWhitelistedFieldsSurviveExtraction() = runTest {
         // The synthetic response contains the resident's home address and merchant
         // names (spec 02 §2.2). The extracted Success must carry nothing but the
-        // six whitelisted fields — the DTO has nowhere else for data to land.
+        // six whitelisted fields - the DTO has nowhere else for data to land.
         val engine = ExtractionEngine(hiddenWebViewFactory = { webViewWithAssetLoader() })
         val result = engine.extractForAdd(context, testPageUrl) as ExtractionResult.Success
 

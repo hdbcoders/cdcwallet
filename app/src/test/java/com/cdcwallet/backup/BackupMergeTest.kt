@@ -75,7 +75,7 @@ class BackupMergeTest {
 
         // The existing-set filter removes the token that matches; the merge
         // function itself keeps in-payload duplicates (dedup is importMerge's
-        // job via distinctBy) — so only B is a new token, but the two As are
+        // job via distinctBy) - so only B is a new token, but the two As are
         // both filtered against the existing set. Assert the filter result.
         val merged = mergeVouchers(existing, incoming)
 

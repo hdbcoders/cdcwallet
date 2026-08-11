@@ -17,7 +17,7 @@ class VoucherLinkValidatorTest {
     @Test
     fun trailingSlashStillYieldsATokenSegment() {
         // The canonical tokenizer trims slashes, so this normalizes to the same
-        // token as the slash-less form — not junk.
+        // token as the slash-less form - not junk.
         assertTrue(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/ABC123/"))
     }
 

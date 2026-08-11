@@ -37,7 +37,7 @@ fun SplashScreen(modifier: Modifier = Modifier) {
             contentDescription = null,
             contentScale = ContentScale.Fit,
             // Artwork (circle) fills 86.5% of the 1024px canvas; sizing the
-            // canvas at 222dp renders the artwork at ~192dp — the same visual
+            // canvas at 222dp renders the artwork at ~192dp - the same visual
             // size as the API 31+ system splash icon (503px @ 420dpi). No
             // circular clip needed: the logo is already a perfect circle.
             modifier = Modifier.size(222.dp),

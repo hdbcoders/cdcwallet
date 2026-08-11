@@ -14,14 +14,14 @@ import java.time.Instant
 /**
  * App-scoped orchestrator for visible-WebView extractions (spec 02 §2.7
  * concurrency rules). It owns:
- *  - a scope that **survives screen exit** — the detail screen's ViewModel is
+ *  - a scope that **survives screen exit** - the detail screen's ViewModel is
  *    destroyed on back, but the extraction must finish in the background and
  *    still write the result (02 §2.7 "in-flight loads survive screen exit");
  *  - a registry of in-flight extractions keyed by `VoucherGroup.id`, so a
  *    delete can cancel the specific load before removing the row (02 §2.7
  *    "cancel extraction on delete").
  *
- * Lives in [com.cdcwallet.AppContainer] — one instance for the app. The
+ * Lives in [com.cdcwallet.AppContainer] - one instance for the app. The
  * add-time hidden-WebView path is NOT routed here: it is a one-shot flow owned
  * by the add screen, whose cancellation teardown lives in [ExtractionEngine].
  */
@@ -48,7 +48,7 @@ class ExtractionCoordinator(
         if (existing != null && existing.isActive) return
         val job = scope.launch {
             val result = extractionEngine.extractFromVisibleWebView(webView, voucherUrl)
-            // Apply the result even if the screen is gone — the DB write is the
+            // Apply the result even if the screen is gone - the DB write is the
             // durable part; the UI callback is best-effort.
             applyResult(voucherId, result)
             ensureActive()

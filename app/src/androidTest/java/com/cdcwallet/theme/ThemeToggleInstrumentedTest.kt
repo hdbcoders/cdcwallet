@@ -66,7 +66,7 @@ class ThemeToggleInstrumentedTest {
         val systemDark = (appContext.resources.configuration.uiMode and
             Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         assertEquals(if (systemDark) ThemeMode.DARK else ThemeMode.LIGHT, store.mode)
-        // A second store reads the same value — the bake was persisted, so
+        // A second store reads the same value - the bake was persisted, so
         // the app stops following the system after first launch.
         assertEquals(store.mode, ThemeModeStore(appContext).mode)
     }

@@ -4,7 +4,7 @@ import android.content.Context
 
 /**
  * Shared action constants and persisted state for the debug-only dev tooling.
- * Lives under `src/debug` — never compiled into release builds.
+ * Lives under `src/debug` - never compiled into release builds.
  */
 object DevActions {
 

@@ -13,7 +13,7 @@ import java.time.Instant
 /**
  * Backup orchestration (spec 06). Export assembles the payload from the
  * repository and writes the encrypted file; import performs no network
- * request of any kind — restored rows come straight from the payload and
+ * request of any kind - restored rows come straight from the payload and
  * behave as normal cached entries from then on.
  */
 class BackupFlow(
@@ -36,7 +36,7 @@ class BackupFlow(
 
     /**
      * Merge mode (spec 06 §6.3): import only rows whose token isn't already
-     * local, using the canonical case-sensitive comparison (01 §1.4) — never a
+     * local, using the canonical case-sensitive comparison (01 §1.4) - never a
      * second implementation. Existing entries always take precedence.
      *
      * @return the number of rows actually imported
@@ -51,7 +51,7 @@ class BackupFlow(
         return merged.size
     }
 
-    /** Replace mode (spec 06 §6.3) — the most destructive operation in the app. */
+    /** Replace mode (spec 06 §6.3) - the most destructive operation in the app. */
     suspend fun importReplace(payload: VoucherBackupPayload) {
         repository.replaceAll(dedupeByToken(payload.vouchers))
     }
@@ -59,7 +59,7 @@ class BackupFlow(
 
 /**
  * Pure merge computation, kept testable. Duplicate detection uses the
- * canonical `VoucherToken.isDuplicate` (01 §1.4 / 06 §6.3) — never a second
+ * canonical `VoucherToken.isDuplicate` (01 §1.4 / 06 §6.3) - never a second
  * implementation. O(n+m): the existing token set is built once.
  */
 fun mergeVouchers(

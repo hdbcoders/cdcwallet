@@ -87,7 +87,7 @@ class BackupPayloadTest {
             root.keys,
         )
 
-        // Each voucher entry carries exactly the VoucherGroup field set —
+        // Each voucher entry carries exactly the VoucherGroup field set -
         // nothing WebView-related (cache, cookies, browser state) can leak in.
         val voucherFields = root.getValue("vouchers").jsonArray.map { it.jsonObject.keys }
         assertTrue(voucherFields.isNotEmpty())

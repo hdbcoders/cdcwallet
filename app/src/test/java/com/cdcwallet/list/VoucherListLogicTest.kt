@@ -408,7 +408,7 @@ class VoucherListLogicTest {
     @Test
     fun zeroBalanceCategoriesAreFilteredOutOfSummary() {
         // A category that sums to $0 (e.g. an "unused" voucher group with
-        // zero value) must not appear in the hero's category rows — the
+        // zero value) must not appear in the hero's category rows - the
         // total stays correct, the category list drops the $0 entry.
         val summary = summarizeActive(
             listOf(

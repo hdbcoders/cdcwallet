@@ -13,7 +13,7 @@ import java.time.ZoneId
 
 /**
  * Parses the whitelisted bridge payload into an ExtractionResult.Success.
- * Only the six whitelisted fields (spec 02 §2.6) exist in the DTOs below —
+ * Only the six whitelisted fields (spec 02 §2.6) exist in the DTOs below -
  * there is structurally nowhere for address or merchant data to land.
  */
 internal object VoucherPayloadParser {
@@ -38,7 +38,7 @@ internal object VoucherPayloadParser {
         val balances = payload.vouchers
             .filter { it.state == "unused" }
             .groupBy { voucher ->
-                // Climate/undifferentiated vouchers carry no `type` — bucket
+                // Climate/undifferentiated vouchers carry no `type` - bucket
                 // them under the campaign's first word (e.g. "Climate" from
                 // "Climate Vouchers ($100)") so their value still counts
                 // (spec 02 §2.2: `type` is nullable for non-CDC schemes).

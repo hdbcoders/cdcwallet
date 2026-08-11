@@ -42,7 +42,7 @@ import java.time.LocalDate
  * Tap-to-open-and-refresh (spec 04 §4.4, acceptance §4.6): the visible WebView
  * is the extracting WebView; success transitions an UNVERIFIED row to a real
  * status; failure keeps cached data, marks it stale, and shows the non-blocking
- * banner. Synthetic pages served via WebViewAssetLoader — never real RedeemSG
+ * banner. Synthetic pages served via WebViewAssetLoader - never real RedeemSG
  * hosts.
  */
 @RunWith(AndroidJUnit4::class)

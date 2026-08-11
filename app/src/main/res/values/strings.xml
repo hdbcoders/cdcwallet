@@ -5,7 +5,7 @@
     <string name="app_name">CDC Wallet</string>
     <string name="menu">Menu</string>
     <!-- Date pattern for the app's dates ("Expires 12 Mar 2026", backup
-         summary). Localized per locale — e.g. Chinese uses yyyy年M月d日. -->
+         summary). Localized per locale - e.g. Chinese uses yyyy年M月d日. -->
     <string name="date_pattern">d MMM yyyy</string>
     <string name="back">Back</string>
     <string name="settings">Settings</string>
@@ -29,7 +29,7 @@
     <string name="archived">Archived</string>
     <string name="archive">Archive</string>
     <string name="restore">Restore</string>
-    <string name="empty_list">No voucher links yet — add one with the + button.</string>
+    <string name="empty_list">No voucher links yet. Add one with the + button.</string>
     <string name="balance_eyebrow">Balance</string>
     <string name="balance">Balance</string>
     <string name="more_categories">+%1$d more</string>
@@ -56,8 +56,8 @@
     <string name="add">Add</string>
     <string name="add_invalid">This doesn\'t look like a RedeemSG voucher link.</string>
     <string name="add_duplicate">Link not added. Voucher already in your list.</string>
-    <string name="add_added">Added — %1$s</string>
-    <string name="add_added_unverified">Added — couldn\'t verify it yet; tap the entry to check later.</string>
+    <string name="add_added">Added: %1$s</string>
+    <string name="add_added_unverified">Added, but couldn\'t verify it yet; tap the entry to check later.</string>
 
     <!-- Detail / WebView screen. -->
     <string name="detail_parse_error">Website data failed to parse</string>
@@ -73,7 +73,7 @@
     <string name="expired_footer">This voucher link has expired</string>
     <string name="no_balance_banner">This voucher link has no more balance</string>
 
-    <!-- Badges (spec 04 §4.2) — one label per state. -->
+    <!-- Badges (spec 04 §4.2) - one label per state. -->
     <string name="badge_no_expiry">No expiry date</string>
     <string name="badge_expired">Expired</string>
     <string name="badge_fully_used">Fully used</string>
@@ -109,7 +109,7 @@
     <string name="backup">Backup</string>
     <string name="export_backup">Export backup</string>
     <string name="exporting_backup">Encrypting and Exporting backup</string>
-    <string name="export_desc">Saves an encrypted copy of all your voucher links to Downloads. You\'ll set a password — remember it, it can\'t be recovered.</string>
+    <string name="export_desc">Saves an encrypted copy of all your voucher links to Downloads. You\'ll set a password. Remember it; it can\'t be recovered.</string>
     <string name="import_backup">Import backup</string>
     <string name="importing_backup">Decrypting &amp; Importing backup</string>
     <string name="import_desc">Restores from a backup file you exported before. Nothing is downloaded during import.</string>
@@ -122,7 +122,7 @@
     </plurals>
     <string name="set_backup_password">Set a backup password</string>
     <string name="backup_password">Backup password</string>
-    <string name="password_encrypt_desc">This password encrypts the backup file. It is never stored — if you forget it, the backup can\'t be opened.</string>
+    <string name="password_encrypt_desc">This password encrypts the backup file. It is never stored. If you forget it, the backup can\'t be opened.</string>
     <string name="password_enter_desc">Enter the password this backup was exported with.</string>
     <string name="confirm_password">Confirm password</string>
     <string name="merge_desc">Merge adds only links you don\'t already have. Replace deletes everything currently saved.</string>

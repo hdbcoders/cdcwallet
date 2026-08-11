@@ -19,7 +19,7 @@ enum class AppLanguage(val locale: Locale) {
     EN(Locale.ENGLISH),
     // Simplified Chinese (the Singapore standard). The explicit zh-CN locale
     // resolves `values-zh-rCN`. Any system Chinese region (including zh-TW)
-    // maps to ZH — Simplified Chinese is the only Chinese variant the app
+    // maps to ZH - Simplified Chinese is the only Chinese variant the app
     // offers, so a zh-TW device gets the simplified script rather than English.
     ZH(Locale("zh", "CN")),
     MS(Locale("ms")),
@@ -30,7 +30,7 @@ enum class AppLanguage(val locale: Locale) {
  * The currently active app language, provided by [AppTheme] from the
  * [LanguageStore]. Composable display-time localizers (e.g.
  * [localizeCategory]) read this instead of `LocalConfiguration`, because the
- * activity wraps its resources via `attachBaseContext` — the composition
+ * activity wraps its resources via `attachBaseContext` - the composition
  * local is the explicit, reliable source.
  */
 val LocalAppLanguage = staticCompositionLocalOf { AppLanguage.EN }
@@ -80,7 +80,7 @@ class LanguageStore(context: Context) {
 }
 
 /**
- * Wraps [base] so its resources resolve in [locale] — the manual per-app
+ * Wraps [base] so its resources resolve in [locale] - the manual per-app
  * locale mechanism for this single-activity app (no appcompat dependency,
  * which would force an AppCompat theme conversion).
  */

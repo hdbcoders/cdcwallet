@@ -25,7 +25,7 @@ class VoucherListViewModel(
 
     /**
      * True once the repository's active-voucher flow has emitted its first
-     * (real) value — distinguishes "DB still loading/decrypting" (splash shown)
+     * (real) value - distinguishes "DB still loading/decrypting" (splash shown)
      * from "DB is empty" (empty list is a valid loaded state).
      */
     val isLoaded: StateFlow<Boolean> = repository.observeActive()

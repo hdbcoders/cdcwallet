@@ -32,13 +32,13 @@ open class VoucherApp : Application() {
         container = AppContainer(this)
         // Eager warm-up of the long-lived visible WebView (spec 02 §2.4
         // revision 2026-08-03): engine init, renderer, and DNS are warm before
-        // the first tap, so taps feel like a phone browser. Loads no URL — no
+        // the first tap, so taps feel like a phone browser. Loads no URL - no
         // network traffic. Failures here degrade to first-tap creation.
         container.extractionEngine.warmUp(this)
     }
 }
 
-/** Hand-rolled composition root — no DI framework for a sideload app of this size. */
+/** Hand-rolled composition root - no DI framework for a sideload app of this size. */
 class AppContainer(context: Context) {
     private val appContext = context.applicationContext
 

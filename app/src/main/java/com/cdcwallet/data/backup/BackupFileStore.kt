@@ -25,7 +25,7 @@ object BackupFileStore {
         val resolver = context.contentResolver
         if (Build.VERSION.SDK_INT >= 29) {
             // Remove previous exports first (spec 06 §6.2: one predictable
-            // file in Downloads). Match the whole "cdcvoucher*" family —
+            // file in Downloads). Match the whole "cdcvoucher*" family -
             // earlier runs created cdcvoucher (1).backup…(n).backup, and
             // MediaStore's unique-file logic treats those siblings as making
             // the base name unavailable. Cleaning them also clears stale

@@ -42,7 +42,7 @@ import com.cdcwallet.ui.theme.rememberReduceMotion
 /**
  * Archived screen (spec 05 §5.4): same ticket-row layout and overflow pattern
  * as the main list (restyled alongside it), with Restore/Delete instead of
- * Archive/Delete, and tap-to-open retained — tapping an archived row opens the
+ * Archive/Delete, and tap-to-open retained - tapping an archived row opens the
  * real URL in-app exactly like a main-list tap (04 §4.4, 02 §2.7). Delete
  * shares the one confirmation dialog; empty state is a plain message, not a
  * blank screen. State and DB calls live in [ArchivedVoucherViewModel].

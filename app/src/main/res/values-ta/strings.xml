@@ -25,7 +25,7 @@
     <string name="archived">காப்பகம்</string>
     <string name="archive">காப்பகப்படுத்து</string>
     <string name="restore">மீட்டெடு</string>
-    <string name="empty_list">இன்னும் வவுச்சர் இணைப்புகள் இல்லை — + பொத்தானைப் பயன்படுத்திச் சேர்க்கவும்.</string>
+    <string name="empty_list">இன்னும் வவுச்சர் இணைப்புகள் இல்லை. + பொத்தானைப் பயன்படுத்திச் சேர்க்கவும்.</string>
     <string name="balance_eyebrow">இருப்பு</string>
     <string name="balance">இருப்பு</string>
     <string name="more_categories">மேலும் %1$d</string>
@@ -49,8 +49,8 @@
     <string name="add">சேர்</string>
     <string name="add_invalid">இது RedeemSG வவுச்சர் இணைப்பாகத் தெரியவில்லை.</string>
     <string name="add_duplicate">இணைப்பு சேர்க்கப்படவில்லை. வவுச்சர் ஏற்கனவே உங்கள் பட்டியலில் உள்ளது.</string>
-    <string name="add_added">சேர்க்கப்பட்டது — %1$s</string>
-    <string name="add_added_unverified">சேர்க்கப்பட்டது — இன்னும் சரிபார்க்க முடியவில்லை; பிறகு பார்க்க உள்ளீட்டைத் தட்டவும்.</string>
+    <string name="add_added">சேர்க்கப்பட்டது: %1$s</string>
+    <string name="add_added_unverified">சேர்க்கப்பட்டது, ஆனால் இன்னும் சரிபார்க்க முடியவில்லை; பிறகு பார்க்க உள்ளீட்டைத் தட்டவும்.</string>
 
     <string name="detail_parse_error">வலைத்தளத் தரவைப் பாகுபடுத்த முடியவில்லை</string>
     <string name="detail_network_error">வலைத்தளத்தை ஏற்ற முடியவில்லை</string>
@@ -95,7 +95,7 @@
     <string name="backup">காப்புப்பிரதி</string>
     <string name="export_backup">காப்புப்பிரதியை ஏற்றுமதி செய்</string>
     <string name="exporting_backup">காப்புப்பிரதியை குறியாக்கி ஏற்றுமதி செய்கிறது</string>
-    <string name="export_desc">உங்கள் அனைத்து வவுச்சர் இணைப்புகளின் மறைகுறியாக்கப்பட்ட நகலை பதிவிறக்கங்களில் சேமிக்கிறது. கடவுச்சொல்லை அமைப்பீர்கள் — அதை நினைவில் வைத்திருங்கள், அதை மீட்டெடுக்க முடியாது.</string>
+    <string name="export_desc">உங்கள் அனைத்து வவுச்சர் இணைப்புகளின் மறைகுறியாக்கப்பட்ட நகலை பதிவிறக்கங்களில் சேமிக்கிறது. கடவுச்சொல்லை அமைப்பீர்கள். அதை நினைவில் வைத்திருங்கள், அதை மீட்டெடுக்க முடியாது.</string>
     <string name="import_backup">காப்புப்பிரதியை இறக்குமதி செய்</string>
     <string name="importing_backup">காப்புப்பிரதியை மறைகுறியாக்கி இறக்குமதி செய்கிறது</string>
     <string name="import_desc">நீங்கள் முன்பு ஏற்றுமதி செய்த காப்புப்பிரதிக் கோப்பிலிருந்து மீட்டெடுக்கிறது. இறக்குமதியின் போது எதுவும் பதிவிறக்கப்படாது.</string>
@@ -108,7 +108,7 @@
     </plurals>
     <string name="set_backup_password">காப்புப்பிரதி கடவுச்சொல்லை அமைக்கவும்</string>
     <string name="backup_password">காப்புப்பிரதி கடவுச்சொல்</string>
-    <string name="password_encrypt_desc">இந்த கடவுச்சொல் காப்புப்பிரதி கோப்பை மறைகுறியாக்குகிறது. இது ஒருபோதும் சேமிக்கப்படாது — நீங்கள் மறந்துவிட்டால், காப்புப்பிரதியைத் திறக்க முடியாது.</string>
+    <string name="password_encrypt_desc">இந்த கடவுச்சொல் காப்புப்பிரதி கோப்பை மறைகுறியாக்குகிறது. இது ஒருபோதும் சேமிக்கப்படாது. நீங்கள் மறந்துவிட்டால், காப்புப்பிரதியைத் திறக்க முடியாது.</string>
     <string name="password_enter_desc">இந்த காப்புப்பிரதி ஏற்றுமதி செய்யப்பட்ட கடவுச்சொல்லை உள்ளிடவும்.</string>
     <string name="confirm_password">கடவுச்சொல்லை உறுதிப்படுத்து</string>
     <string name="merge_desc">இணைத்தல் உங்களிடம் இல்லாத இணைப்புகளை மட்டுமே சேர்க்கும். மாற்றுதல் தற்போது சேமித்த அனைத்தையும் நீக்கும்.</string>

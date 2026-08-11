@@ -62,7 +62,7 @@ class FontScaleInstrumentedTest {
             .openHelperFactory(SupportOpenHelperFactory("test-passphrase".toByteArray()))
             .allowMainThreadQueries()
             .build()
-        // Fresh font prefs per test — a persisted choice from a previous test
+        // Fresh font prefs per test - a persisted choice from a previous test
         // would leak into the default resolution.
         fontPrefs().edit().clear().commit()
     }
@@ -117,7 +117,7 @@ class FontScaleInstrumentedTest {
             .performTouchInput { click(Offset(width * 0.95f, centerY)) }
         composeRule.waitForIdle()
         assertEquals(AppFontScale.HUGE, store.scale)
-        // A fresh store reads the same value — the choice was persisted.
+        // A fresh store reads the same value - the choice was persisted.
         assertEquals(AppFontScale.HUGE, FontScaleStore(appContext).scale)
     }
 
@@ -135,12 +135,12 @@ class FontScaleInstrumentedTest {
                 )
             }
         }
-        // The radio on the Huge stop is a big tap target — tapping it must
+        // The radio on the Huge stop is a big tap target - tapping it must
         // select Huge directly (not just move the slider).
         composeRule.onNodeWithTag("font-size-radio-huge").performScrollTo().performClick()
         composeRule.waitForIdle()
         assertEquals(AppFontScale.HUGE, store.scale)
-        // A fresh store reads the same value — the choice was persisted.
+        // A fresh store reads the same value - the choice was persisted.
         assertEquals(AppFontScale.HUGE, FontScaleStore(appContext).scale)
     }
 
@@ -179,7 +179,7 @@ class FontScaleInstrumentedTest {
     @Test
     fun popupMenuTextScalesWithFontSize() {
         // Popup windows (DropdownMenu/Dialog) shadow the composition's
-        // LocalDensity with the window density — without the AppScaledContent
+        // LocalDensity with the window density - without the AppScaledContent
         // wrapper, menu text would ignore the text-size setting.
         var level by mutableStateOf(AppFontScale.DEFAULT)
         composeRule.setContent {

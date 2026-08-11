@@ -6,7 +6,7 @@ import org.junit.Test
 /**
  * Pure decision logic behind the first-launch theme bake (spec change: the
  * app inherits the system dark/light default exactly once, then only manual
- * toggles). The device-side half — reading uiMode out of the Configuration —
+ * toggles). The device-side half - reading uiMode out of the Configuration -
  * lives in ThemeModeStore and is covered by the instrumented bake test.
  */
 class ThemeModeStoreTest {

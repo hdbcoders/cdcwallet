@@ -31,7 +31,7 @@ import java.util.Locale
 
 /**
  * In-app language (i18n, spec 07 §7.5): the LanguageStore default/persistence
- * contract and the standalone picker flow — the Translate button in the main
+ * contract and the standalone picker flow - the Translate button in the main
  * list's app bar opens the picker (outside Settings), selecting a language
  * persists the choice and dismisses. The activity-recreation side
  * (attachBaseContext) is covered by manual QA.
@@ -71,7 +71,7 @@ class LanguageSettingsInstrumentedTest {
 
     @Test
     fun storeDefaultsToSystemLanguageWhenSupported() {
-        // zh-TW is not one of the app's locales (zh-CN is) — any zh region
+        // zh-TW is not one of the app's locales (zh-CN is) - any zh region
         // still maps to Simplified Chinese, the only Chinese variant offered.
         Locale.setDefault(Locale("zh", "TW"))
         assertEquals(AppLanguage.ZH, LanguageStore(appContext).language)

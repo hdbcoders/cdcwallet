@@ -40,7 +40,7 @@ data class RedesignColors(
 /** Effective redesign tokens for the current theme, provided by [AppTheme]. */
 val LocalRedesignColors = staticCompositionLocalOf { LightRedesignColors }
 
-/** Light mode — cream canvas, white surfaces, gold accents. */
+/** Light mode - cream canvas, white surfaces, gold accents. */
 val LightRedesignColors = RedesignColors(
     background = Color(0xFFF5F1E7),
     surface = Color(0xFFFFFFFF),
@@ -67,7 +67,7 @@ val LightRedesignColors = RedesignColors(
     dangerSoft = Color(0x1AC7373F), // rgba(199,55,63,0.10)
 )
 
-/** Dark mode — deep navy canvas, raised navy surfaces, gold accents. */
+/** Dark mode - deep navy canvas, raised navy surfaces, gold accents. */
 val DarkRedesignColors = RedesignColors(
     background = Color(0xFF0F141C),
     surface = Color(0xFF171F2B),

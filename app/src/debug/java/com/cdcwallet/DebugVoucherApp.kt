@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
  * Debug-only Application (lives under `src/debug`, so release builds keep the
  * plain [VoucherApp]; the debug manifest points at this class). Auto-seeds the
  * dev fixtures on launch so a fresh install/cleared-data shows them with no
- * extra step — unless auto-seed was disabled by CLEAR_DEV_DATA. Re-seed /
+ * extra step - unless auto-seed was disabled by CLEAR_DEV_DATA. Re-seed /
  * force-reseed / clear-all from adb is handled by [SeedDevDataReceiver], which
  * is registered here DYNAMICALLY: on API 36 the background-broadcast policy
  * silently drops implicit broadcasts to manifest-declared receivers, while a

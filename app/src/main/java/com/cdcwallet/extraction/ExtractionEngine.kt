@@ -19,12 +19,12 @@ import kotlinx.coroutines.withTimeout
 /**
  * The single extraction implementation, used by exactly two call sites
  * (spec 02 §2.4):
- *  - extractForAdd: one-time hidden WebView at add time (Package 3) — a
+ *  - extractForAdd: one-time hidden WebView at add time (Package 3) - a
  *    fresh instance that loads network-fresh (LOAD_NO_CACHE) but shares the
  *    persistent process session, since Android's cookie store is process-wide
  *    (wiping it would destroy the visible session; see 2026-08-02 revision).
  *  - extractFromVisibleWebView: the visible WebView the user already opened
- *    (Package 4) — browser-like: HTTP cache and cookies persist across opens
+ *    (Package 4) - browser-like: HTTP cache and cookies persist across opens
  *    (spec 02 §2.4 revision 2026-08-02). Churning fresh sessions per open
  *    tripped the operator's rate limiting on api-cdc.redeem.gov.sg, leaving
  *    the makeup view blank for minutes; one persistent session behaves like a
@@ -34,7 +34,7 @@ import kotlinx.coroutines.withTimeout
  * Since revision 2026-08-03 the visible WebView is itself **long-lived**
  * (spec 02 §2.4/§2.7): one instance created warm at app start
  * ([warmUp]/[acquireVisibleWebView]), reused for every tap, never destroyed by
- * the UI — the screen only detaches it. Each tap is still a fresh document on
+ * the UI - the screen only detaches it. Each tap is still a fresh document on
  * that instance (unconditional reload + fresh wrapper + fresh bridge), so data
  * is always fresh; only the engine/process/DNS machinery is reused, which is
  * what makes taps feel like a phone browser.
@@ -44,7 +44,7 @@ import kotlinx.coroutines.withTimeout
  * name is remapped, so a late callback would land in the new bridge). Two
  * layers close that window: `stopLoading()` first aborts the superseded load's
  * in-flight requests, and a per-load [WebViewClient] opens a [LoadGate] on the
- * new load's first `onPageStarted` — callbacks arriving while the gate is
+ * new load's first `onPageStarted` - callbacks arriving while the gate is
  * closed (i.e. before the new page actually started) are dropped. Impossible
  * with fresh instances, mandatory with reuse.
  *
@@ -52,7 +52,7 @@ import kotlinx.coroutines.withTimeout
  * throw; cancellation tears down the hidden WebView and orphans nothing.
  *
  * All teardown (script handler removal + bridge removal + client restore)
- * happens inside `extract()`'s `finally` — owned per-call, never shared state.
+ * happens inside `extract()`'s `finally` - owned per-call, never shared state.
  * The engine is an app-wide singleton used by both the add flow and the detail
  * screen, and two overlapping extractions must never touch each other's
  * handlers.
@@ -169,7 +169,7 @@ class ExtractionEngine(
         configureSession(webView, browserLike = browserLike)
         val deferred = CompletableDeferred<ExtractionResult>()
         if (gate != null) {
-            // Reuse hygiene: the superseded load (which may still be in flight —
+            // Reuse hygiene: the superseded load (which may still be in flight -
             // loads survive screen exit) is aborted by this tap. Aborting it
             // here also closes the stale-page delivery window the epoch gate
             // guards (spec 02 §2.7 revision 2026-08-03).
@@ -235,7 +235,7 @@ class ExtractionEngine(
         // tripped the operator's rate limiting and hung the makeup view.
         // Add-time shares that same persistent session: Android's CookieManager
         // is process-wide, so wiping it here for a "fresh" add-time load would
-        // destroy the visible session on every add — recreating exactly the
+        // destroy the visible session on every add - recreating exactly the
         // churn this revision (2026-08-02) was written to prevent. The fresh
         // hidden instance still loads network-fresh for its own request via
         // LOAD_NO_CACHE; it just does not wipe the shared session.

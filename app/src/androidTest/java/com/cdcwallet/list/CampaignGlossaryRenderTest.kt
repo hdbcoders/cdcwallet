@@ -70,7 +70,7 @@ class CampaignGlossaryRenderTest {
     @Test
     fun unknownCategoriesRenderRawInEveryLanguage() {
         var language by mutableStateOf(AppLanguage.EN)
-        // Use a summary with categories that have NO glossary entries —
+        // Use a summary with categories that have NO glossary entries -
         // they must render raw in every language.
         val unknownSummary = summary.copy(
             categoryTotals = listOf(

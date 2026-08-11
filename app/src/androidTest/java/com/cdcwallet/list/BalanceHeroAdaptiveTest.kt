@@ -47,7 +47,7 @@ import java.time.Instant
  * title) now wraps instead. The no-truncation proof is geometric: each text
  * node's TextLayoutResult must report no visual overflow, and line positions
  * are asserted via bounds overlap. Amount strings follow formatSgd's output
- * ("1,234.5" — trailing zeros stripped; category amounts include the "$").
+ * ("1,234.5" - trailing zeros stripped; category amounts include the "$").
  */
 @RunWith(AndroidJUnit4::class)
 class BalanceHeroAdaptiveTest {
@@ -175,7 +175,7 @@ class BalanceHeroAdaptiveTest {
                 }
             }
         }
-        // Category name and amount are forced to separate lines — both fully visible.
+        // Category name and amount are forced to separate lines - both fully visible.
         composeRule.onNodeWithText("Heartland", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText("$1,000", useUnmergedTree = true).assertIsDisplayed()
         assertOnSeparateLines("Heartland", "$1,000")
@@ -275,7 +275,7 @@ class BalanceHeroAdaptiveTest {
         composeRule.onNodeWithText(longName, useUnmergedTree = true).assertIsDisplayed()
         assertNotTruncated(longName)
         // The kebab stays pinned to the card's right edge even with a long
-        // wrapped name — only the campaign text wraps.
+        // wrapped name - only the campaign text wraps.
         val kebab = composeRule
             .onNodeWithContentDescription("More options for", substring = true)
             .fetchSemanticsNode().boundsInRoot

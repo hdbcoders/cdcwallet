@@ -71,7 +71,7 @@ class VoucherBackupFlowInstrumentedTest {
     /** Bytes of the user's pre-existing `cdcvoucher.backup` (if any), snapshotted
      *  before the test. The app's own export deletes previous exports first
      *  (spec 06 §6.2: one predictable file), so the tests would otherwise
-     *  replace it — the tearDown restores these bytes verbatim. */
+     *  replace it - the tearDown restores these bytes verbatim. */
     private var preExistingBackupBytes: ByteArray? = null
 
     /** Start of the test run, used to identify files THIS run created. */
@@ -96,7 +96,7 @@ class VoucherBackupFlowInstrumentedTest {
     }
 
     /** The export tests write real files to Downloads. Delete exactly the files
-     *  THIS run created (MediaStore DATE_ADDED / file mtime >= test start) —
+     *  THIS run created (MediaStore DATE_ADDED / file mtime >= test start) -
      *  never anything that was already there. */
     private fun deleteBackupsCreatedThisRun() {
         runCatching {
@@ -260,7 +260,7 @@ class VoucherBackupFlowInstrumentedTest {
         }
     }
 
-    /** Decrypt runs on Dispatchers.IO (P1 item 3) — wait for the async result
+    /** Decrypt runs on Dispatchers.IO (P1 item 3) - wait for the async result
      *  (summary dialog or error snackbar) before asserting on it. */
     private fun waitUntilNodeAppears(text: String, timeoutMillis: Long = 10_000) {
         composeRule.waitUntil(timeoutMillis) {
@@ -268,7 +268,7 @@ class VoucherBackupFlowInstrumentedTest {
         }
     }
 
-    /** The busy dialog must show while a backup operation runs — PBKDF2 gives
+    /** The busy dialog must show while a backup operation runs - PBKDF2 gives
      *  a real (sub-second) window to catch it in. */
     private fun waitUntilProgressAppears(timeoutMillis: Long = 5_000) {
         composeRule.waitUntil(timeoutMillis) {
@@ -297,7 +297,7 @@ class VoucherBackupFlowInstrumentedTest {
         // grant must go through the shell (UiAutomation#grantRuntimePermission
         // is API 28+); on API 28 the permission state must already exist when
         // the instrumentation process starts, otherwise the sdcard_rw GID is
-        // never applied to the running process and writes get EACCES — CI
+        // never applied to the running process and writes get EACCES - CI
         // grants the permission with `pm grant` before am instrument.
         if (Build.VERSION.SDK_INT in 24..27) {
             InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(
@@ -314,7 +314,7 @@ class VoucherBackupFlowInstrumentedTest {
         val uri = runBlocking { flow.export(appContext, "backup-passphrase") }
 
         // API 29+ returns content://media/external/downloads/...; API 24-28
-        // return file:///storage/emulated/0/Download/... — both contain "download".
+        // return file:///storage/emulated/0/Download/... - both contain "download".
         assertTrue(uri.toString().contains("download", ignoreCase = true))
         val bytes = appContext.contentResolver.openInputStream(uri)!!.readBytes()
         assertTrue("file must not be empty", bytes.isNotEmpty())
@@ -352,7 +352,7 @@ class VoucherBackupFlowInstrumentedTest {
                 .fetchSemanticsNodes().isEmpty()
         }
 
-        // Corrupted file, correct password — must show the identical message.
+        // Corrupted file, correct password - must show the identical message.
         currentBytes = validBytes.copyOf().also { it[it.size - 1] = it[it.size - 1].xor(0x01) }
         importWithPassword("backup-passphrase")
         waitUntilNodeAppears(BackupException.GENERIC_MESSAGE)
@@ -496,7 +496,7 @@ class VoucherBackupFlowInstrumentedTest {
 
         importWithPassword("backup-passphrase")
 
-        // The decrypt window is real (PBKDF2) — the progress dialog must
+        // The decrypt window is real (PBKDF2) - the progress dialog must
         // appear with the import message…
         waitUntilProgressAppears()
         composeRule.onNodeWithText("Decrypting & Importing backup").assertIsDisplayed()

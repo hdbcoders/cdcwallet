@@ -25,7 +25,7 @@
     <string name="archived">Diarkibkan</string>
     <string name="archive">Arkib</string>
     <string name="restore">Pulihkan</string>
-    <string name="empty_list">Belum ada pautan baucar — tambah dengan butang +.</string>
+    <string name="empty_list">Belum ada pautan baucar. Tambah dengan butang +.</string>
     <string name="balance_eyebrow">Baki</string>
     <string name="balance">Baki</string>
     <string name="more_categories">+%1$d lagi</string>
@@ -49,8 +49,8 @@
     <string name="add">Tambah</string>
     <string name="add_invalid">Ini bukan pautan baucar RedeemSG.</string>
     <string name="add_duplicate">Pautan tidak ditambah. Baucar sudah ada dalam senarai anda.</string>
-    <string name="add_added">Ditambah — %1$s</string>
-    <string name="add_added_unverified">Ditambah — belum dapat disahkan; ketik untuk semak kemudian.</string>
+    <string name="add_added">Ditambah: %1$s</string>
+    <string name="add_added_unverified">Ditambah, tetapi belum dapat disahkan; ketik untuk semak kemudian.</string>
 
     <string name="detail_parse_error">Data laman web gagal diproses</string>
     <string name="detail_network_error">Tidak dapat memuatkan laman web</string>
@@ -95,7 +95,7 @@
     <string name="backup">Sandaran</string>
     <string name="export_backup">Eksport sandaran</string>
     <string name="exporting_backup">Menyulit dan Mengeksport sandaran</string>
-    <string name="export_desc">Menyimpan salinan disulitkan semua pautan baucar anda ke Muat Turun. Anda akan menetapkan kata laluan — ingatlah, ia tidak dapat dipulihkan.</string>
+    <string name="export_desc">Menyimpan salinan disulitkan semua pautan baucar anda ke Muat Turun. Anda akan menetapkan kata laluan. Ingatlah, ia tidak dapat dipulihkan.</string>
     <string name="import_backup">Import sandaran</string>
     <string name="importing_backup">Menyahsulit &amp; Mengimport sandaran</string>
     <string name="import_desc">Memulihkan daripada fail sandaran yang anda eksport sebelum ini. Tiada apa-apa dimuat turun semasa import.</string>
@@ -108,7 +108,7 @@
     </plurals>
     <string name="set_backup_password">Tetapkan kata laluan sandaran</string>
     <string name="backup_password">Kata laluan sandaran</string>
-    <string name="password_encrypt_desc">Kata laluan ini menyulitkan fail sandaran. Ia tidak pernah disimpan — jika anda melupakannya, sandaran tidak boleh dibuka.</string>
+    <string name="password_encrypt_desc">Kata laluan ini menyulitkan fail sandaran. Ia tidak pernah disimpan. Jika anda melupakannya, sandaran tidak boleh dibuka.</string>
     <string name="password_enter_desc">Masukkan kata laluan yang digunakan untuk mengeksport sandaran ini.</string>
     <string name="confirm_password">Sahkan kata laluan</string>
     <string name="merge_desc">Gabung hanya menambah pautan yang belum anda ada. Ganti memadam semua yang disimpan sekarang.</string>

@@ -24,7 +24,7 @@ object DevSeeder {
 
     /**
      * Delete and re-insert the dev rows regardless of current state. Only the
-     * dev-seed tokens are removed — the user's own vouchers are untouched.
+     * dev-seed tokens are removed - the user's own vouchers are untouched.
      */
     suspend fun forceSeed(repository: VoucherRepository) {
         val devTokens = DevSeedData.vouchers.mapTo(HashSet()) { it.token }

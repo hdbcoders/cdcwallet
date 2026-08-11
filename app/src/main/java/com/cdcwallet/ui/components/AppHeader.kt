@@ -115,13 +115,13 @@ fun AppHeader(
                     border = BorderStroke(1.dp, c.hairline),
                 ) {
                     // DropdownMenu content lives in a popup window whose
-                    // density ignores the app font scale — re-apply it so
+                    // density ignores the app font scale - re-apply it so
                     // menu text scales with the text-size setting.
                     AppScaledContent {
                         val dark = LocalAppIsDark.current
                         DropdownMenuItem(
                             // Theme toggle (spec change): the menu shows the mode
-                            // the user can switch TO — "Dark Mode" when light,
+                            // the user can switch TO - "Dark Mode" when light,
                             // "Light Mode" when dark.
                             text = {
                                 MenuLabel(
@@ -307,7 +307,7 @@ private fun MenuLabel(text: String) {
 }
 
 /** Header icon button: rounded, raised surface + hairline border. Fixed at
- *  [minSize] unless [contentPadding] makes the content larger — icon-only
+ *  [minSize] unless [contentPadding] makes the content larger - icon-only
  *  buttons keep the default 34dp; text-bearing buttons (the language
  *  switcher) grow with their text at large font scales. */
 @Composable
@@ -323,7 +323,7 @@ private fun IconBtn(
     Box(
         modifier = modifier
             // clip/background/clickable OUTSIDE the padding so the visible
-            // button includes the contentPadding — a background inside
+            // button includes the contentPadding - a background inside
             // padding would only paint the unpadded text area and the glyphs
             // would hug the surface edges.
             .clip(RoundedCornerShape(10.dp))

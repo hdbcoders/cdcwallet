@@ -255,7 +255,7 @@ internal const val VIEWPORT_FIX_SCRIPT =
 /**
  * Modal height fix: the page's Chakra modal sizes itself with `vh` units
  * (`.chakra-modal__overlay` uses 100vw/100vh, the content uses max-height:vh),
- * but in Android WebView the `vh` unit can resolve to 0 (a WebView quirk —
+ * but in Android WebView the `vh` unit can resolve to 0 (a WebView quirk -
  * `vw` works, `vh` doesn't), so the History modal renders at 0 height: the
  * data is in the DOM but nothing paints. For `position:fixed` elements,
  * `%`-based heights resolve against the viewport instead of the broken `vh`,
@@ -330,7 +330,7 @@ internal fun installInjection(
     // API 24–25 (or a stale WebView) fallback. On API 26+ the prior client
     // (e.g. an asset-loader client under test) is read back and chained as the
     // delegate so its interception keeps working; on API 24–25 there is no
-    // getter, so the caller supplies it explicitly — production never sets a
+    // getter, so the caller supplies it explicitly - production never sets a
     // client before this point, so this matters only for tests.
     val delegate = if (Build.VERSION.SDK_INT >= 26) {
         webView.webViewClient

@@ -15,7 +15,7 @@ import java.time.Instant
 import java.time.LocalDate
 
 /**
- * Core entity — one row per saved voucher link. Canonical definition lives here
+ * Core entity - one row per saved voucher link. Canonical definition lives here
  * (spec 01 §1.2); every other package imports these types as-is.
  */
 @Serializable

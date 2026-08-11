@@ -37,7 +37,7 @@ import java.time.Instant
 
 /**
  * Duplicate-add UX (spec 03 §3.2 step 2): the add flow ends on the add screen
- * with "Link not added. Voucher already in your list." — no navigation away,
+ * with "Link not added. Voucher already in your list." - no navigation away,
  * no list highlight, no second row. Drives the real AddVoucherScreen + flow
  * against the SQLCipher repository; the duplicate check runs before any fetch,
  * so no WebView/network is involved.
