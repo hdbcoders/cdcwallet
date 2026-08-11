@@ -70,19 +70,26 @@ class CampaignGlossaryRenderTest {
     @Test
     fun unknownCategoriesRenderRawInEveryLanguage() {
         var language by mutableStateOf(AppLanguage.EN)
+        // Use a summary with categories that have NO glossary entries —
+        // they must render raw in every language.
+        val unknownSummary = summary.copy(
+            categoryTotals = listOf(
+                CategoryBalance("Other", BigDecimal("10.00")),
+                CategoryBalance("Dining", BigDecimal("20.00")),
+            ),
+        )
         composeRule.setContent {
             MaterialTheme {
                 CompositionLocalProvider(LocalAppLanguage provides language) {
-                    BalanceHero(summary = summary, collapsed = false, onToggle = {})
+                    BalanceHero(summary = unknownSummary, collapsed = false, onToggle = {})
                 }
             }
         }
         listOf(AppLanguage.EN, AppLanguage.ZH, AppLanguage.MS, AppLanguage.TA).forEach { lang ->
             language = lang
             composeRule.waitForIdle()
-            // "Heartland" and "Climate" have no glossary entries — raw in all languages.
-            composeRule.onNodeWithText("Heartland", useUnmergedTree = true).assertIsDisplayed()
-            composeRule.onNodeWithText("Climate", useUnmergedTree = true).assertIsDisplayed()
+            composeRule.onNodeWithText("Other", useUnmergedTree = true).assertIsDisplayed()
+            composeRule.onNodeWithText("Dining", useUnmergedTree = true).assertIsDisplayed()
         }
     }
 
