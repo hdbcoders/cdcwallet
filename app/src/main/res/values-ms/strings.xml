@@ -95,7 +95,7 @@
     <string name="backup">Sandaran</string>
     <string name="export_backup">Eksport sandaran</string>
     <string name="exporting_backup">Menyulit dan Mengeksport sandaran</string>
-    <string name="export_desc">Menyimpan salinan disulitkan semua pautan baucar anda ke Muat Turun. Anda akan menetapkan kata laluan. Ingatlah, ia tidak dapat dipulihkan.</string>
+    <string name="export_desc">Menyimpan salinan disulitkan semua pautan baucar anda ke folder Muat Turun. Tetapkan kata laluan dan ingatlah, anda tidak boleh mengimport sandaran ini tanpa kata laluan tersebut.</string>
     <string name="import_backup">Import sandaran</string>
     <string name="importing_backup">Menyahsulit &amp; Mengimport sandaran</string>
     <string name="import_desc">Memulihkan daripada fail sandaran yang anda eksport sebelum ini. Tiada apa-apa dimuat turun semasa import.</string>
