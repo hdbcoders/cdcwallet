@@ -7,7 +7,14 @@
     <string name="back">பின்</string>
     <string name="settings">அமைப்புகள்</string>
     <string name="about_app">பயன்பாட்டைப் பற்றி</string>
-    <string name="about_placeholder">மேலும் தகவல் எதிர்காலத்தில் இங்கு கிடைக்கும்.</string>
+    <string name="about_description">இந்த வவச்சர் சேமிப்பு பயன்பாடு ஒரு பொழுதுபோக்கு திட்டமாகும், மேலும் தங்கள் வவச்சர் இணைப்புகளை அடிக்கடி இழப்பவர்கள் அல்லது பயன்பாட்டு இடைமுகத்தை விரும்புபவர்களுக்காக உருவாக்கப்பட்டது. இணைய அணுகல் RedeemSG தளத்தை ஏற்றுவதற்கு மட்டுமே பயன்படுத்தப்படுகிறது. இந்தப் பயன்பாட்டால் எந்த தரவு அல்லது பகுப்பாய்வும் சேகரிக்கப்படுவதில்லை. ஆங்கிலம் அல்லாத அனைத்து மொழிபெயர்ப்புகளும் AI ஆல் செய்யப்படுகின்றன.</string>
+    <string name="about_credits_label">இந்தத் திட்டம் பின்வருவோரால் உருவாக்கப்பட்டது:</string>
+    <string name="about_credit_architecture">Claude Sonnet 5 (max) : கட்டமைப்பு</string>
+    <string name="about_credit_design">ChatGPT 5.6 Luna (high) : வடிவமைப்பு மற்றும் பட உருவாக்கம்</string>
+    <string name="about_credit_code">DeepSeek v4 Flash-0731 : குறியீடு செயலாக்கம்</string>
+    <string name="about_source_label">மூலக் குறியீட்டை இங்கே காணலாம்:</string>
+    <string name="about_source_link">LINK TO BE CONFIRMED</string>
+    <string name="about_version">பதிப்பு %1$s</string>
     <string name="cancel">ரத்து</string>
     <string name="delete">நீக்கு</string>
     <string name="copy_url">URL நகலெடு</string>
