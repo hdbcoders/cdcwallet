@@ -42,7 +42,7 @@ import java.time.Instant
 
 /**
  * Balance hero collapse + adaptive FlowRow behavior (spec 04 §4.3 change):
- * tapping the hero collapses it to a compact "Balance:" + total card; every
+ * tapping the hero collapses it to a compact "BALANCE" + total card; every
  * text that used to ellipsize/truncate (total, meta, category rows, ticket
  * title) now wraps instead. The no-truncation proof is geometric: each text
  * node's TextLayoutResult must report no visual overflow, and line positions
@@ -99,8 +99,8 @@ class BalanceHeroAdaptiveTest {
         composeRule.onNodeWithTag("balance-hero").performClick()
         composeRule.waitForIdle()
 
-        // Collapsed: "Balance:" + total only; categories gone; card shorter.
-        composeRule.onNodeWithText("Balance:", useUnmergedTree = true).assertIsDisplayed()
+        // Collapsed: "BALANCE" + total only; categories gone; card shorter.
+        composeRule.onNodeWithText("BALANCE", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText("1,234.5", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText("Heartland", useUnmergedTree = true).assertDoesNotExist()
         val collapsedHeight =
@@ -120,14 +120,14 @@ class BalanceHeroAdaptiveTest {
                 BalanceHero(summary = summary, collapsed = true, onToggle = {})
             }
         }
-        composeRule.onNodeWithText("Balance:", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("BALANCE", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText("1,234.5", useUnmergedTree = true).assertIsDisplayed()
-        assertSameLine("Balance:", "1,234.5")
+        assertSameLine("BALANCE", "1,234.5")
         // The amount is right-aligned to the card edge and the label is
         // vertically centered across the card's full height.
         val hero = composeRule.onNodeWithTag("balance-hero").fetchSemanticsNode().boundsInRoot
         val amount = textNode("1,234.5")
-        val label = textNode("Balance:")
+        val label = textNode("BALANCE")
         assertTrue(
             "amount should hug the card's right edge (amount.right=${amount.right}, hero.right=${hero.right})",
             amount.right > hero.right - 120f && amount.right <= hero.right,
@@ -144,7 +144,7 @@ class BalanceHeroAdaptiveTest {
             "label should fill most of the card height (label.height=${label.height}, hero.height=${hero.height})",
             label.height > hero.height * 0.5f,
         )
-        assertNotTruncated("Balance:")
+        assertNotTruncated("BALANCE")
         assertNotTruncated("1,234.5")
     }
 
@@ -159,10 +159,10 @@ class BalanceHeroAdaptiveTest {
                 }
             }
         }
-        composeRule.onNodeWithText("Balance:", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("BALANCE", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithText("1,234.5", useUnmergedTree = true).assertIsDisplayed()
-        assertOnSeparateLines("Balance:", "1,234.5")
-        assertNotTruncated("Balance:")
+        assertOnSeparateLines("BALANCE", "1,234.5")
+        assertNotTruncated("BALANCE")
         assertNotTruncated("1,234.5")
     }
 

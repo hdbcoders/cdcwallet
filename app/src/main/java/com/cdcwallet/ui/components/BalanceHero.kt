@@ -136,7 +136,7 @@ private fun CollapsedBalance(summary: ListSummary, c: RedesignColors) {
                 // Fixed role size (headlineMedium ≈ its current rendered
                 // size) so the label no longer tracks the amount's height —
                 // the amount (headlineLarge) is now the dominant element.
-                text = stringResource(R.string.balance),
+                text = stringResource(R.string.balance).uppercase(),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontFamily = PlexMonoFontFamily,
                     fontWeight = FontWeight.SemiBold,
