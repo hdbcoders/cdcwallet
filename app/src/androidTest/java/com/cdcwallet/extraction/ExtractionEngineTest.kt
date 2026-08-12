@@ -350,6 +350,10 @@ class ExtractionEngineTest {
 
     @Test
     fun wrongApiPathIsNeverCaptured() = runTest {
+        // The right host and token, but a trailing segment after the token:
+        // the token-anchored match rejects it. (The live endpoint drifted to a
+        // version-prefixed path '/v1/public/vouchers/groups/{token}', so the
+        // match anchors on the token, not on the path start.)
         val result = engine().extractForAdd(context, "https://appassets.androidplatform.net/WrongPathFetch")
         assertEquals(
             ExtractionResult.Failure(ExtractionResult.FailureReason.TIMEOUT),

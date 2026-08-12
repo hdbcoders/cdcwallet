@@ -61,12 +61,18 @@ private const val CAPTURE_SCRIPT_TEMPLATE =
         }
       }
 
+      // Token-anchored matching (refactor H3 + live-shape revision): the exact
+      // API host, a path CONTAINING '/vouchers/groups/', and the expected
+      // token as that prefix's immediate, final segment. The live endpoint has
+      // drifted to '/v1/public/vouchers/groups/{token}' (observed 2026-08-12),
+      // so the prefix position is deliberately not anchored to the path start.
       function isTargetUrl(url) {
         var u = null;
         try { u = new URL(url); } catch (e) { return false; }
         if (u.hostname !== EXPECTED_HOST) return false;
-        if (u.pathname.indexOf(EXPECTED_PATH) !== 0) return false;
-        var token = u.pathname.substring(EXPECTED_PATH.length);
+        var idx = u.pathname.indexOf(EXPECTED_PATH);
+        if (idx === -1) return false;
+        var token = u.pathname.substring(idx + EXPECTED_PATH.length);
         if (token.length === 0 || token.indexOf('/') !== -1) return false;
         return token === EXPECTED_TOKEN;
       }

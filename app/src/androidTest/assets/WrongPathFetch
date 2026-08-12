@@ -6,9 +6,12 @@
 </head>
 <body>
 <script>
-// The right host and token, but the path does not start with the expected
-// API prefix: must never be captured.
-fetch('/api/vouchers/groups/WrongPathFetch');
+// The right host and token, but the token is followed by a trailing segment:
+// under the token-anchored match, '/vouchers/groups/{token}/extra' is NOT the
+// voucher endpoint and must never be captured. (The live API sits under a
+// version prefix such as '/v1/public/', so a pure prefix check is no longer
+// the correct rejection test - the token-anchored shape is.)
+fetch('/vouchers/groups/WrongPathFetch/extra');
 </script>
 </body>
 </html>
