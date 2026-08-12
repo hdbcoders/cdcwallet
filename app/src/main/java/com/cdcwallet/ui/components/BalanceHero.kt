@@ -128,6 +128,12 @@ fun BalanceHero(
         ) {
             if (collapsed) {
                 CollapsedBalance(summary, c, eyebrowColor)
+            } else if (summary.total.signum() == 0) {
+                // No usable value anywhere (empty list, or everything expired
+                // / fully used): the category breakdown would be blank, so
+                // show a single centered message instead of an empty two
+                // -column card.
+                NoUsableVouchers(c)
             } else {
                 ExpandedBalance(summary, c, dark, eyebrowColor)
             }
@@ -197,6 +203,24 @@ private fun CollapsedBalance(
             )
         }
     }
+}
+
+/**
+ * Shown instead of the two-column breakdown when there is no usable value
+ * across the vouchers (total == 0 — empty list, or everything expired or
+ * fully used): a single centered line. The card still collapses to the
+ * compact "BALANCE $0" state on tap.
+ */
+@Composable
+private fun NoUsableVouchers(c: RedesignColors) {
+    Text(
+        text = stringResource(R.string.no_usable_vouchers),
+        fontSize = 20.sp,
+        fontWeight = FontWeight.Medium,
+        color = c.textTertiary,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 /**

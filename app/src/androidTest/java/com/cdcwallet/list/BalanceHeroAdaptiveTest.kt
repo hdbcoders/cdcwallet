@@ -235,6 +235,45 @@ class BalanceHeroAdaptiveTest {
     }
 
     @Test
+    fun expandedHeroShowsCenteredMessageWhenTotalIsZero() {
+        // Empty list / everything expired or fully used: the two-column
+        // breakdown would be blank, so the expanded hero shows one centered
+        // message instead of "BALANCE $0" + an empty right column.
+        val zeroSummary = summary.copy(
+            total = BigDecimal.ZERO,
+            categoryTotals = emptyList(),
+        )
+        var collapsed by mutableStateOf(false)
+        composeRule.setContent {
+            MaterialTheme {
+                BalanceHero(
+                    summary = zeroSummary,
+                    collapsed = collapsed,
+                    onToggle = { collapsed = !collapsed },
+                )
+            }
+        }
+        composeRule.onNodeWithText("There are no usable vouchers", useUnmergedTree = true)
+            .assertIsDisplayed()
+        // No BALANCE eyebrow / no amount in this state.
+        composeRule.onNodeWithText("BALANCE", useUnmergedTree = true).assertDoesNotExist()
+        // The message is horizontally centered in the card.
+        val message = composeRule
+            .onNodeWithText("There are no usable vouchers", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        val hero = composeRule.onNodeWithTag("balance-hero").fetchSemanticsNode().boundsInRoot
+        assertTrue(
+            "message should be centered (message.center.x=${message.center.x}, hero.center.x=${hero.center.x})",
+            kotlin.math.abs(message.center.x - hero.center.x) < 50f,
+        )
+        // Collapsing still works from the zero state: compact "BALANCE $0".
+        composeRule.onNodeWithTag("balance-hero").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("BALANCE", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("0", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
     fun storePersistsCollapsedStateAcrossInstances() {
         val store = HeroCollapseStore(appContext)
         assertFalse("default is expanded", store.collapsed)
