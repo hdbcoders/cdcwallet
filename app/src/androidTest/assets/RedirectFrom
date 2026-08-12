@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>redirecting voucher page</title>
+</head>
+<body>
+<script>
+// Client-side redirect: the tapped URL navigates away to a DIFFERENT
+// voucher's page. The capture wrapper is bound to the tapped URL's token,
+// so the redirected page's payload must never be captured for this load.
+// (A server-side 302 cannot be simulated: WebResourceResponse rejects 3xx
+// status codes, and WebViewAssetLoader cannot serve redirects - a JS
+// navigation is the closest achievable fixture and exercises the same
+// property.)
+window.location.replace('https://appassets.androidplatform.net/TestToken1');
+</script>
+</body>
+</html>

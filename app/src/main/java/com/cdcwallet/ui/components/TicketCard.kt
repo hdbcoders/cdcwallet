@@ -55,7 +55,6 @@ import com.cdcwallet.ui.theme.categoryVisuals
 import com.cdcwallet.ui.theme.LocalAppLanguage
 import com.cdcwallet.ui.theme.localizeCampaignName
 import com.cdcwallet.ui.theme.localizeCategory
-import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
 
 /**
@@ -83,7 +82,6 @@ fun TicketCard(
         DateTimeFormatter.ofPattern(datePattern, locale).format(date)
     }
     val expiryText = dateText?.let { stringResource(R.string.expires, it) }
-    val fullyRedeemed = voucher.categoryBalances.none { it.remainingValue > BigDecimal.ZERO }
 
     Surface(
         shape = RoundedCornerShape(16.dp),
@@ -166,13 +164,22 @@ fun TicketCard(
                 )
             }
 
-            // Body: pills + amounts, or the status banner.
-            if (badge is BadgeState.Expired) {
-                StatusBanner(text = stringResource(R.string.expired_footer))
-            } else if (fullyRedeemed || badge is BadgeState.NoBalance) {
-                StatusBanner(text = stringResource(R.string.no_balance_banner))
-            } else {
-                CategoryPills(voucher, Modifier.padding(horizontal = 18.dp, vertical = 8.dp))
+            // Body: pills + amounts, or the status banner. Driven exclusively by
+            // BadgeState (refactor H10, spec 04 §4.2): the "no balance" banner
+            // applies only to an ACTIVE zero-balance row - a UNVERIFIED /
+            // NOT_STARTED row with no extracted balances must never read as
+            // "fully used".
+            when {
+                badge is BadgeState.Expired ->
+                    StatusBanner(text = stringResource(R.string.expired_footer))
+                badge is BadgeState.NoBalance ->
+                    StatusBanner(text = stringResource(R.string.no_balance_banner))
+                badge is BadgeState.Unverified ->
+                    StatusBanner(
+                        text = stringResource(R.string.unverified_footer),
+                        neutral = true,
+                    )
+                else -> CategoryPills(voucher, Modifier.padding(horizontal = 18.dp, vertical = 8.dp))
             }
         }
     }
@@ -271,12 +278,14 @@ private fun daysLeftText(badge: BadgeState.Active): String = when {
 }
 
 /** Red soft banner for expired / fully-redeemed vouchers. Mockup: plain text,
- *  no icon. */
+ *  no icon. [neutral] renders the banner on the neutral raised surface instead
+ *  of the danger tint - used for UNVERIFIED rows (refactor H10), whose missing
+ *  data is not a warning. */
 @Composable
-private fun StatusBanner(text: String) {
+private fun StatusBanner(text: String, neutral: Boolean = false) {
     val c = LocalRedesignColors.current
     Surface(
-        color = c.dangerSoft,
+        color = if (neutral) c.surfaceRaised else c.dangerSoft,
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .padding(horizontal = 18.dp)

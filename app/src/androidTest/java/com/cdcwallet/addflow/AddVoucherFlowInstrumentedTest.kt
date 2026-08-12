@@ -20,6 +20,7 @@ import com.cdcwallet.data.db.AppDatabase
 import com.cdcwallet.data.db.SqlCipherNative
 import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.extraction.ExtractionEngine
+import com.cdcwallet.extraction.assetPageLoaderClient
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
@@ -73,31 +74,31 @@ class AddVoucherFlowInstrumentedTest {
     }
 
     private fun assetWebView(context: Context): WebView =
-        WebView(context).apply {
-            webViewClient = object : WebViewClient() {
-                override fun shouldInterceptRequest(
-                    view: WebView,
-                    request: WebResourceRequest,
-                ): WebResourceResponse? = assetLoader.shouldInterceptRequest(request.url)
-            }
-        }
+        WebView(context).apply { webViewClient = assetPageLoaderClient(assetLoader) }
+
+    /** Engine with the asset-loader fixture host passed through the test seams. */
+    private fun extractionEngine(): ExtractionEngine = ExtractionEngine(
+        hiddenWebViewFactory = { assetWebView(it) },
+        // Success-required tests: 30s budget so slow emulator loads under the
+        // full suite don't abort the extraction at the 10s production default.
+        extractionTimeoutMs = 30_000,
+        allowedPageOrigin = "https://appassets.androidplatform.net",
+        targetApiHost = "appassets.androidplatform.net",
+        // API 24-25 cannot read the view's client back (no getter): the
+        // rewrite-fallback path needs the delegate explicitly.
+        fallbackInjectionDelegate = assetPageLoaderClient(assetLoader),
+    )
 
     @Test
     fun happyPathAddsRowWithRealData() = runTest {
         val repository = RoomVoucherRepository(database)
         val flow = AddVoucherFlow(
             repository = repository,
-            extractionEngine = ExtractionEngine(
-                hiddenWebViewFactory = { assetWebView(it) },
-                // Success-required test: 30s budget so slow emulator loads
-                // under the full suite don't abort the extraction at the 10s
-                // production default.
-                extractionTimeoutMs = 30_000,
-            ),
+            extractionEngine = extractionEngine(),
             validator = VoucherLinkValidator(allowedHost = "appassets.androidplatform.net"),
         )
 
-        val result = flow.add(appContext, "https://appassets.androidplatform.net/testpage.html")
+        val result = flow.add(appContext, "https://appassets.androidplatform.net/TestToken1")
 
         assertTrue(result is AddVoucherResult.Added)
         val voucher = (result as AddVoucherResult.Added).voucher
@@ -110,7 +111,7 @@ class AddVoucherFlowInstrumentedTest {
             ),
             voucher.categoryBalances,
         )
-        val found = runBlocking { repository.findByToken("testpage.html") }
+        val found = runBlocking { repository.findByToken("TestToken1") }
         assertEquals("CDC Vouchers 2026", found?.campaignName)
         assertTrue(found?.categoryBalances.orEmpty().isNotEmpty())
     }
@@ -120,17 +121,11 @@ class AddVoucherFlowInstrumentedTest {
         val repository = RoomVoucherRepository(database)
         val flow = AddVoucherFlow(
             repository = repository,
-            extractionEngine = ExtractionEngine(
-                hiddenWebViewFactory = { assetWebView(it) },
-                // Success-required test: 30s budget so slow emulator loads
-                // under the full suite don't abort the extraction at the 10s
-                // production default.
-                extractionTimeoutMs = 30_000,
-            ),
+            extractionEngine = extractionEngine(),
             validator = VoucherLinkValidator(allowedHost = "appassets.androidplatform.net"),
         )
 
-        val result = flow.add(appContext, "https://appassets.androidplatform.net/badtarget.html")
+        val result = flow.add(appContext, "https://appassets.androidplatform.net/BrokenFetch")
 
         assertTrue(result is AddVoucherResult.AddedUnverified)
         val voucher = (result as AddVoucherResult.AddedUnverified).voucher

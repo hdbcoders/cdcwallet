@@ -3,7 +3,11 @@
     <!-- RedeemSG serves via Let's Encrypt ISRG Root X2, which Android's
          platform trust store only carries on API 29+. Min SDK is 24, so the
          root is added as an additional trust anchor for API 24-28. -->
-    <base-config>
+    <!-- Cleartext is explicitly disallowed (refactor H2): the voucher link is
+         a bearer credential and must only ever be carried over TLS. Applies to
+         WebView loads too - an http:// URL (e.g. from a crafted backup import)
+         can never actually load. -->
+    <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />
             <certificates src="@raw/isrg_root_x2" />

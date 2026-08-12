@@ -3,6 +3,7 @@ package com.cdcwallet.list
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -156,11 +157,19 @@ class VoucherListScreenTest {
         composeRule.onNodeWithText("Expired").assertIsDisplayed()
         composeRule.onNodeWithText("Not started").assertIsDisplayed()
 
-        // Spec 04 §4.3: total excludes the UNVERIFIED entry from value and count.
-        // The hero renders the eyebrow in uppercase and splits "$" from the
-        // amount into separate Text nodes (mockup), so assert per-node.
+        // Refactor H10 (spec 04 §4.2): the UNVERIFIED row shows the neutral
+        // unverified footer in its body - never the "no more balance" banner
+        // (empty balances are not proof of being fully used).
+        composeRule.onNodeWithText("No balance information yet", substring = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("This voucher link has no more balance").assertCountEquals(0)
+
+        // Spec 04 §4.3: the total counts only ACTIVE entries (refactor H9) -
+        // the UNVERIFIED row and the NOT_STARTED/EXPIRED balances contribute
+        // nothing to the value or the count. The hero renders the eyebrow in
+        // uppercase and splits "$" from the amount into separate Text nodes
+        // (mockup), so assert per-node.
         composeRule.onNodeWithText("BALANCE").assertIsDisplayed()
-        composeRule.onNodeWithText("92.5").assertIsDisplayed()
+        composeRule.onNodeWithText("85.5").assertIsDisplayed()
         // Category breakdown rows (top 3 by value) render in the right column.
         // Use onFirst() because category names also appear on voucher cards.
         for (part in listOf(

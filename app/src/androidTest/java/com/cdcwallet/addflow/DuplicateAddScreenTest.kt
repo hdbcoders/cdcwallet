@@ -23,6 +23,7 @@ import com.cdcwallet.data.db.SqlCipherNative
 import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.data.model.VoucherGroup
 import com.cdcwallet.extraction.ExtractionEngine
+import com.cdcwallet.extraction.assetPageLoaderClient
 import com.cdcwallet.ui.add.AddVoucherScreen
 import kotlinx.coroutines.runBlocking
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
@@ -68,19 +69,16 @@ class DuplicateAddScreenTest {
     private fun flow(repository: RoomVoucherRepository): AddVoucherFlow =
         AddVoucherFlow(
             repository = repository,
-            extractionEngine = ExtractionEngine(hiddenWebViewFactory = { assetWebView(it) }),
+            extractionEngine = ExtractionEngine(
+                hiddenWebViewFactory = { assetWebView(it) },
+                allowedPageOrigin = "https://appassets.androidplatform.net",
+                targetApiHost = "appassets.androidplatform.net",
+            ),
             validator = VoucherLinkValidator(allowedHost = "appassets.androidplatform.net"),
         )
 
     private fun assetWebView(context: Context): WebView =
-        WebView(context).apply {
-            webViewClient = object : WebViewClient() {
-                override fun shouldInterceptRequest(
-                    view: WebView,
-                    request: WebResourceRequest,
-                ): WebResourceResponse? = assetLoader.shouldInterceptRequest(request.url)
-            }
-        }
+        WebView(context).apply { webViewClient = assetPageLoaderClient(assetLoader) }
 
     private val assetLoader: WebViewAssetLoader by lazy {
         WebViewAssetLoader.Builder()
@@ -97,12 +95,12 @@ class DuplicateAddScreenTest {
     @Test
     fun duplicateSubmitShowsMessageAndStaysOnAddScreen() {
         val repository = RoomVoucherRepository(database)
-        val url = "https://appassets.androidplatform.net/testpage.html"
+        val url = "https://appassets.androidplatform.net/TestToken1"
         runBlocking {
             repository.insert(
                 VoucherGroup(
                     id = "id-existing",
-                    token = "testpage.html",
+                    token = "TestToken1",
                     url = url,
                     campaignName = "CDC Vouchers 2026",
                     validityStatus = ValidityStatus.ACTIVE,
@@ -147,6 +145,6 @@ class DuplicateAddScreenTest {
         // …and no second row was inserted.
         val rows = runBlocking { repository.findAll() }
         assertEquals(1, rows.size)
-        assertEquals(1, rows.count { it.token == "testpage.html" })
+        assertEquals(1, rows.count { it.token == "TestToken1" })
     }
 }

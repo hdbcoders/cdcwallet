@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>wrong api path page</title>
+</head>
+<body>
+<script>
+// The right host and token, but the path does not start with the expected
+// API prefix: must never be captured.
+fetch('/api/vouchers/groups/WrongPathFetch');
+</script>
+</body>
+</html>

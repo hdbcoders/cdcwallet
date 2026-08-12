@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>direct bridge call page</title>
+</head>
+<body>
+<script>
+// An unrelated document forging a payload: it can guess the predictable
+// bridge names but not the per-load nonce, so every call must be dropped.
+// The page makes no real fetch at all.
+var fake = JSON.stringify({
+  campaign: { name: "Fabricated 2026", validity: "campaign_valid", validity_end: "2026-12-31T23:59:59+08:00" },
+  vouchers: [{ state: "unused", voucher_value: 999, type: "heartland" }]
+});
+window.RedeemBridge && window.RedeemBridge.onData(fake, 'RedeemBridge');
+window['RedeemBridge1'] && window['RedeemBridge1'].onData(fake, 'guessed-nonce');
+window['RedeemBridge2'] && window['RedeemBridge2'].onData(fake, 'guessed-nonce');
+</script>
+</body>
+</html>

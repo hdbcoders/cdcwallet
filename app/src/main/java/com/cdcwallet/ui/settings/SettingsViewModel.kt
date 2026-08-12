@@ -12,6 +12,7 @@ import com.cdcwallet.R
 import com.cdcwallet.data.VoucherRepository
 import com.cdcwallet.data.backup.BackupFileStore
 import com.cdcwallet.data.backup.BackupFlow
+import com.cdcwallet.data.backup.InvalidBackupPayloadException
 import com.cdcwallet.data.model.VoucherBackupPayload
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -147,15 +148,15 @@ class SettingsViewModel(
         viewModelScope.launch {
             try {
                 val payload = withContext(Dispatchers.IO) {
-                    runCatching {
-                        withTimeout(BACKUP_OP_TIMEOUT_MS) { backupFlow.decryptBackup(bytes, password) }
-                    }.getOrNull()
+                    withTimeout(BACKUP_OP_TIMEOUT_MS) { backupFlow.decryptBackup(bytes, password) }
                 }
-                if (payload == null) {
-                    _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
-                } else {
-                    _uiState.update { it.copy(summaryPayload = payload) }
-                }
+                _uiState.update { it.copy(summaryPayload = payload) }
+            } catch (e: InvalidBackupPayloadException) {
+                // The file decrypted, but its rows are invalid (refactor H4):
+                // "check your password" would be the wrong hint here.
+                _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_import_failed))
+            } catch (e: Exception) {
+                _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
             } finally {
                 _uiState.update { it.copy(busyPhase = null) }
             }
@@ -185,6 +186,8 @@ class SettingsViewModel(
                                 pluralCount = imported,
                             ),
                         )
+                    } catch (e: InvalidBackupPayloadException) {
+                        _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_import_failed))
                     } catch (e: Exception) {
                         _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
                     } finally {

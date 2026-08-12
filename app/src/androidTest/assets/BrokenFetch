@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>broken network page</title>
+</head>
+<body>
+<script>
+// Same target host + token so the strict capture check accepts it, but an
+// unsupported scheme: the fetch rejects immediately (deterministic - no DNS
+// dependency) and the wrapper reports a network failure.
+fetch('ftp://appassets.androidplatform.net/vouchers/groups/BrokenFetch');
+</script>
+</body>
+</html>

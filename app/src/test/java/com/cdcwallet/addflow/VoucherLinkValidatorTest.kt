@@ -1,6 +1,5 @@
 package com.cdcwallet.addflow
 
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -27,8 +26,39 @@ class VoucherLinkValidatorTest {
     }
 
     @Test
-    fun httpSchemeTolerated() {
-        assertTrue(validator.isPlausibleVoucherLink("http://voucher.redeem.gov.sg/ABC123"))
+    fun httpSchemeRejected() {
+        // Refactor H2: the confirmed production policy is HTTPS only. The link
+        // is a bearer credential; an http URL could leak it or serve a
+        // tampered page.
+        assertFalse(validator.isPlausibleVoucherLink("http://voucher.redeem.gov.sg/ABC123"))
+    }
+
+    @Test
+    fun schemeRelativeUrlRejected() {
+        // "//host/token" has no scheme: it would resolve against whatever the
+        // surrounding context is, which is not a self-contained voucher link.
+        assertFalse(validator.isPlausibleVoucherLink("//voucher.redeem.gov.sg/ABC123"))
+    }
+
+    @Test
+    fun userInfoRejected() {
+        assertFalse(validator.isPlausibleVoucherLink("https://user@voucher.redeem.gov.sg/ABC123"))
+    }
+
+    @Test
+    fun unexpectedPortRejected() {
+        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg:8443/ABC123"))
+        // Even the "correct" port written explicitly is not the official shape.
+        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg:443/ABC123"))
+    }
+
+    @Test
+    fun multiSegmentPathRejected() {
+        // The official voucher path is exactly /{token}; deeper paths are not
+        // voucher links and could smuggle a token that the stored URL then
+        // disagrees with.
+        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/a/b/ABC123"))
+        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/groups/ABC123"))
     }
 
     @Test
@@ -81,5 +111,14 @@ class VoucherLinkValidatorTest {
         assertTrue(validator.isPlausibleVoucherLink("https://Voucher.Redeem.Gov.Sg/TokenABC"))
         assertFalse(validator.isPlausibleVoucherLink("https://wronghost.redeem.gov.sg/TokenABC"))
         assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/"))
+    }
+
+    @Test
+    fun customTestHostAcceptedThroughTheConstructorSeam() {
+        // Test-only custom hosts must remain available through injected
+        // validators, never through the production policy.
+        val fixtureValidator = VoucherLinkValidator(allowedHost = "appassets.androidplatform.net")
+        assertTrue(fixtureValidator.isPlausibleVoucherLink("https://appassets.androidplatform.net/TestToken1"))
+        assertFalse(validator.isPlausibleVoucherLink("https://appassets.androidplatform.net/TestToken1"))
     }
 }

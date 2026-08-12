@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>slow synthetic voucher page</title>
+</head>
+<body>
+<script>
+setTimeout(function () { fetch('/vouchers/groups/SlowPage'); }, 20000);
+</script>
+</body>
+</html>

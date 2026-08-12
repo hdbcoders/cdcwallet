@@ -1,11 +1,17 @@
 package com.cdcwallet.list
 
 import android.content.Context
+import android.os.Build
+import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -22,6 +28,7 @@ import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.data.model.VoucherGroup
 import com.cdcwallet.extraction.ExtractionCoordinator
 import com.cdcwallet.extraction.ExtractionEngine
+import com.cdcwallet.extraction.assetPageLoaderClient
 import com.cdcwallet.ui.detail.VoucherWebViewScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -80,12 +87,7 @@ class VoucherWebViewScreenTest {
         database.close()
     }
 
-    private fun assetLoaderClient(): WebViewClient = object : WebViewClient() {
-        override fun shouldInterceptRequest(
-            view: WebView,
-            request: WebResourceRequest,
-        ): WebResourceResponse? = assetLoader.shouldInterceptRequest(request.url)
-    }
+    private fun assetLoaderClient(): WebViewClient = assetPageLoaderClient(assetLoader)
 
     private fun assetWebView(context: Context): WebView =
         WebView(context).apply { webViewClient = assetLoaderClient() }
@@ -94,20 +96,23 @@ class VoucherWebViewScreenTest {
      *  client wraps the view's existing client on API 26+, and on API 24–25
      *  (no getter) it falls back to the engine's explicit delegate. A 30s
      *  extraction budget (vs the 10s production default) keeps slow emulator
-     *  loads from aborting the extraction under full-suite load. */
+     *  loads from aborting the extraction under full-suite load. The
+     *  asset-loader fixture host is passed through the engine's test seams. */
     private fun extractionEngine(): ExtractionEngine = ExtractionEngine(
         fallbackInjectionDelegate = assetLoaderClient(),
         extractionTimeoutMs = 30_000,
+        allowedPageOrigin = "https://appassets.androidplatform.net",
+        targetApiHost = "appassets.androidplatform.net",
     )
 
     @Test
     fun unverifiedRowTransitionsToRealStatusOnTapRefresh() {
         runBlocking {
             val repository = RoomVoucherRepository(database)
-            val url = "https://appassets.androidplatform.net/testpage.html"
+            val url = "https://appassets.androidplatform.net/TestToken1"
             val unverified = VoucherGroup(
                 id = "id-u1",
-                token = "testpage.html",
+                token = "TestToken1",
                 url = url,
                 campaignName = "testpage.html",
                 validityStatus = ValidityStatus.UNVERIFIED,
@@ -136,13 +141,13 @@ class VoucherWebViewScreenTest {
 
             withTimeout(45_000) {
                 while (true) {
-                    val row = repository.findByToken("testpage.html")
+                    val row = repository.findByToken("TestToken1")
                     if (row?.validityStatus == ValidityStatus.ACTIVE) break
                     delay(100)
                 }
             }
 
-            val updated = repository.findByToken("testpage.html")
+            val updated = repository.findByToken("TestToken1")
             assertEquals(ValidityStatus.ACTIVE, updated?.validityStatus)
             assertEquals("CDC Vouchers 2026", updated?.campaignName)
             // Category names are canonicalized to capitalized form on every
@@ -162,10 +167,10 @@ class VoucherWebViewScreenTest {
     fun failedRefreshKeepsCachedDataMarksStaleAndShowsBanner() {
         runBlocking {
             val repository = RoomVoucherRepository(database)
-            val url = "https://appassets.androidplatform.net/failpage.html"
+            val url = "https://appassets.androidplatform.net/FailPage"
             val cached = VoucherGroup(
                 id = "id-cached",
-                token = "Broken",
+                token = "FailPage",
                 url = url,
                 campaignName = "CDC Vouchers 2026",
                 validityStatus = ValidityStatus.ACTIVE,
@@ -191,21 +196,156 @@ class VoucherWebViewScreenTest {
                 }
             }
 
-            withTimeout(20_000) {
+            withTimeout(45_000) {
                 while (true) {
-                    val row = repository.findByToken("Broken")
-                    if (row?.lastRefreshError == "NETWORK_ERROR") break
+                    val row = repository.findByToken("FailPage")
+                    if (row?.lastRefreshError != null) break
                     delay(100)
                 }
             }
 
-            val updated = repository.findByToken("Broken")
+            val updated = repository.findByToken("FailPage")
             assertEquals(ValidityStatus.ACTIVE, updated?.validityStatus)
             assertEquals("CDC Vouchers 2026", updated?.campaignName)
             assertEquals("NETWORK_ERROR", updated?.lastRefreshError)
 
             composeRule.waitForIdle()
             composeRule.onNodeWithText("Unable to load website").assertIsDisplayed()
+        }
+    }
+
+    /**
+     * Refactor H1: the engine's long-lived WebView is shared, so during an
+     * animated push a NEWER detail screen can re-parent it into its own host
+     * before the OLD screen disposes. The old screen's dispose must NOT detach
+     * the view out of the newer screen's host.
+     */
+    @Test
+    fun disposingOldScreenLeavesReparentedWebViewAttachedToNewerHost() {
+        val repository = RoomVoucherRepository(database)
+        val url = "https://appassets.androidplatform.net/FailPage"
+        runBlocking {
+            repository.insert(
+                VoucherGroup(
+                    id = "id-detach-1",
+                    token = "FailPage",
+                    url = url,
+                    campaignName = "FailPage",
+                    validityStatus = ValidityStatus.UNVERIFIED,
+                    expiryDate = null,
+                    categoryBalances = emptyList(),
+                    dateAdded = Instant.now(),
+                    lastRefreshedAt = null,
+                    lastRefreshError = null,
+                ),
+            )
+        }
+        var showDetail by mutableStateOf(true)
+        val captured = arrayOfNulls<WebView>(1)
+        composeRule.setContent {
+            MaterialTheme {
+                if (showDetail) {
+                    VoucherWebViewScreen(
+                        voucherId = "id-detach-1",
+                        voucherUrl = url,
+                        repository = repository,
+                        extractionEngine = extractionEngine(),
+                        extractionCoordinator = ExtractionCoordinator(repository, extractionEngine()),
+                        onBack = {},
+                        webViewFactory = { ctx -> assetWebView(ctx).also { captured[0] = it } },
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+        val webView = captured[0] ?: error("WebView not created")
+
+        // Simulate the newer detail screen re-parenting the shared instance
+        // during animated navigation (its factory calls acquireVisibleWebView,
+        // which removes the view from any previous parent first).
+        val newerHost = FrameLayout(appContext)
+        composeRule.runOnUiThread {
+            (webView.parent as? ViewGroup)?.removeView(webView)
+            newerHost.addView(webView)
+        }
+
+        // The old screen is disposed (back navigation completes the pop).
+        composeRule.runOnUiThread { showDetail = false }
+        composeRule.waitForIdle()
+
+        composeRule.runOnUiThread {
+            assertEquals(
+                "the newer screen's host must still own the shared WebView",
+                newerHost,
+                webView.parent,
+            )
+        }
+    }
+
+    /** Refactor H1: a screen that still owns the WebView detaches it on dispose. */
+    @Test
+    fun disposingScreenDetachesWebViewItStillOwnsAndClearsItsProgressClient() {
+        val repository = RoomVoucherRepository(database)
+        val url = "https://appassets.androidplatform.net/FailPage"
+        runBlocking {
+            repository.insert(
+                VoucherGroup(
+                    id = "id-detach-2",
+                    token = "FailPage",
+                    url = url,
+                    campaignName = "FailPage",
+                    validityStatus = ValidityStatus.UNVERIFIED,
+                    expiryDate = null,
+                    categoryBalances = emptyList(),
+                    dateAdded = Instant.now(),
+                    lastRefreshedAt = null,
+                    lastRefreshError = null,
+                ),
+            )
+        }
+        var showDetail by mutableStateOf(true)
+        val captured = arrayOfNulls<WebView>(1)
+        composeRule.setContent {
+            MaterialTheme {
+                if (showDetail) {
+                    VoucherWebViewScreen(
+                        voucherId = "id-detach-2",
+                        voucherUrl = url,
+                        repository = repository,
+                        extractionEngine = extractionEngine(),
+                        extractionCoordinator = ExtractionCoordinator(repository, extractionEngine()),
+                        onBack = {},
+                        webViewFactory = { ctx -> assetWebView(ctx).also { captured[0] = it } },
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        // Wait until the extraction settles: page-progress events have by then
+        // recomposed the screen, so the screen's dispose guard knows its host.
+        runBlocking {
+            withTimeout(30_000) {
+                while (true) {
+                    val row = repository.findByToken("FailPage")
+                    if (row?.lastRefreshError != null) break
+                    delay(100)
+                }
+            }
+        }
+
+        composeRule.runOnUiThread { showDetail = false }
+        composeRule.waitForIdle()
+
+        val webView = captured[0] ?: error("WebView not created")
+        composeRule.runOnUiThread {
+            assertNull("the screen must detach its own WebView", webView.parent)
+            // API 24-25 have no getWebChromeClient getter; the release itself
+            // is guarded the same way in production, so the assertion only
+            // runs where the getter exists.
+            if (Build.VERSION.SDK_INT >= 26) {
+                assertNull("the screen must release its progress client", webView.webChromeClient)
+            }
         }
     }
 }

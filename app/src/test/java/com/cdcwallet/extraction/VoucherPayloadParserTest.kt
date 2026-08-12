@@ -117,9 +117,11 @@ class VoucherPayloadParserTest {
     }
 
     @Test
-    fun `unparseable expiry yields null not failure`() {
-        val result = VoucherPayloadParser.parse(payloadJson(validityEnd = "not-a-date"))
-        assertNull(result?.expiryDate)
+    fun `unparseable nonblank expiry is a parse failure`() {
+        // Refactor H7: a nonblank validity_end that does not parse means the
+        // payload is corrupt - silently reading it as "no expiry" would hide
+        // schema drift behind a plausible-looking row.
+        assertNull(VoucherPayloadParser.parse(payloadJson(validityEnd = "not-a-date")))
     }
 
     @Test
@@ -144,19 +146,63 @@ class VoucherPayloadParserTest {
     fun `blank type vouchers bucket under campaign name`() {
         val json = payloadJson(vouchers = """[
             {"id":"v1","state":"unused","voucher_value":10,"type":"heartland"},
-            {"id":"v2","state":"unused"},
+            {"id":"v2","state":"unused","voucher_value":2},
             {"state":"unused","voucher_value":5}
         ]""")
         val result = VoucherPayloadParser.parse(json)
-        // v1 keeps its type; v3 (blank type, value 5) falls back to the
-        // campaign's first word ("CDC" from "CDC Vouchers 2026"). v2 (no
-        // value) contributes nothing.
+        // v1 keeps its type; v2 and v3 (blank type, values 2 and 5) fall back
+        // to the campaign's first word ("CDC" from "CDC Vouchers 2026").
         assertEquals(
             listOf(
                 com.cdcwallet.data.model.CategoryBalance("heartland", BigDecimal("10")),
-                com.cdcwallet.data.model.CategoryBalance("CDC", BigDecimal("5")),
+                com.cdcwallet.data.model.CategoryBalance("CDC", BigDecimal("7")),
             ),
             result?.categoryBalances,
         )
+    }
+
+    @Test
+    fun `unknown voucher state is a parse failure`() {
+        // Refactor H7: a state outside unused/redeemed/voided means the
+        // response shape moved under us - ignoring it would silently
+        // undercount the balance.
+        val json = payloadJson(vouchers = """[
+            {"id":"v1","state":"unused","voucher_value":50,"type":"heartland"},
+            {"id":"v2","state":"spent_elsewhere","voucher_value":20,"type":"heartland"}
+        ]""")
+        assertNull(VoucherPayloadParser.parse(json))
+    }
+
+    @Test
+    fun `missing voucher state is a parse failure`() {
+        val json = payloadJson(vouchers = """[
+            {"id":"v1","state":"unused","voucher_value":50,"type":"heartland"},
+            {"id":"v2","voucher_value":20,"type":"heartland"}
+        ]""")
+        assertNull(VoucherPayloadParser.parse(json))
+    }
+
+    @Test
+    fun `unparseable voucher value is a parse failure`() {
+        val json = payloadJson(vouchers = """[
+            {"id":"v1","state":"unused","voucher_value":"$45","type":"heartland"}
+        ]""")
+        assertNull(VoucherPayloadParser.parse(json))
+    }
+
+    @Test
+    fun `missing voucher value on unused voucher is a parse failure`() {
+        val json = payloadJson(vouchers = """[
+            {"id":"v1","state":"unused","type":"heartland"}
+        ]""")
+        assertNull(VoucherPayloadParser.parse(json))
+    }
+
+    @Test
+    fun `negative voucher value is a parse failure`() {
+        val json = payloadJson(vouchers = """[
+            {"id":"v1","state":"unused","voucher_value":-5,"type":"heartland"}
+        ]""")
+        assertNull(VoucherPayloadParser.parse(json))
     }
 }

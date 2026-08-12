@@ -1,0 +1,1 @@
+{"object":"grouped_vouchers","campaign":{"name":"Slow Campaign 2026","validity":"campaign_valid","validity_start":"2026-01-01T00:00:00+08:00","validity_end":"2026-12-31T23:59:59+08:00","id":"campaign-uuid-slow"},"data":{"id":"SlowPage","vouchers":[{"id":"s1","state":"unused","voucher_value":10,"type":"heartland","last_redeemed_timestamp":null,"merchant_name":null}]}}

@@ -15,7 +15,7 @@ class BackupMergeTest {
     private fun voucher(token: String, name: String = token) = VoucherGroup(
         id = "id-$token",
         token = token,
-        url = "https://voucher.redeem.gov.sg/groups/$token",
+        url = "https://voucher.redeem.gov.sg/$token",
         campaignName = name,
         validityStatus = ValidityStatus.ACTIVE,
         expiryDate = null,

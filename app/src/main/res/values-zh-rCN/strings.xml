@@ -63,6 +63,7 @@
     <string name="more_options">%1$s 的更多选项</string>
     <string name="expired_footer">此购物券链接已过期</string>
     <string name="no_balance_banner">此购物券链接已没有更多余额</string>
+    <string name="unverified_footer">暂无余额信息——点按此条目查看。</string>
 
     <string name="badge_no_expiry">无到期日期</string>
     <string name="badge_expired">已过期</string>

@@ -1,6 +1,7 @@
 package com.cdcwallet.ui.detail
 
 import android.content.Context
+import android.os.Build
 import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -78,6 +79,22 @@ fun VoucherWebViewScreen(
     val state by vm.uiState.collectAsState()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
+    /**
+     * The screen-owned progress client, captured at attach time. On dispose
+     * it is released only when the WebView still carries THIS client (a newer
+     * detail screen may have replaced it during animated navigation).
+     */
+    var chromeClientRef by remember { mutableStateOf<WebChromeClient?>(null) }
+
+    /**
+     * The view hierarchy this screen attached the WebView into (recorded in
+     * the AndroidView update block). The engine's instance is long-lived and
+     * can be re-parented by a NEWER detail screen during animated navigation
+     * (refactor H1); on dispose we must detach it only when it is still in
+     * OUR host, never out of a newer screen's.
+     */
+    var attachedHostRef by remember { mutableStateOf<ViewGroup?>(null) }
+
     val voucher = state.voucher
     if (state.isLoaded && voucher == null) {
         LaunchedEffect(Unit) { onBack() }
@@ -107,15 +124,28 @@ fun VoucherWebViewScreen(
             AndroidView(
                 factory = { context ->
                     webViewFactory(context).also { webView ->
-                        webView.webChromeClient = object : WebChromeClient() {
+                        val progressClient = object : WebChromeClient() {
                             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                                 vm.onPageProgressChanged(newProgress)
                             }
                         }
+                        webView.webChromeClient = progressClient
                         webViewRef = webView
+                        chromeClientRef = progressClient
                     }
                 },
-                update = { view -> vm.onNewWebViewReady(view) },
+                update = { view ->
+                    // Record the host we attached into - ONCE per screen
+                    // lifetime (refactor H1). Recomposition must not re-record
+                    // it: during animated navigation a newer screen may have
+                    // re-parented the shared instance, and a later update
+                    // would then point at the NEWER host, making the dispose
+                    // guard detach the view out of the newer screen.
+                    if (attachedHostRef == null) {
+                        attachedHostRef = view.parent as? ViewGroup
+                    }
+                    vm.onNewWebViewReady(view)
+                },
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             )
         }
@@ -123,13 +153,36 @@ fun VoucherWebViewScreen(
 
     DisposableEffect(Unit) {
         onDispose {
-            // Detach only - the engine owns the instance for the whole app
-            // session (02 §2.4 revision 2026-08-03). No stopLoading: a load
-            // started by a tap may complete after the user leaves, and
-            // rotation must not kill an in-flight load.
+            // Detach only if the engine's long-lived instance is still inside
+            // THIS screen's host (02 §2.4 revision 2026-08-03: detach-only,
+            // never stopLoading/destroy). During animated navigation a newer
+            // detail screen may already have re-parented the view into its own
+            // host - removing it from there would blank the newer screen
+            // (refactor H1). Best-effort: if the interop container already
+            // removed the view, there is nothing to detach.
             val view = webViewRef
             if (view != null) {
-                runCatching { (view.parent as? ViewGroup)?.removeView(view) }
+                val stillOurs = view.parent === attachedHostRef
+                if (stillOurs) {
+                    runCatching { (view.parent as? ViewGroup)?.removeView(view) }
+                }
+                // Release the screen-owned progress client when the WebView
+                // still carries it, so it cannot retain this screen's
+                // ViewModel after the screen is gone. API 26+ has the
+                // getWebChromeClient getter for an identity check; API 24-25
+                // does not, so there the client is released only when no
+                // newer screen can own the instance (a newer screen that took
+                // it would have re-parented the view into its own host).
+                if (Build.VERSION.SDK_INT >= 26) {
+                    if (view.webChromeClient === chromeClientRef) {
+                        runCatching { view.webChromeClient = null }
+                    }
+                } else {
+                    val someoneElseTookIt = view.parent != null && !stillOurs
+                    if (!someoneElseTookIt) {
+                        runCatching { view.webChromeClient = null }
+                    }
+                }
             }
         }
     }

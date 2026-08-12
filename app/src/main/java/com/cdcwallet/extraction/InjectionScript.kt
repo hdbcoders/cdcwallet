@@ -5,23 +5,52 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.webkit.ScriptHandler
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 
-internal const val BRIDGE_NAME = "RedeemBridge"
-
 /**
- * Injected at document-start. Wraps the page's own fetch/XHR and, for responses
- * matching the voucher-groups endpoint, extracts ONLY the whitelisted fields
- * (spec 02 §2.6) and delivers them to the native bridge. Nothing else from the
- * response is ever read or passed out of the page.
+ * The capture script, as a template. Installed at document-start; wraps the
+ * page's own fetch/XHR and, for responses matching the voucher-groups API,
+ * extracts ONLY the whitelisted fields (spec 02 §2.6) and delivers them to the
+ * native bridge. Nothing else from the response is ever read or passed out of
+ * the page.
+ *
+ * Three values are substituted per load ([captureScriptFor]):
+ *  - `__EXPECTED_HOST__` - the exact API host the capture may match (hard
+ *    rule 02 §2.1: only the real RedeemSG API; test fixtures override via the
+ *    engine's `targetApiHost` seam);
+ *  - `__EXPECTED_TOKEN__` - the voucher token of THIS load. A page's request
+ *    only counts when its path token matches, so a payload from a different
+ *    voucher (stale document, wrong row URL) is never captured (refactor H3);
+ *  - `__BRIDGE_NAME__` - the per-load unique bridge name (refactor H1). A
+ *    previous load's document looks up its own name, which is removed at that
+ *    load's teardown, so a late callback can never land in the next load's
+ *    bridge;
+ *  - `__NONCE__` - a per-load random value that every bridge call must carry
+ *    (refactor H3). The native side drops any call without the exact nonce, so
+ *    an unrelated document cannot forge a payload even if it guesses the
+ *    (predictable) bridge name;
+ *  - `__ALLOWED_PAGE_ORIGIN__` - the only page origin the wrapper may
+ *    activate on (refactor H3). The injection itself uses the `*` origin rule
+ *    on purpose: Google WebView 150 (2025) does not run document-start
+ *    scripts for exact-origin rule sets (verified empirically on
+ *    WebView 150.0.7871.181 - only `*` fires), so the origin restriction is
+ *    enforced inside the script instead: on any other origin the wrapper
+ *    bails out immediately and never wraps fetch/XHR.
  */
-internal const val CAPTURE_SCRIPT =
+private const val CAPTURE_SCRIPT_TEMPLATE =
     """
     (function () {
-      var pathPattern = /\/vouchers\/groups\//;
+      var ALLOWED_PAGE_ORIGIN = __ALLOWED_PAGE_ORIGIN__;
+      if (window.location.origin !== ALLOWED_PAGE_ORIGIN) return;
+      var EXPECTED_HOST = __EXPECTED_HOST__;
+      var EXPECTED_PATH = '/vouchers/groups/';
+      var EXPECTED_TOKEN = __EXPECTED_TOKEN__;
+      var BRIDGE_NAME = __BRIDGE_NAME__;
+      var NONCE = __NONCE__;
       var captured = false;
 
       function toAbsoluteUrl(raw) {
@@ -33,7 +62,13 @@ internal const val CAPTURE_SCRIPT =
       }
 
       function isTargetUrl(url) {
-        return pathPattern.test(url);
+        var u = null;
+        try { u = new URL(url); } catch (e) { return false; }
+        if (u.hostname !== EXPECTED_HOST) return false;
+        if (u.pathname.indexOf(EXPECTED_PATH) !== 0) return false;
+        var token = u.pathname.substring(EXPECTED_PATH.length);
+        if (token.length === 0 || token.indexOf('/') !== -1) return false;
+        return token === EXPECTED_TOKEN;
       }
 
       function whitelist(json) {
@@ -73,16 +108,18 @@ internal const val CAPTURE_SCRIPT =
           return;
         }
         captured = true;
-        if (window.RedeemBridge && typeof window.RedeemBridge.onData === 'function') {
-          window.RedeemBridge.onData(JSON.stringify(payload));
+        var bridge = window[BRIDGE_NAME];
+        if (bridge && typeof bridge.onData === 'function') {
+          bridge.onData(JSON.stringify(payload), NONCE);
         }
       }
 
       function fail(kind) {
         if (captured) return;
         captured = true;
-        if (window.RedeemBridge && typeof window.RedeemBridge.onError === 'function') {
-          window.RedeemBridge.onError(kind);
+        var bridge = window[BRIDGE_NAME];
+        if (bridge && typeof bridge.onError === 'function') {
+          bridge.onError(kind, NONCE);
         }
       }
 
@@ -151,6 +188,12 @@ internal const val CAPTURE_SCRIPT =
  * in px. `.css-14jkxbw` is a RedeemSG React build artifact that WILL change;
  * the heuristic fallback below is what actually survives rebuilds. Removable
  * once the underlying 100vh bug is fixed.
+ *
+ * DEAD CODE since revision 2026-08-07 (spec 02 §2.5): the `vh` quirk is fixed
+ * at the WebView level (explicit MATCH_PARENT layout params), so neither this
+ * nor MODAL_HEIGHT_FIX_SCRIPT is referenced. Retained as a fallback in case a
+ * future WebView build reintroduces the quirk - do not wire them back in
+ * without a product decision.
  */
 internal const val VIEWPORT_FIX_SCRIPT =
     """
@@ -262,6 +305,8 @@ internal const val VIEWPORT_FIX_SCRIPT =
  * so we inject explicit `%` heights on the stable Chakra modal classes. Runs
  * on DOMContentLoaded and re-applies on open, since Chakra mounts the modal
  * lazily when the user taps "History".
+ *
+ * DEAD CODE since revision 2026-08-07 (spec 02 §2.5) - see VIEWPORT_FIX_SCRIPT.
  */
 internal const val MODAL_HEIGHT_FIX_SCRIPT =
     """
@@ -299,45 +344,101 @@ internal const val MODAL_HEIGHT_FIX_SCRIPT =
     })();
     """
 
-/** Capture wrapper + viewport fix (see notes on each). */
-internal val INJECTION_SCRIPT: String =
-    CAPTURE_SCRIPT // Capture-only: extraction wrapper active, no layout fixes.
+/**
+ * Per-load capture script with the expected token, the unique bridge name, the
+ * per-load nonce, the API host, and the allowed page origin substituted. The
+ * values are embedded as JS string literals (escaped), so any token content is
+ * safe.
+ */
+internal fun captureScriptFor(
+    expectedToken: String,
+    bridgeName: String,
+    nonce: String,
+    targetApiHost: String,
+    allowedPageOrigin: String,
+): String = CAPTURE_SCRIPT_TEMPLATE
+    .replace("__ALLOWED_PAGE_ORIGIN__", jsStringLiteral(allowedPageOrigin))
+    .replace("__EXPECTED_HOST__", jsStringLiteral(targetApiHost))
+    .replace("__EXPECTED_TOKEN__", jsStringLiteral(expectedToken))
+    .replace("__BRIDGE_NAME__", jsStringLiteral(bridgeName))
+    .replace("__NONCE__", jsStringLiteral(nonce))
 
-internal val INJECTION_SCRIPT_TAG: String = "<script>$INJECTION_SCRIPT</script>"
+/** The capture script wrapped in a `<script>` tag for the HTML-rewrite fallback. */
+internal fun injectionScriptTagFor(
+    expectedToken: String,
+    bridgeName: String,
+    nonce: String,
+    targetApiHost: String,
+    allowedPageOrigin: String,
+): String = "<script>${captureScriptFor(expectedToken, bridgeName, nonce, targetApiHost, allowedPageOrigin)}</script>"
+
+private fun jsStringLiteral(value: String): String =
+    "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'"
 
 internal sealed interface InjectionPath {
-    data class DocumentStart(val scriptHandler: androidx.webkit.ScriptHandler) : InjectionPath
+    data class DocumentStart(val scriptHandler: ScriptHandler) : InjectionPath
     data object HtmlRewrite : InjectionPath
+
+    /**
+     * No injection is possible on this WebView build: document-start scripts
+     * are unsupported AND there is no delegate response to HTML-rewrite. The
+     * page still loads normally; extraction reports a failure (refactor H5).
+     */
+    data object Unavailable : InjectionPath
 }
 
 /**
  * Installs the wrapper ahead of the page's own scripts (spec 02 §2.5):
  * primary path is addDocumentStartJavaScript; fallback is HTML rewriting via
- * shouldInterceptRequest, which works on every supported WebView version.
+ * shouldInterceptRequest, which requires a delegate that actually supplies the
+ * main document (test/asset loader) - production has none. When the rewrite
+ * client observes a main-document request that no delegate intercepts, it
+ * invokes [onNoInjection] exactly once so the extraction can fail fast
+ * (refactor H5) instead of burning the timeout; the page itself still loads
+ * through the WebView's own network stack.
+ *
+ * The document-start rule set is always `*`: Google WebView 150 (2025) does
+ * not run document-start scripts for exact-origin rule sets (verified
+ * empirically on WebView 150.0.7871.181), so the origin restriction is
+ * enforced inside the script against [allowedPageOrigin] instead (refactor
+ * H3) - same security property, version-proof.
  */
 internal fun installInjection(
     webView: WebView,
     forceFallback: Boolean,
     fallbackInjectionDelegate: WebViewClient? = null,
+    expectedToken: String,
+    bridgeName: String,
+    nonce: String,
+    targetApiHost: String,
+    allowedPageOrigin: String,
+    onNoInjection: () -> Unit,
 ): InjectionPath {
     if (!forceFallback && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-        // "*" = any http(s) origin; an empty set would restrict the script to
-        // non-http(s) documents only (about:blank, data:), where the real page
-        // would never load.
-        val handler = WebViewCompat.addDocumentStartJavaScript(webView, INJECTION_SCRIPT, setOf("*"))
+        val handler = WebViewCompat.addDocumentStartJavaScript(
+            webView,
+            captureScriptFor(expectedToken, bridgeName, nonce, targetApiHost, allowedPageOrigin),
+            setOf("*"),
+        )
         return InjectionPath.DocumentStart(handler)
     }
     // API 24–25 (or a stale WebView) fallback. On API 26+ the prior client
-    // (e.g. an asset-loader client under test) is read back and chained as the
-    // delegate so its interception keeps working; on API 24–25 there is no
-    // getter, so the caller supplies it explicitly - production never sets a
-    // client before this point, so this matters only for tests.
+    // (e.g. an asset-loader client under test, or the engine's own extraction
+    // client) is read back and chained as the delegate so its interception
+    // keeps working; on API 24–25 there is no getter, so the caller supplies
+    // it explicitly. A delegate that never actually intercepts the main
+    // document (production) is detected at rewrite time via [onNoInjection].
     val delegate = if (Build.VERSION.SDK_INT >= 26) {
         webView.webViewClient
     } else {
         fallbackInjectionDelegate
     }
-    webView.webViewClient = HtmlRewritingClient(delegate)
+    if (delegate == null) return InjectionPath.Unavailable
+    webView.webViewClient = HtmlRewritingClient(
+        delegate,
+        injectionScriptTagFor(expectedToken, bridgeName, nonce, targetApiHost, allowedPageOrigin),
+        onNoInjection,
+    )
     return InjectionPath.HtmlRewrite
 }
 
@@ -347,10 +448,13 @@ internal fun installInjection(
  * document (test/asset loader). No native HTTP client is ever opened to a
  * RedeemSG host (hard rule 02 §2.1): when there is no delegate response, the
  * request falls through to the WebView's own network stack, which loads the real
- * page without injection (extraction degrades to fail-soft on legacy WebViews).
+ * page without injection (refactor H5: the engine reports this as a failure
+ * instead of waiting out the timeout).
  */
 private class HtmlRewritingClient(
-    private val delegate: WebViewClient?,
+    private val delegate: WebViewClient,
+    private val scriptTag: String,
+    private val onNoInjection: () -> Unit,
 ) : WebViewClient() {
 
     private var rewrote = false
@@ -359,12 +463,20 @@ private class HtmlRewritingClient(
         view: WebView,
         request: WebResourceRequest,
     ): WebResourceResponse? {
-        val delegateResponse = delegate?.shouldInterceptRequest(view, request)
+        val delegateResponse = delegate.shouldInterceptRequest(view, request)
         val mainDocument = request.isForMainFrame && !rewrote
-        if (mainDocument && delegateResponse != null && delegateResponse.data != null) {
+        if (mainDocument) {
+            rewrote = true
+            if (delegateResponse?.data == null) {
+                // The delegate does not supply the main document (production
+                // default, refactor H5): no injection is possible on this
+                // load. Report it exactly once - the extraction fails fast
+                // while the page still loads natively.
+                onNoInjection()
+                return null
+            }
             val rewritten = rewriteHtml(delegateResponse.data, delegateResponse.encoding)
             if (rewritten != null) {
-                rewrote = true
                 return rewritten
             }
             return delegateResponse
@@ -379,12 +491,12 @@ private class HtmlRewritingClient(
         val modified = if (headStart >= 0) {
             val tagEnd = html.indexOf('>', headStart)
             if (tagEnd >= 0) {
-                html.substring(0, tagEnd + 1) + INJECTION_SCRIPT_TAG + html.substring(tagEnd + 1)
+                html.substring(0, tagEnd + 1) + scriptTag + html.substring(tagEnd + 1)
             } else {
                 html
             }
         } else {
-            INJECTION_SCRIPT_TAG + html
+            scriptTag + html
         }
         return WebResourceResponse(
             "text/html",
@@ -394,14 +506,14 @@ private class HtmlRewritingClient(
     }
 
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean =
-        delegate?.shouldOverrideUrlLoading(view, request) ?: false
+        delegate.shouldOverrideUrlLoading(view, request)
 
     override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
-        delegate?.onPageStarted(view, url, favicon)
+        delegate.onPageStarted(view, url, favicon)
     }
 
     override fun onPageFinished(view: WebView, url: String) {
-        delegate?.onPageFinished(view, url)
+        delegate.onPageFinished(view, url)
     }
 
     override fun onReceivedError(
@@ -409,7 +521,7 @@ private class HtmlRewritingClient(
         request: WebResourceRequest,
         error: android.webkit.WebResourceError,
     ) {
-        delegate?.onReceivedError(view, request, error)
+        delegate.onReceivedError(view, request, error)
     }
 
     override fun onReceivedHttpError(
@@ -417,6 +529,6 @@ private class HtmlRewritingClient(
         request: WebResourceRequest,
         errorResponse: WebResourceResponse,
     ) {
-        delegate?.onReceivedHttpError(view, request, errorResponse)
+        delegate.onReceivedHttpError(view, request, errorResponse)
     }
 }

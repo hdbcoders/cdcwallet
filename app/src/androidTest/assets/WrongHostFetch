@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>wrong api host page</title>
+</head>
+<body>
+<script>
+// The right path and token, but a non-official host: must never be captured.
+// .test is a reserved TLD, so nothing real is ever contacted.
+fetch('https://api.evil.test/vouchers/groups/WrongHostFetch');
+</script>
+</body>
+</html>

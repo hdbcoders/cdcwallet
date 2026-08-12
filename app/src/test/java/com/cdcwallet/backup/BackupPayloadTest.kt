@@ -23,7 +23,7 @@ class BackupPayloadTest {
     private fun voucher() = VoucherGroup(
         id = "id-1",
         token = "Token1",
-        url = "https://voucher.redeem.gov.sg/groups/Token1",
+        url = "https://voucher.redeem.gov.sg/Token1",
         campaignName = "CDC Vouchers 2026",
         validityStatus = ValidityStatus.ACTIVE,
         expiryDate = null,

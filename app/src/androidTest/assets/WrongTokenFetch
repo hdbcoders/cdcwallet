@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>wrong token page</title>
+</head>
+<body>
+<script>
+// The right host and path, but a different voucher token: must never be
+// captured for the row whose expected token is WrongTokenFetch.
+fetch('/vouchers/groups/OtherToken');
+</script>
+</body>
+</html>

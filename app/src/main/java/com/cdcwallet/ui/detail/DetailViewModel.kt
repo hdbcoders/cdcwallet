@@ -82,4 +82,11 @@ class DetailViewModel(
     }
 
     fun consumeRefreshMessage() { refreshMessageRes = null }
+
+    override fun onCleared() {
+        // The screen is gone (back navigation pops the backstack entry): the
+        // extraction and its database write continue app-scoped, but the
+        // screen-bound callback must not retain this ViewModel (refactor H1).
+        extractionCoordinator.detachResultCallback(voucherId)
+    }
 }

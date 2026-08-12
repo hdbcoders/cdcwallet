@@ -116,9 +116,11 @@ fun badgeLabel(state: BadgeState): BadgeLabel = when (state) {
 }
 
 /**
- * Spec 04 §4.3: total remaining value across active entries, broken down by
- * category. UNVERIFIED entries contribute nothing to the value and are not
- * counted toward "N links" (they have no verified data yet).
+ * Spec 04 §4.3: total remaining value across entries, broken down by
+ * category. Only `ValidityStatus.ACTIVE` entries contribute value and count
+ * toward "N links" (refactor H9 - confirmed product rule): `UNVERIFIED` rows
+ * carry no extracted data yet, and `NOT_STARTED`/`EXPIRED` balances are not
+ * spendable value, so they must not inflate the hero.
  */
 data class ListSummary(
     val total: BigDecimal,
@@ -127,14 +129,14 @@ data class ListSummary(
 )
 
 fun summarizeActive(vouchers: List<VoucherGroup>): ListSummary {
-    val known = vouchers.filter { it.validityStatus != ValidityStatus.UNVERIFIED }
+    val active = vouchers.filter { it.validityStatus == ValidityStatus.ACTIVE }
     val byCategory = linkedMapOf<String, BigDecimal>()
-    known.forEach { voucher ->
+    active.forEach { voucher ->
         voucher.categoryBalances.forEach { balance ->
             byCategory.merge(balance.category, balance.remainingValue, BigDecimal::add)
         }
     }
-    val total = known.fold(BigDecimal.ZERO) { acc, voucher ->
+    val total = active.fold(BigDecimal.ZERO) { acc, voucher ->
         acc + voucher.categoryBalances.fold(BigDecimal.ZERO) { a, b -> a + b.remainingValue }
     }
     return ListSummary(
@@ -142,7 +144,7 @@ fun summarizeActive(vouchers: List<VoucherGroup>): ListSummary {
         categoryTotals = byCategory.map { (category, value) -> CategoryBalance(category, value) }
             .filter { it.remainingValue.signum() != 0 }
             .sortedBy { it.category },
-        linkCount = known.size,
+        linkCount = active.size,
     )
 }
 

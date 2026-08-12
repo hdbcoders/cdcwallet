@@ -357,7 +357,7 @@ class VoucherListLogicTest {
     // ---- aggregate summary (04 §4.3) ----
 
     @Test
-    fun summarySumsAcrossEntriesAndCategories() {
+    fun summaryCountsOnlyActiveEntriesAndSumsCategories() {
         val vouchers = listOf(
             voucher(
                 "a",
@@ -380,17 +380,25 @@ class VoucherListLogicTest {
                 today.plusDays(2),
                 listOf(CategoryBalance("heartland", BigDecimal("5"))),
             ),
+            voucher(
+                "e",
+                ValidityStatus.EXPIRED,
+                today.minusDays(1),
+                listOf(CategoryBalance("heartland", BigDecimal("2"))),
+            ),
             voucher("u", ValidityStatus.UNVERIFIED),
         )
 
         val summary = summarizeActive(vouchers)
 
-        assertEquals(BigDecimal("90.5"), summary.total)
-        assertEquals(3, summary.linkCount)
+        // Refactor H9: only ACTIVE balances count. NOT_STARTED/EXPIRED
+        // balances are not spendable value, and UNVERIFIED rows carry none.
+        assertEquals(BigDecimal("85.5"), summary.total)
+        assertEquals(2, summary.linkCount)
         assertEquals(
             listOf(
                 CategoryBalance("groceries", BigDecimal("10")),
-                CategoryBalance("heartland", BigDecimal("55")),
+                CategoryBalance("heartland", BigDecimal("50")),
                 CategoryBalance("supermarket", BigDecimal("25.5")),
             ),
             summary.categoryTotals,

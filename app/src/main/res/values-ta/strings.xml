@@ -63,6 +63,7 @@
     <string name="more_options">%1$sக்கான மேலும் விருப்பங்கள்</string>
     <string name="expired_footer">இந்த வவுச்சர் இணைப்பு காலாவதியாகிவிட்டது</string>
     <string name="no_balance_banner">இந்த வவுச்சர் இணைப்பில் மேலும் இருப்பு இல்லை</string>
+    <string name="unverified_footer">இருப்புத் தகவல் இன்னும் இல்லை — சரிபார்க்க இந்த உள்ளீட்டைத் தட்டவும்.</string>
 
     <string name="badge_no_expiry">காலாவதி தேதி இல்லை</string>
     <string name="badge_expired">காலாவதியானது</string>

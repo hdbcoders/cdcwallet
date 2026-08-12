@@ -63,6 +63,7 @@
     <string name="more_options">Lebih banyak pilihan untuk %1$s</string>
     <string name="expired_footer">Pautan baucar ini telah luput</string>
     <string name="no_balance_banner">Pautan baucar ini tiada baki lagi</string>
+    <string name="unverified_footer">Tiada maklumat baki lagi — ketik entri ini untuk menyemak.</string>
 
     <string name="badge_no_expiry">Tiada tarikh luput</string>
     <string name="badge_expired">Telah luput</string>
