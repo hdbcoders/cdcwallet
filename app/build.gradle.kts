@@ -54,34 +54,56 @@ android {
 // AGP 9 removed the old `android.experimental.androidTest.uninstallAfterTest`
 // knob, and connectedDebugAndroidTest uninstalls the app + test APK at the
 // end of its own action — there is no DSL/task to stop it. To keep the app
-// installed after a test run (so device state survives verification runs),
-// reinstall the debug APK as soon as the test task finishes, including on
-// failure. Target device: -PandroidTestSerial=<serial> if set, else the
-// ANDROID_SERIAL env var, else plain `adb install` (single-device only).
+// installed AND seeded after a test run (so device state survives
+// verification runs), reinstall the debug APK and reseed the dev fixtures as
+// soon as the test task finishes, including on failure. Target device:
+// -PandroidTestSerial=<serial> if set, else the ANDROID_SERIAL env var, else
+// plain `adb` (single-device only).
 tasks.matching { it.name == "connectedDebugAndroidTest" }.configureEach {
     val thisTask = this
-    fun reinstallAfterTests() {
-        val apk = layout.buildDirectory.file("outputs/apk/debug/app-debug.apk").get().asFile
+    fun adb(vararg args: String): Int {
         val serial = providers.gradleProperty("androidTestSerial").orNull
             ?: System.getenv("ANDROID_SERIAL")
+        val proc = ProcessBuilder(
+            buildList {
+                add("adb")
+                if (serial != null) {
+                    add("-s")
+                    add(serial)
+                }
+                addAll(args.toList())
+            },
+        ).inheritIO().start()
+        return proc.waitFor()
+    }
+    fun reinstallAndReseedAfterTests() {
+        val apk = layout.buildDirectory.file("outputs/apk/debug/app-debug.apk").get().asFile
         runCatching {
-            val proc = ProcessBuilder(
-                buildList {
-                    add("adb")
-                    if (serial != null) {
-                        add("-s")
-                        add(serial)
-                    }
-                    addAll(listOf("install", "-r", apk.absolutePath))
-                },
-            ).inheritIO().start()
-            println("Reinstalled debug APK on $serial after connected tests (adb exit ${proc.waitFor()})")
-        }.onFailure { println("WARN: reinstall-after-tests failed: $it") }
+            val installExit = adb("install", "-r", apk.absolutePath)
+            println("Reinstalled debug APK after connected tests (adb exit $installExit)")
+            // The uninstall above wiped the app data (including the seeded
+            // DB). SeedDevDataReceiver is registered DYNAMICALLY by
+            // DebugVoucherApp (API 36 silently drops implicit broadcasts to
+            // manifest-declared receivers), so the app must be running for
+            // the broadcast to reach it. Launch, let it register, then
+            // broadcast (which also re-enables auto-seed), and relaunch so
+            // the foreground app reflects the seeded data.
+            adb("shell", "am", "start", "-n", "com.cdcwallet/.MainActivity")
+            Thread.sleep(2500)
+            val seedExit = adb(
+                "shell", "am", "broadcast", "-a",
+                "com.cdcwallet.action.SEED_DEV_DATA",
+            )
+            println("Reseeded dev data after connected tests (adb exit $seedExit)")
+            Thread.sleep(2000)
+            adb("shell", "am", "force-stop", "com.cdcwallet")
+            adb("shell", "am", "start", "-n", "com.cdcwallet/.MainActivity")
+        }.onFailure { println("WARN: reinstall/reseed-after-tests failed: $it") }
     }
     // afterTask covers both success and failure (doLast would not run on
     // failure); never masks the original result, never runs when skipped.
     gradle.taskGraph.afterTask(closureOf<Task> {
-        if (this == thisTask && !state.skipped) reinstallAfterTests()
+        if (this == thisTask && !state.skipped) reinstallAndReseedAfterTests()
     })
 }
 

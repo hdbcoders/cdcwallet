@@ -55,15 +55,19 @@ object DevSeedData {
             LocalDate.of(2027, 12, 31),
             listOf(CategoryBalance("Climate", BigDecimal("0"))),
         ),
-        // 3. Climate $80, exp 2027-12-31.
+        // 3. Climate $80 + Transport $40, exp 2027-12-31. Transport is a 4th
+        // category so the hero's "+N more" line is exercised in the seed.
         voucher(
             "dev-climate-80",
             "Mango",
             ValidityStatus.ACTIVE,
             LocalDate.of(2027, 12, 31),
-            listOf(CategoryBalance("Climate", BigDecimal("80"))),
+            listOf(
+                CategoryBalance("Climate", BigDecimal("80")),
+                CategoryBalance("Transport", BigDecimal("40")),
+            ),
         ),
-        // 4. Heartland $100 + Supermarket $150, exp 2027-12-31.
+        // 4. Heartland $100 + Supermarket $150, exp 2026-08-31.
         voucher(
             "dev-hs-100-150",
             "Durian",

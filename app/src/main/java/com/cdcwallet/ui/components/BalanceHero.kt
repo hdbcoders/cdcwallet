@@ -14,11 +14,15 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -38,6 +42,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,13 +74,18 @@ import com.cdcwallet.ui.theme.rememberReduceMotion
  */
 
 /**
- * Responsive stacking (replaces the old font-scale threshold): the expanded
- * card switches from the two-column (left + right) mockup layout to a
- * stacked (top + bottom) one when ANY category row would intersect with its
- * own balance - i.e. when [icon + name + amount] needs more horizontal room
- * than the two-column category column provides. Stacking gives the category
- * rows full card width, so nothing ever squeezes into mid-word breaks at
- * any font scale.
+ * Responsive two-column sizing + stacking (replaces the old font-scale
+ * threshold): the balance column is sized to exactly fit its `$`+total row
+ * (plus a small safety buffer), and the category column gets the remainder
+ * of the card. The expanded card keeps the two-column (left + right) mockup
+ * layout while every category row fits in that remainder; as soon as ANY
+ * category row would intersect with its own balance - i.e. [icon + name +
+ * amount] needs more horizontal room than the category column provides -
+ * the card stacks (top + bottom) so every row gets full card width. In the
+ * two-column layout the balance block stretches to the height of the three
+ * category rows, so the `$`+total bottom sits level with the 3rd category
+ * row (the "+N more" line, when present, hangs below the row). Nothing is
+ * ever cut off or split mid-word at any font scale.
  */
 @Composable
 fun BalanceHero(
@@ -109,7 +119,12 @@ fun BalanceHero(
                         end = androidx.compose.ui.geometry.Offset(900f, 900f),
                     ),
                 )
-                .padding(horizontal = 20.dp, vertical = if (collapsed) 6.dp else 18.dp),
+                .padding(
+                    start = 20.dp,
+                    top = if (collapsed) 6.dp else 18.dp,
+                    end = 20.dp,
+                    bottom = if (collapsed) 6.dp else 10.dp,
+                ),
         ) {
             if (collapsed) {
                 CollapsedBalance(summary, c, eyebrowColor)
@@ -187,9 +202,11 @@ private fun CollapsedBalance(
 /**
  * Stack the expanded hero when ANY category row would intersect with its own
  * balance - the [icon + name + amount] unit needs more horizontal room than
- * the two-column category column provides (the FlowRow inside
- * [CategoryMiniRow] would wrap the amount onto a second line). Stacking
- * gives every category row the full card width instead.
+ * the category column provides (the FlowRow inside [CategoryMiniRow] would
+ * wrap the amount onto a second line). The category column is the row's
+ * remainder after the balance column has taken exactly what its `$`+total
+ * row needs, so this also covers the case where the two columns cannot
+ * coexist at all. Stacking gives every row the full card width instead.
  */
 internal fun shouldStackBalanceHero(
     categoryColumnWidthPx: Float,
@@ -218,14 +235,24 @@ private fun ExpandedBalance(
         fontSize = 15.sp,
         fontWeight = FontWeight.SemiBold,
     )
+    // Balance row styles - mirror the Amount composable exactly, so the
+    // measured `$`+total width matches what Text actually draws.
+    val dollarStyle = TextStyle(
+        fontFamily = FrauncesDisplayFontFamily,
+        fontSize = 21.sp,
+        fontWeight = FontWeight.Medium,
+    )
+    val totalStyle = TextStyle(
+        fontFamily = FrauncesDisplayFontFamily,
+        fontSize = 42.sp,
+        fontWeight = FontWeight.Medium,
+        letterSpacing = (-0.8).sp,
+    )
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        // Two-column layout: balance column weight 1, categories weight 1.6,
-        // separated by 14dp - that is the width each row must fit into.
         val spacingPx = with(density) { 14.dp.toPx() }
         val iconAndGapPx = with(density) { (21.6.dp + 6.dp).toPx() }
-        val categoryColumnWidthPx =
-            (with(density) { maxWidth.toPx() } - spacingPx) * (1.6f / 2.6f)
-        val requiredWidthsPx = summary.categoryTotals
+        val contentWidthPx = with(density) { maxWidth.toPx() }
+        val categoryRowWidthsPx = summary.categoryTotals
             .sortedByDescending { it.remainingValue }
             .take(3)
             .map { balance ->
@@ -241,59 +268,89 @@ private fun ExpandedBalance(
                     ).size.width.toFloat()
                 iconAndGapPx + nameWidth + amountWidth
             }
-        val stacked = shouldStackBalanceHero(categoryColumnWidthPx, requiredWidthsPx)
+        // The `$` + total row, measured exactly as the Amount FlowRow lays it
+        // out: `$` glyph + its 2dp end padding, then the 2dp FlowRow spacing,
+        // then the digits. A 2dp safety buffer is added because the FlowRow
+        // wraps a hair before the arithmetic sum of its items (observed on
+        // device at default font scale).
+        val balanceRowWidthPx = with(density) {
+            val dollarPx = textMeasurer
+                .measure(AnnotatedString("$"), dollarStyle).size.width.toFloat() + 2.dp.toPx()
+            val digitsPx = textMeasurer
+                .measure(
+                    AnnotatedString(formatSgd(summary.total).removePrefix("$")),
+                    totalStyle,
+                ).size.width.toFloat()
+            dollarPx + 2.dp.toPx() + digitsPx + 2.dp.toPx()
+        }
+        // Responsive two-column: the balance column gets exactly what its row
+        // needs (plus the buffer); the category column gets the remainder.
+        val balanceColumnWidthPx = balanceRowWidthPx
+        val categoryColumnWidthPx = contentWidthPx - spacingPx - balanceColumnWidthPx
+        val stacked = shouldStackBalanceHero(categoryColumnWidthPx, categoryRowWidthsPx)
         Crossfade(
-        targetState = stacked,
-        animationSpec = if (rememberReduceMotion()) tween(0) else tween(220),
-        label = "balance-hero-layout",
-    ) { isStacked ->
-        if (isStacked) {
-            // Top + bottom: balance block spans the card; categories below.
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                BalanceBlock(summary, c, eyebrowColor, stacked = true)
-                CategoriesBlock(
-                    summary = summary,
-                    c = c,
-                    dark = dark,
-                    moreAlignment = Alignment.Start,
+            targetState = stacked,
+            animationSpec = if (rememberReduceMotion()) tween(0) else tween(220),
+            label = "balance-hero-layout",
+        ) { isStacked ->
+            if (isStacked) {
+                // Top + bottom: balance block spans the card; categories below.
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        } else {
-            // Left + right (mockup): balance left, categories right.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                BalanceBlock(
-                    summary, c, eyebrowColor,
-                    stacked = false,
-                    modifier = Modifier.weight(1f),
-                )
-                CategoriesBlock(
-                    summary = summary,
-                    c = c,
-                    dark = dark,
-                    moreAlignment = Alignment.End,
-                    modifier = Modifier
-                        .weight(1.6f)
-                        .padding(top = 2.dp),
-                )
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    BalanceBlock(summary, c, eyebrowColor, stacked = true)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        CategoryRows(summary, c, dark)
+                        MoreCategoriesLine(summary, c, TextAlign.Start)
+                    }
+                }
+            } else {
+                // Left + right (mockup): balance left, categories right. The
+                // columns are sized to their content (not fixed weights), so
+                // `$` + total always share one line while categories keep the
+                // remainder. The row is as tall as the three category rows and
+                // the balance block stretches to it, so the `$`+total bottom
+                // sits level with the 3rd category row; the compact "+N more"
+                // line hangs below the row.
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        BalanceBlock(
+                            summary, c, eyebrowColor,
+                            stacked = false,
+                            modifier = Modifier
+                                .width(with(density) { balanceColumnWidthPx.toDp() })
+                                .fillMaxHeight(),
+                        )
+                        CategoryRows(
+                            summary, c, dark,
+                            modifier = Modifier
+                                .width(with(density) { categoryColumnWidthPx.toDp() })
+                                .padding(top = 2.dp),
+                        )
+                    }
+                    MoreCategoriesLine(
+                        summary, c, TextAlign.End,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
             }
         }
     }
 }
-}
 
 /**
  * The balance half of the expanded hero: the eyebrow and the total amount.
- * Two-column mode ([stacked] = false) keeps today's left column (both
- * stacked, left-aligned). Stacked mode spans the card: the eyebrow sits
- * left with the amount right-aligned on the same row.
+ * Two-column mode ([stacked] = false) keeps the eyebrow at the top and
+ * stretches the column (the caller fills the row height), so the amount
+ * bottom-aligns with the 3rd category row. Stacked mode spans the card: the
+ * eyebrow sits left with the amount right-aligned on the same row.
  */
 @Composable
 private fun BalanceBlock(
@@ -303,7 +360,10 @@ private fun BalanceBlock(
     stacked: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = if (stacked) Arrangement.Top else Arrangement.SpaceBetween,
+    ) {
         if (stacked) {
             // Eyebrow left, amount right (they wrap to separate rows only
             // if they would collide at extreme sizes).
@@ -379,37 +439,52 @@ private fun Amount(summary: ListSummary, c: RedesignColors) {
 
 /**
  * The category half of the expanded hero: the top-3 category mini-rows by
- * value plus a "+N more" line. Two-column mode is the right column with the
- * "+N more" aligned to the card's end; stacked mode lays full-width rows
- * with the "+N more" aligned to the side of [moreAlignment].
+ * value, one per row with 8dp spacing. Callers place the "+N more" line
+ * ([MoreCategoriesLine]) separately, because in the two-column layout it
+ * hangs below the row that the balance amount aligns to.
  */
 @Composable
-private fun CategoriesBlock(
+private fun CategoryRows(
     summary: ListSummary,
     c: RedesignColors,
     dark: Boolean,
-    moreAlignment: Alignment.Horizontal,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        horizontalAlignment = moreAlignment,
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier,
     ) {
-        val top = summary.categoryTotals
+        summary.categoryTotals
             .sortedByDescending { it.remainingValue }
             .take(3)
-        top.forEach { balance -> CategoryMiniRow(balance, dark) }
-        val hidden = summary.categoryTotals.size - top.size
-        if (hidden > 0) {
-            Text(
-                text = stringResource(R.string.more_categories, hidden),
-                fontFamily = PlexMonoFontFamily,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Medium,
-                color = c.textTertiary,
-            )
-        }
+            .forEach { balance -> CategoryMiniRow(balance, dark) }
+    }
+}
+
+/** The "+N more" line shown under the top-3 rows when more categories exist
+ *  than fit. Compact: an explicit tight [lineHeight] (the ambient body
+ *  lineHeight would otherwise reserve nearly a full category row's height for
+ *  a 10sp label) and a small top gap. [textAlign] right-aligns it in the
+ *  two-column layout and left-aligns it in the stacked one. */
+@Composable
+private fun MoreCategoriesLine(
+    summary: ListSummary,
+    c: RedesignColors,
+    textAlign: TextAlign,
+    modifier: Modifier = Modifier,
+) {
+    val hidden = summary.categoryTotals.size - 3
+    if (hidden > 0) {
+        Text(
+            text = stringResource(R.string.more_categories, hidden),
+            fontFamily = PlexMonoFontFamily,
+            fontSize = 10.sp,
+            lineHeight = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = c.textTertiary,
+            textAlign = textAlign,
+            modifier = modifier.fillMaxWidth(),
+        )
     }
 }
 
