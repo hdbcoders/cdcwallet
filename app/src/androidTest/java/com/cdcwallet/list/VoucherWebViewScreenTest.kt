@@ -8,7 +8,6 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -28,8 +27,11 @@ import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.data.model.VoucherGroup
 import com.cdcwallet.extraction.ExtractionCoordinator
 import com.cdcwallet.extraction.ExtractionEngine
+import com.cdcwallet.extraction.WebViewFixtures
 import com.cdcwallet.extraction.assetPageLoaderClient
 import com.cdcwallet.ui.detail.VoucherWebViewScreen
+import com.cdcwallet.ui.theme.AppTheme
+import com.cdcwallet.ui.theme.ThemeMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -62,17 +64,7 @@ class VoucherWebViewScreenTest {
     private val appContext: Context = ApplicationProvider.getApplicationContext()
     private lateinit var database: AppDatabase
 
-    private val assetLoader: WebViewAssetLoader by lazy {
-        WebViewAssetLoader.Builder()
-            .setDomain("appassets.androidplatform.net")
-            .addPathHandler(
-                "/",
-                WebViewAssetLoader.AssetsPathHandler(
-                    InstrumentationRegistry.getInstrumentation().context,
-                ),
-            )
-            .build()
-    }
+    private val assetLoader: WebViewAssetLoader by lazy { WebViewFixtures.buildAssetLoader() }
 
     @Before
     fun setUp() {
@@ -91,7 +83,7 @@ class VoucherWebViewScreenTest {
     private fun assetLoaderClient(): WebViewClient = assetPageLoaderClient(assetLoader)
 
     private fun assetWebView(context: Context): WebView =
-        WebView(context).apply { webViewClient = assetLoaderClient() }
+        WebViewFixtures.assetWebView(context, assetLoader)
 
     /** The screen extracts through the engine's visible path; the epoch-gate
      *  client wraps the view's existing client on API 26+, and on API 24–25
@@ -99,12 +91,8 @@ class VoucherWebViewScreenTest {
      *  extraction budget (vs the 10s production default) keeps slow emulator
      *  loads from aborting the extraction under full-suite load. The
      *  asset-loader fixture host is passed through the engine's test seams. */
-    private fun extractionEngine(): ExtractionEngine = ExtractionEngine(
-        fallbackInjectionDelegate = assetLoaderClient(),
-        extractionTimeoutMs = 30_000,
-        allowedPageOrigin = "https://appassets.androidplatform.net",
-        targetApiHost = "appassets.androidplatform.net",
-    )
+    private fun extractionEngine(): ExtractionEngine =
+        WebViewFixtures.fixtureEngine(assetLoader)
 
     @Test
     fun unverifiedRowTransitionsToRealStatusOnTapRefresh() {
@@ -126,7 +114,7 @@ class VoucherWebViewScreenTest {
             repository.insert(unverified)
 
             composeRule.setContent {
-                MaterialTheme {
+                AppTheme(mode = ThemeMode.LIGHT) {
                     VoucherWebViewScreen(
                         voucherId = unverified.id,
                                                 repository = repository,
@@ -184,7 +172,7 @@ class VoucherWebViewScreenTest {
             repository.insert(cached)
 
             composeRule.setContent {
-                MaterialTheme {
+                AppTheme(mode = ThemeMode.LIGHT) {
                     VoucherWebViewScreen(
                         voucherId = cached.id,
                                                 repository = repository,
@@ -243,7 +231,7 @@ class VoucherWebViewScreenTest {
         var showDetail by mutableStateOf(true)
         val captured = arrayOfNulls<WebView>(1)
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 if (showDetail) {
                     VoucherWebViewScreen(
                         voucherId = "id-detach-1",
@@ -305,7 +293,7 @@ class VoucherWebViewScreenTest {
         var showDetail by mutableStateOf(true)
         val captured = arrayOfNulls<WebView>(1)
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 if (showDetail) {
                     VoucherWebViewScreen(
                         voucherId = "id-detach-2",
@@ -358,7 +346,7 @@ class VoucherWebViewScreenTest {
         var backCalled = false
         val captured = arrayOfNulls<WebView>(1)
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 VoucherWebViewScreen(
                     voucherId = "does-not-exist",
                     repository = repository,

@@ -11,28 +11,28 @@ import com.cdcwallet.data.VoucherRepository
 object DevSeeder {
 
     /**
-     * Insert all dev rows if the DB has none of the dev seed tokens. Safe on a
-     * fresh install or cleared data; no-op when already seeded.
+     * Insert the dev rows that are missing; existing dev rows (and all user
+     * rows) are left untouched. Refactor D1: repairing partial fixture loss,
+     * not all-or-nothing - the repository's bulkInsert skips duplicate tokens
+     * (conflict-IGNORE), so this is idempotent.
      */
     suspend fun seedIfEmpty(repository: VoucherRepository) {
-        val devTokens = DevSeedData.vouchers.mapTo(HashSet()) { it.token }
         val existing = repository.findAll()
-        val present = existing.any { devTokens.contains(it.token) }
-        if (present) return
-        repository.bulkInsert(DevSeedData.vouchers)
+        val missing = DevSeedData.vouchers.filterNot { row ->
+            existing.any { it.token == row.token }
+        }
+        if (missing.isEmpty()) return
+        repository.bulkInsert(missing)
     }
 
     /**
-     * Delete and re-insert the dev rows regardless of current state. Only the
-     * dev-seed tokens are removed - the user's own vouchers are untouched.
+     * Delete and re-insert the dev rows regardless of current state, in ONE
+     * transaction (refactor D2) so a partial failure never leaves the fixture
+     * set half-deleted. Only the dev-seed tokens are removed - the user's own
+     * vouchers are untouched.
      */
     suspend fun forceSeed(repository: VoucherRepository) {
         val devTokens = DevSeedData.vouchers.mapTo(HashSet()) { it.token }
-        val existing = repository.findAll()
-        val devRows = existing.filter { devTokens.contains(it.token) }
-        if (devRows.isNotEmpty()) {
-            devRows.forEach { repository.delete(it.id) }
-        }
-        repository.bulkInsert(DevSeedData.vouchers)
+        repository.replaceByTokens(DevSeedData.vouchers, devTokens)
     }
 }

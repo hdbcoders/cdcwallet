@@ -5,11 +5,15 @@ import com.cdcwallet.data.model.VoucherRefreshData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * In-memory [VoucherRepository] for ViewModel unit tests (P2). Backed by a
- * [MutableStateFlow]; mirrors Room semantics: [insert] refuses a duplicate
- * token, [archive]/[restore] flip `isArchived`, [delete] removes the row.
+ * [MutableStateFlow]; models the Room contracts faithfully (refactor D4):
+ * [insert] refuses a duplicate token, [bulkInsert] is atomic and skips
+ * duplicate tokens while returning the REAL inserted count (conflict-IGNORE
+ * semantics, refactor M10), [replaceAll]/[replaceByTokens] replace wholesale,
+ * [archive]/[restore] flip `isArchived`, [delete] removes the row.
  */
 class FakeVoucherRepository : VoucherRepository {
 
@@ -17,6 +21,12 @@ class FakeVoucherRepository : VoucherRepository {
 
     /** Current raw rows, archived or not. */
     fun snapshot(): List<VoucherGroup> = _vouchers.value
+
+    /** Simulates the unique-token backstop rejecting a row (refactor M3). */
+    var failInsert = false
+
+    val insertCalls = AtomicInteger(0)
+    val findCalls = AtomicInteger(0)
 
     override fun observeActive(): Flow<List<VoucherGroup>> =
         _vouchers.map { list -> list.filter { !it.isArchived } }
@@ -34,6 +44,8 @@ class FakeVoucherRepository : VoucherRepository {
         _vouchers.map { list -> list.firstOrNull { it.id == id } }
 
     override suspend fun insert(voucher: VoucherGroup): Boolean {
+        insertCalls.incrementAndGet()
+        if (failInsert) return false
         val rows = _vouchers.value
         if (rows.any { it.token == voucher.token }) return false
         _vouchers.value = rows + voucher
@@ -79,8 +91,10 @@ class FakeVoucherRepository : VoucherRepository {
         _vouchers.value = _vouchers.value.filterNot { it.id == id }
     }
 
-    override suspend fun findByToken(token: String): VoucherGroup? =
-        _vouchers.value.firstOrNull { it.token == token }
+    override suspend fun findByToken(token: String): VoucherGroup? {
+        findCalls.incrementAndGet()
+        return _vouchers.value.firstOrNull { it.token == token }
+    }
 
     override suspend fun findAll(): List<VoucherGroup> = _vouchers.value
 
@@ -88,8 +102,19 @@ class FakeVoucherRepository : VoucherRepository {
         _vouchers.value = vouchers
     }
 
+    override suspend fun replaceByTokens(vouchers: List<VoucherGroup>, tokens: Set<String>) {
+        _vouchers.value = _vouchers.value.filterNot { it.token in tokens } + vouchers
+    }
+
     override suspend fun bulkInsert(vouchers: List<VoucherGroup>): Int {
-        _vouchers.value = _vouchers.value + vouchers
-        return vouchers.size
+        if (vouchers.isEmpty()) return 0
+        // Refactor D4: conflict-IGNORE semantics like the real repository -
+        // rows whose token already exists are skipped, and the returned count
+        // is the number of rows actually inserted.
+        val rows = _vouchers.value
+        val existingTokens = rows.mapTo(HashSet()) { it.token }
+        val fresh = vouchers.filter { it.token !in existingTokens }
+        _vouchers.value = rows + fresh
+        return fresh.size
     }
 }

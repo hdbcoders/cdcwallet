@@ -44,40 +44,23 @@ class ExtractionEngineSessionTest {
     private lateinit var context: Context
     private lateinit var assetLoader: WebViewAssetLoader
 
-    private val assetOrigin = "https://appassets.androidplatform.net"
-
     private val testPageUrl = "https://appassets.androidplatform.net/TestToken1"
     private val noApiPageUrl = "https://appassets.androidplatform.net/NoApiPage"
     private val slowPageUrl = "https://appassets.androidplatform.net/SlowPage"
 
     @Before
     fun setUp() {
-        // Must run on the main thread - WebView versions ≤ ~100 enforce this;
-        // newer ones tolerate it either way. Same pattern as VoucherApp.
-        InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            WebView.setWebContentsDebuggingEnabled(true)
-        }
+        // Refactor D5: shared fixture setup (loader + debugging).
+        WebViewFixtures.enableWebViewDebugging()
         context = ApplicationProvider.getApplicationContext()
-        val testContext = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context
-        assetLoader = WebViewAssetLoader.Builder()
-            .setDomain("appassets.androidplatform.net")
-            .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(testContext))
-            .build()
+        assetLoader = WebViewFixtures.buildAssetLoader()
     }
-
-    private fun webViewWithAssetLoader(): WebView =
-        WebView(context).apply { webViewClient = assetLoaderClient() }
 
     private fun assetLoaderClient(): WebViewClient = assetPageLoaderClient(assetLoader)
 
     /** Engine with the asset-loader fixture host passed through the test seams. */
-    private fun engine(timeoutMs: Long = 30_000): ExtractionEngine = ExtractionEngine(
-        hiddenWebViewFactory = { webViewWithAssetLoader() },
-        fallbackInjectionDelegate = assetLoaderClient(),
-        extractionTimeoutMs = timeoutMs,
-        allowedPageOrigin = assetOrigin,
-        targetApiHost = "appassets.androidplatform.net",
-    )
+    private fun engine(timeoutMs: Long = 30_000): ExtractionEngine =
+        WebViewFixtures.fixtureEngine(assetLoader, timeoutMs = timeoutMs)
 
     private fun row(id: String, token: String, url: String) = VoucherGroup(
         id = id,

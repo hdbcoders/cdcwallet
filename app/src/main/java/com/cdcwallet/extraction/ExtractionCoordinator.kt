@@ -106,6 +106,16 @@ class ExtractionCoordinator(
     }
 
     /**
+     * Cancel any in-flight visible extraction regardless of voucher (refactor
+     * D3): used by the debug clear/reseed tools, whose stable fixture IDs mean
+     * a late result could otherwise write onto a freshly re-inserted row with
+     * the same id.
+     */
+    fun cancelAll() {
+        visibleJob?.cancel()
+    }
+
+    /**
      * Detach the UI callback of a detail screen that has gone away (refactor
      * H1). The extraction itself and its database write continue - only the
      * screen-bound callback (banner state) is dropped, so the ViewModel is not

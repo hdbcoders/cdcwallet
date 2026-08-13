@@ -14,6 +14,7 @@ import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.data.model.VoucherBackupPayload
 import com.cdcwallet.data.model.VoucherGroup
 import com.cdcwallet.ui.theme.FontScaleStore
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
@@ -22,6 +23,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -63,17 +65,14 @@ class SettingsViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val vm = viewModel()
-            var event: SettingsEvent? = null
-            // The collector runs on its own IO thread: the busy-wait below
-            // never yields to the runBlocking event loop, so a child coroutine
-            // on that loop would never resume.
-            val collector = launch(Dispatchers.IO) { event = vm.events.first() }
+            // Refactor D10: a CompletableDeferred completed by the collector
+            // replaces the Thread.sleep busy-wait - the runBlocking loop
+            // suspends until the real-IO collector delivers the event or the
+            // wall-clock deadline expires.
+            val done = CompletableDeferred<SettingsEvent?>()
+            val collector = launch(Dispatchers.IO) { done.complete(vm.events.first()) }
             trigger(vm)
-            val deadline = System.currentTimeMillis() + deadlineMs
-            while (event == null && System.currentTimeMillis() < deadline) {
-                dispatcher.scheduler.advanceUntilIdle()
-                Thread.sleep(100)
-            }
+            val event = withTimeoutOrNull(deadlineMs) { done.await() }
             collector.cancel()
             event to vm
         } finally {

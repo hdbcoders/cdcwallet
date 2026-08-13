@@ -49,6 +49,14 @@ interface VoucherRepository {
     suspend fun findByToken(token: String): VoucherGroup?
     suspend fun findAll(): List<VoucherGroup>
     suspend fun replaceAll(vouchers: List<VoucherGroup>)
+
+    /**
+     * Debug reseed (refactor D2): delete every row whose token is in [tokens]
+     * and insert [vouchers] - all in ONE transaction, so a partial failure can
+     * never leave the fixture set half-deleted. User rows (tokens outside the
+     * set) are untouched.
+     */
+    suspend fun replaceByTokens(vouchers: List<VoucherGroup>, tokens: Set<String>)
 }
 
 class RoomVoucherRepository(
@@ -108,6 +116,16 @@ class RoomVoucherRepository(
     override suspend fun replaceAll(vouchers: List<VoucherGroup>) {
         database.withTransaction {
             dao.deleteAll()
+            if (vouchers.isNotEmpty()) {
+                dao.insertAll(vouchers)
+            }
+        }
+    }
+
+    override suspend fun replaceByTokens(vouchers: List<VoucherGroup>, tokens: Set<String>) {
+        if (tokens.isEmpty()) return
+        database.withTransaction {
+            dao.deleteByTokens(tokens)
             if (vouchers.isNotEmpty()) {
                 dao.insertAll(vouchers)
             }

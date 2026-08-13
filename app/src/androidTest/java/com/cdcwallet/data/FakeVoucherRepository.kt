@@ -90,8 +90,17 @@ class FakeVoucherRepository : VoucherRepository {
         _vouchers.value = vouchers
     }
 
+    override suspend fun replaceByTokens(vouchers: List<VoucherGroup>, tokens: Set<String>) {
+        _vouchers.value = _vouchers.value.filterNot { it.token in tokens } + vouchers
+    }
+
     override suspend fun bulkInsert(vouchers: List<VoucherGroup>): Int {
-        _vouchers.value = _vouchers.value + vouchers
-        return vouchers.size
+        if (vouchers.isEmpty()) return 0
+        // Refactor D4: conflict-IGNORE semantics like the real repository.
+        val rows = _vouchers.value
+        val existingTokens = rows.mapTo(HashSet()) { it.token }
+        val fresh = vouchers.filter { it.token !in existingTokens }
+        _vouchers.value = rows + fresh
+        return fresh.size
     }
 }

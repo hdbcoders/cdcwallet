@@ -15,13 +15,14 @@ object DevActions {
     private const val KEY_AUTO_SEED = "auto_seed_enabled"
 
     /**
-     * Whether [DebugVoucherApp] auto-seeds fixtures on launch. Default true;
+     * Whether [DebugVoucherApp] auto-seeds fixtures on launch. Default true
+     * (refactor D1): a fresh debug install is seeded with no extra step;
      * CLEAR_DEV_DATA disables it (so the DB stays empty across relaunches),
      * SEED_DEV_DATA re-enables it.
      */
     fun autoSeedEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_AUTO_SEED, false)
+            .getBoolean(KEY_AUTO_SEED, true)
 
     fun setAutoSeedEnabled(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

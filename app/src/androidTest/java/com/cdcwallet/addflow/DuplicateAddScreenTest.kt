@@ -23,6 +23,8 @@ import com.cdcwallet.data.db.SqlCipherNative
 import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.data.model.VoucherGroup
 import com.cdcwallet.extraction.ExtractionEngine
+import com.cdcwallet.extraction.RequestCountingClient
+import com.cdcwallet.extraction.WebViewFixtures
 import com.cdcwallet.extraction.assetPageLoaderClient
 import com.cdcwallet.ui.add.AddVoucherScreen
 import kotlinx.coroutines.runBlocking
@@ -35,6 +37,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Duplicate-add UX (spec 03 §3.2 step 2): the add flow ends on the add screen
@@ -71,26 +74,16 @@ class DuplicateAddScreenTest {
             repository = repository,
             extractionEngine = ExtractionEngine(
                 hiddenWebViewFactory = { assetWebView(it) },
-                allowedPageOrigin = "https://appassets.androidplatform.net",
-                targetApiHost = "appassets.androidplatform.net",
+                allowedPageOrigin = WebViewFixtures.ASSET_ORIGIN,
+                targetApiHost = WebViewFixtures.ASSET_DOMAIN,
             ),
             validator = VoucherLinkValidator(allowedHost = "appassets.androidplatform.net"),
         )
 
     private fun assetWebView(context: Context): WebView =
-        WebView(context).apply { webViewClient = assetPageLoaderClient(assetLoader) }
+        WebViewFixtures.assetWebView(context, assetLoader)
 
-    private val assetLoader: WebViewAssetLoader by lazy {
-        WebViewAssetLoader.Builder()
-            .setDomain("appassets.androidplatform.net")
-            .addPathHandler(
-                "/",
-                WebViewAssetLoader.AssetsPathHandler(
-                    androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context,
-                ),
-            )
-            .build()
-    }
+    private val assetLoader: WebViewAssetLoader by lazy { WebViewFixtures.buildAssetLoader() }
 
     @Test
     fun duplicateSubmitShowsMessageAndStaysOnAddScreen() {
@@ -146,5 +139,69 @@ class DuplicateAddScreenTest {
         val rows = runBlocking { repository.findAll() }
         assertEquals(1, rows.size)
         assertEquals(1, rows.count { it.token == "TestToken1" })
+    }
+
+    @Test
+    fun duplicateSubmitNeverCreatesAWebViewOrTouchesTheNetwork() {
+        // Refactor D9: the duplicate check must run strictly before any
+        // extraction - a duplicate submit may never construct the hidden
+        // WebView, and the counting client proves zero intercepted requests
+        // even if one were constructed.
+        val repository = RoomVoucherRepository(database)
+        val url = "https://appassets.androidplatform.net/TestToken1"
+        runBlocking {
+            repository.insert(
+                VoucherGroup(
+                    id = "id-existing",
+                    token = "TestToken1",
+                    url = url,
+                    campaignName = "CDC Vouchers 2026",
+                    validityStatus = ValidityStatus.ACTIVE,
+                    expiryDate = null,
+                    categoryBalances = emptyList(),
+                    dateAdded = Instant.now(),
+                    lastRefreshedAt = null,
+                    lastRefreshError = null,
+                ),
+            )
+        }
+        val factoryInvocations = AtomicInteger(0)
+        var countingClient: RequestCountingClient? = null
+        val countingEngine = ExtractionEngine(
+            hiddenWebViewFactory = { context ->
+                factoryInvocations.incrementAndGet()
+                WebView(context).apply {
+                    webViewClient =
+                        RequestCountingClient(assetPageLoaderClient(assetLoader)).also { countingClient = it }
+                }
+            },
+            allowedPageOrigin = WebViewFixtures.ASSET_ORIGIN,
+            targetApiHost = WebViewFixtures.ASSET_DOMAIN,
+        )
+        composeRule.setContent {
+            AddVoucherScreen(
+                flow = AddVoucherFlow(
+                    repository = repository,
+                    extractionEngine = countingEngine,
+                    validator = VoucherLinkValidator(allowedHost = "appassets.androidplatform.net"),
+                ),
+                onBack = {},
+            )
+        }
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(isFocused() and hasText("Paste voucher link"))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Paste voucher link").performTextInput(url)
+        composeRule.onNodeWithText("Add").performClick()
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Link not added. Voucher already in your list.")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        // The strongest zero-network proof: the hidden WebView was never even
+        // created, so nothing could have been fetched.
+        assertEquals(0, factoryInvocations.get())
+        assertEquals(0, countingClient?.requestCount?.get() ?: 0)
     }
 }

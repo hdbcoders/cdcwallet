@@ -5,7 +5,6 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -26,10 +25,13 @@ import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.data.model.VoucherGroup
 import com.cdcwallet.extraction.ExtractionCoordinator
 import com.cdcwallet.extraction.ExtractionEngine
+import com.cdcwallet.extraction.WebViewFixtures
 import com.cdcwallet.ui.detail.VoucherWebViewScreen
 import com.cdcwallet.ui.list.ArchivedVoucherScreen
 import com.cdcwallet.ui.list.VoucherListScreen
+import com.cdcwallet.ui.theme.AppTheme
 import com.cdcwallet.ui.theme.LanguageStore
+import com.cdcwallet.ui.theme.ThemeMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -63,17 +65,7 @@ class VoucherArchiveFlowInstrumentedTest {
     private val appContext: Context = ApplicationProvider.getApplicationContext()
     private lateinit var database: AppDatabase
 
-    private val assetLoader: WebViewAssetLoader by lazy {
-        WebViewAssetLoader.Builder()
-            .setDomain("appassets.androidplatform.net")
-            .addPathHandler(
-                "/",
-                WebViewAssetLoader.AssetsPathHandler(
-                    InstrumentationRegistry.getInstrumentation().context,
-                ),
-            )
-            .build()
-    }
+    private val assetLoader: WebViewAssetLoader by lazy { WebViewFixtures.buildAssetLoader() }
 
     @Before
     fun setUp() {
@@ -122,7 +114,7 @@ class VoucherArchiveFlowInstrumentedTest {
 
     private fun listContent(repository: RoomVoucherRepository, onOpenVoucher: (VoucherGroup) -> Unit = {}) {
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 VoucherListScreen(
                     repository = repository,
                     extractionCoordinator = coordinator(repository),
@@ -142,7 +134,7 @@ class VoucherArchiveFlowInstrumentedTest {
         onOpenVoucher: (VoucherGroup) -> Unit = {},
     ) {
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 ArchivedVoucherScreen(
                     repository = repository,
                     extractionCoordinator = coordinator(repository),
@@ -368,7 +360,7 @@ class VoucherArchiveFlowInstrumentedTest {
         runBlocking { repository.insert(slow) }
 
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 VoucherWebViewScreen(
                     voucherId = slow.id,
                                         repository = repository,
@@ -386,13 +378,95 @@ class VoucherArchiveFlowInstrumentedTest {
         runBlocking { repository.delete("id-slow") }
 
         // Wait past the engine timeout: the late failure/result must not
+        // resurrect the deleted row, and nothing may crash. Bounded polling
+        // (refactor D10: no nested runBlocking, no Thread.sleep) - there is
+        // no completion signal for a negative assertion, so the loop waits
+        // out the real engine timeout.
+        runBlocking {
+            withTimeout(20_000) {
+                var resurrected = false
+                for (i in 0..150) {
+                    delay(100)
+                    if (repository.findByToken("Slow") != null) {
+                        resurrected = true
+                        break
+                    }
+                }
+                assertTrue("deleted row must not be resurrected", !resurrected)
+            }
+        }
+        assertNull(runBlocking { repository.findByToken("Slow") })
+    }
+
+    @Test
+    fun deleteViaListMenuWhileDetailRefreshInFlightDoesNotResurrectRow() {
+        // Refactor D6: the production path - an engine-owned visible
+        // extraction (no injected WebView factory; a URL that never loads, so
+        // the engine times out) is in flight, then the LIST screen's
+        // ViewModel performs the delete (vm.delete -> coordinator.cancel for
+        // the in-flight job -> row removed). The late result must never
+        // resurrect the row.
+        val repository = RoomVoucherRepository(database)
+        val url = "ftp://internal.local/vouchers/groups/Slow"
+        val slow = VoucherGroup(
+            id = "id-slow",
+            token = "Slow",
+            url = url,
+            campaignName = "Slow",
+            validityStatus = ValidityStatus.UNVERIFIED,
+            expiryDate = null,
+            categoryBalances = emptyList(),
+            dateAdded = Instant.now(),
+            lastRefreshedAt = null,
+            lastRefreshError = null,
+        )
+        runBlocking { repository.insert(slow) }
+
+        // One shared coordinator across the launch and the delete - the
+        // app-scoped slot the list VM cancels must be the one the extraction
+        // runs on.
+        val sharedCoordinator = coordinator(repository)
+        val engine = ExtractionEngine()
+
+        // Start the tap-refresh on the engine-owned visible WebView (the exact
+        // production mechanism the detail screen invokes) against a URL that
+        // never completes, so the extraction is in flight while the delete
+        // below runs. composeRule allows ONE setContent per test, so the
+        // launch is driven directly instead of through a second screen.
+        composeRule.runOnUiThread {
+            val webView = engine.acquireVisibleWebView(appContext)
+            sharedCoordinator.launchVisible(slow.id, url, webView) { }
+        }
+
+        // The main list deletes through the real kebab menu + ViewModel path
+        // (vm.delete -> coordinator.cancel -> row removed).
+        composeRule.setContent {
+            AppTheme(mode = ThemeMode.LIGHT) {
+                VoucherListScreen(
+                    repository = repository,
+                    extractionCoordinator = sharedCoordinator,
+                    onAddClick = {},
+                    onOpenVoucher = {},
+                    onArchivedClick = {},
+                    onSettingsClick = {}, onAboutClick = {},
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
+                )
+            }
+        }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("More options for Slow").performClick()
+        composeRule.onNodeWithText("Delete").performClick()
+        composeRule.onNodeWithText("Delete").performClick()
+
+        // Step 3: wait out the engine timeout - the late result must not
         // resurrect the deleted row, and nothing may crash.
         runBlocking {
             withTimeout(20_000) {
                 var resurrected = false
                 for (i in 0..150) {
                     delay(100)
-                    if (runBlocking { repository.findByToken("Slow") } != null) {
+                    if (repository.findByToken("Slow") != null) {
                         resurrected = true
                         break
                     }

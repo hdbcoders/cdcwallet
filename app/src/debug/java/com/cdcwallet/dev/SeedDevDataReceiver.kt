@@ -34,14 +34,20 @@ class SeedDevDataReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val app = context.applicationContext as VoucherApp
         val pendingResult = goAsync()
+        // Refactor D3: cancel any in-flight visible extraction before mutating
+        // rows - the stable fixture IDs mean a late result could land on a
+        // freshly re-inserted row after a clear/reseed.
+        app.container.extractionCoordinator.cancelAll()
         when (intent.action) {
             DevActions.ACTION_CLEAR -> {
-                // Disable auto-seed first, then wipe every row. Relaunching the
-                // app now leaves the DB empty until a SEED broadcast is sent.
+                // Disable auto-seed first, then wipe every row (transactional
+                // repository replace, refactor D2 - no direct DAO access from
+                // debug code). Relaunching the app now leaves the DB empty
+                // until a SEED broadcast is sent.
                 DevActions.setAutoSeedEnabled(app, false)
                 scope.launch {
                     try {
-                        app.container.database.voucherDao().deleteAll()
+                        app.container.repository.replaceAll(emptyList())
                     } finally {
                         pendingResult.finish()
                     }

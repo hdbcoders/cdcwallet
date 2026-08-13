@@ -78,6 +78,10 @@ interface VoucherDao {
     @Query("DELETE FROM voucher_groups")
     suspend fun deleteAll(): Int
 
+    /** Delete every row whose token is in [tokens] (debug reseed, refactor D2). */
+    @Query("DELETE FROM voucher_groups WHERE token IN (:tokens)")
+    suspend fun deleteByTokens(tokens: Set<String>): Int
+
     /**
      * Bulk insert with conflict-IGNORE semantics (refactor M10): duplicates are
      * skipped INSIDE the single transaction instead of aborting it - callers

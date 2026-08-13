@@ -7,7 +7,8 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.room.Room
 import androidx.test.core.app.ActivityScenario
@@ -20,7 +21,9 @@ import com.cdcwallet.data.db.AppDatabase
 import com.cdcwallet.data.db.SqlCipherNative
 import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.extraction.ExtractionEngine
+import com.cdcwallet.extraction.WebViewFixtures
 import com.cdcwallet.extraction.assetPageLoaderClient
+import com.cdcwallet.ui.add.AddVoucherScreen
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
@@ -43,21 +46,11 @@ import java.math.BigDecimal
 class AddVoucherFlowInstrumentedTest {
 
     @get:Rule
-    val composeRule = createEmptyComposeRule()
+    val composeRule = createComposeRule()
 
     private val appContext: Context = ApplicationProvider.getApplicationContext()
     private lateinit var database: AppDatabase
-    private val assetLoader: WebViewAssetLoader by lazy {
-        WebViewAssetLoader.Builder()
-            .setDomain("appassets.androidplatform.net")
-            .addPathHandler(
-                "/",
-                WebViewAssetLoader.AssetsPathHandler(
-                    androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context,
-                ),
-            )
-            .build()
-    }
+    private val assetLoader: WebViewAssetLoader by lazy { WebViewFixtures.buildAssetLoader() }
 
     @Before
     fun setUp() {
@@ -74,20 +67,12 @@ class AddVoucherFlowInstrumentedTest {
     }
 
     private fun assetWebView(context: Context): WebView =
-        WebView(context).apply { webViewClient = assetPageLoaderClient(assetLoader) }
+        WebViewFixtures.assetWebView(context, assetLoader)
 
-    /** Engine with the asset-loader fixture host passed through the test seams. */
-    private fun extractionEngine(): ExtractionEngine = ExtractionEngine(
-        hiddenWebViewFactory = { assetWebView(it) },
-        // Success-required tests: 30s budget so slow emulator loads under the
-        // full suite don't abort the extraction at the 10s production default.
-        extractionTimeoutMs = 30_000,
-        allowedPageOrigin = "https://appassets.androidplatform.net",
-        targetApiHost = "appassets.androidplatform.net",
-        // API 24-25 cannot read the view's client back (no getter): the
-        // rewrite-fallback path needs the delegate explicitly.
-        fallbackInjectionDelegate = assetPageLoaderClient(assetLoader),
-    )
+    /** Engine with the asset-loader fixture host passed through the test seams
+     *  (30s budget: success-required tests under full-suite emulator load). */
+    private fun extractionEngine(): ExtractionEngine =
+        WebViewFixtures.fixtureEngine(assetLoader, hiddenWebViewFactory = ::assetWebView)
 
     @Test
     fun happyPathAddsRowWithRealData() = runTest {
@@ -146,6 +131,38 @@ class AddVoucherFlowInstrumentedTest {
             composeRule.waitForIdle()
             composeRule.onNodeWithText(SHARED_TEXT).assertIsDisplayed()
         }
+    }
+
+    @Test
+    fun sharedUrlRunsTheFullAddPipelineToAPersistedRow() {
+        // Refactor D9: the share test above only proves the text reaches the
+        // field. This drives the FULL pipeline (the exact path a share intent
+        // triggers: URL arrives -> validation -> duplicate check -> fixture
+        // extraction -> row persisted) against the real screen, flow, engine,
+        // and SQLCipher repository. Fixture host via the injected validator;
+        // never the production policy, never a real RedeemSG host.
+        val repository = RoomVoucherRepository(database)
+        composeRule.setContent {
+            AddVoucherScreen(
+                flow = AddVoucherFlow(
+                    repository = repository,
+                    extractionEngine = extractionEngine(),
+                    validator = VoucherLinkValidator(allowedHost = "appassets.androidplatform.net"),
+                ),
+                initialUrl = "https://appassets.androidplatform.net/TestToken1",
+                onBack = {},
+            )
+        }
+        // The arrived URL auto-submits; wait for the success message.
+        composeRule.waitUntil(15_000) {
+            composeRule.onAllNodesWithText("Added:", substring = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        // The row landed in the repository with the extracted payload.
+        val found = runBlocking { repository.findByToken("TestToken1") }
+        assertEquals("CDC Vouchers 2026", found?.campaignName)
+        assertEquals(ValidityStatus.ACTIVE, found?.validityStatus)
+        assertTrue(found?.categoryBalances.orEmpty().isNotEmpty())
     }
 
     private companion object {

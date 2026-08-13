@@ -155,6 +155,29 @@ class BackupFlowTest {
     }
 
     @Test
+    fun duplicateImportedIdsRejectPayloadBeforeAnyMutation() = runTest {
+        // Refactor D12: two rows sharing one id in the payload must be
+        // rejected wholesale - the merge must never half-apply.
+        val repo = FakeVoucherRepository()
+        val backupFlow = flow(repo)
+
+        var rejected = false
+        try {
+            backupFlow.importMerge(
+                payload(
+                    voucher("A", id = "shared-id"),
+                    voucher("B", id = "shared-id"),
+                ),
+            )
+        } catch (e: InvalidBackupPayloadException) {
+            rejected = true
+        }
+
+        assertTrue("duplicate imported ids must reject the payload", rejected)
+        assertTrue(repo.snapshot().isEmpty())
+    }
+
+    @Test
     fun negativeBalanceRejectsPayload() = runTest {
         val repo = FakeVoucherRepository()
         val backupFlow = flow(repo)

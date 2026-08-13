@@ -1,10 +1,10 @@
 package com.cdcwallet.list
 
 import android.content.Context
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -32,7 +32,9 @@ import com.cdcwallet.data.model.VoucherGroup
 import com.cdcwallet.extraction.ExtractionCoordinator
 import com.cdcwallet.extraction.ExtractionEngine
 import com.cdcwallet.ui.list.VoucherListScreen
+import com.cdcwallet.ui.theme.AppTheme
 import com.cdcwallet.ui.theme.LanguageStore
+import com.cdcwallet.ui.theme.ThemeMode
 import kotlinx.coroutines.runBlocking
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import org.junit.After
@@ -133,7 +135,7 @@ class VoucherListScreenTest {
         }
 
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 VoucherListScreen(
                     repository = repository,
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
@@ -224,7 +226,7 @@ class VoucherListScreenTest {
         }
 
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 VoucherListScreen(
                     repository = repository,
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
@@ -257,7 +259,7 @@ class VoucherListScreenTest {
         }
 
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 VoucherListScreen(
                     repository = repository,
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
@@ -292,7 +294,7 @@ class VoucherListScreenTest {
         var openedId: String? = null
 
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 VoucherListScreen(
                     repository = repository,
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
@@ -319,7 +321,7 @@ class VoucherListScreenTest {
     fun emptyListShowsPrompt() {
         val repository = RoomVoucherRepository(database)
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 VoucherListScreen(
                     repository = repository,
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
@@ -340,7 +342,7 @@ class VoucherListScreenTest {
         val repository = RoomVoucherRepository(database)
         var addClicked = false
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 VoucherListScreen(
                     repository = repository,
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
@@ -366,7 +368,7 @@ class VoucherListScreenTest {
         var settingsClicked = false
         var aboutClicked = false
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 VoucherListScreen(
                     repository = repository,
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
@@ -390,6 +392,81 @@ class VoucherListScreenTest {
         composeRule.waitForIdle()
         assertTrue(aboutClicked)
         assertFalse(settingsClicked)
+    }
+
+    @Test
+    fun allSixBadgeStatesAnnounceTheirLabelsThroughMergedCardSemantics() {
+        // Refactor D11: TalkBack reads the CARD's merged clickable semantics
+        // (title + badge + expiry), so each badge state must surface its
+        // label inside that merged node - not just as visible text.
+        val repository = RoomVoucherRepository(database)
+        val today = LocalDate.now()
+        runBlocking {
+            repository.insert(
+                voucher("u", "U Card", ValidityStatus.UNVERIFIED, null, lastRefreshError = "NETWORK_ERROR"),
+            )
+            repository.insert(
+                voucher(
+                    "n", "N Card", ValidityStatus.NOT_STARTED, today.plusDays(5),
+                    listOf(CategoryBalance("heartland", BigDecimal("5"))),
+                ),
+            )
+            repository.insert(
+                voucher("e", "E Card", ValidityStatus.EXPIRED, today.minusDays(1), emptyList()),
+            )
+            repository.insert(
+                voucher("z", "Z Card", ValidityStatus.ACTIVE, today.plusDays(100), emptyList()),
+            )
+            repository.insert(
+                voucher(
+                    "s", "S Card", ValidityStatus.ACTIVE, today.plusDays(10),
+                    listOf(CategoryBalance("heartland", BigDecimal("50"))),
+                ),
+            )
+            repository.insert(
+                voucher(
+                    "f", "F Card", ValidityStatus.ACTIVE, today.plusDays(40),
+                    listOf(CategoryBalance("heartland", BigDecimal("50"))),
+                ),
+            )
+        }
+
+        composeRule.setContent {
+            AppTheme(mode = ThemeMode.LIGHT) {
+                VoucherListScreen(
+                    repository = repository,
+                    extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
+                    onAddClick = {},
+                    onOpenVoucher = {},
+                    onArchivedClick = {}, onSettingsClick = {}, onAboutClick = {},
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
+                )
+            }
+        }
+
+        // Each label is announced through a merged, clickable card node; rows
+        // below the fold are scrolled to first (LazyColumn composes lazily).
+        composeRule.onNode(hasText("Couldn't verify, tap to check") and hasClickAction())
+            .assertIsDisplayed()
+        composeRule.onNode(hasText("Not started") and hasClickAction()).assertIsDisplayed()
+        composeRule.onNode(hasScrollAction())
+            .performScrollToNode(hasText("Expired") and hasClickAction())
+        composeRule.onNode(hasText("Expired") and hasClickAction()).assertIsDisplayed()
+        composeRule.onNode(hasScrollAction())
+            .performScrollToNode(hasText("Fully used") and hasClickAction())
+        composeRule.onNode(hasText("Fully used") and hasClickAction()).assertIsDisplayed()
+        // SOON + FINE both carry the days-left plural label on their cards.
+        composeRule.onNode(hasScrollAction())
+            .performScrollToNode(hasText("days left", substring = true) and hasClickAction())
+        composeRule.onAllNodes(hasText("days left", substring = true) and hasClickAction())
+            .assertCountEquals(2)
+
+        // Custom header controls keep their accessibility identities.
+        composeRule.onNodeWithContentDescription("Menu").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Select language").assertIsDisplayed()
+        // The Archived pill announces its count through its merged semantics.
+        composeRule.onNode(hasText("Archived") and hasClickAction()).assertIsDisplayed()
     }
 
     private fun assertTopToBottomOrder(vararg texts: String) {

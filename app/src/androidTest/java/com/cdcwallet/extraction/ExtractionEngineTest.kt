@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.webkit.WebViewAssetLoader
 import com.cdcwallet.data.model.ValidityStatus
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -18,7 +19,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -52,23 +52,13 @@ class ExtractionEngineTest {
 
     @Before
     fun setUp() {
-        // Must run on the main thread - WebView versions ≤ ~100 enforce this;
-        // newer ones tolerate it either way. Same pattern as VoucherApp.
-        InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            WebView.setWebContentsDebuggingEnabled(true)
-        }
+        // Refactor D5: shared fixture setup (loader + debugging).
+        WebViewFixtures.enableWebViewDebugging()
         context = ApplicationProvider.getApplicationContext()
-        val testContext = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context
-        assetLoader = WebViewAssetLoader.Builder()
-            .setDomain("appassets.androidplatform.net")
-            .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(testContext))
-            .build()
+        assetLoader = WebViewFixtures.buildAssetLoader()
     }
 
     private fun assetLoaderClient(): WebViewClient = assetPageLoaderClient(assetLoader)
-
-    private fun webViewWithAssetLoader(): WebView =
-        WebView(context).apply { webViewClient = assetLoaderClient() }
 
     /** Serves the WrongOriginPage fixture from a NON-official origin. */
     private fun wrongOriginClient(): WebViewClient = object : WebViewClient() {
@@ -144,13 +134,12 @@ class ExtractionEngineTest {
         forceFallback: Boolean = false,
         delegate: WebViewClient? = assetLoaderClient(),
         timeoutMs: Long = 10_000,
-    ): ExtractionEngine = ExtractionEngine(
+    ): ExtractionEngine = WebViewFixtures.fixtureEngine(
+        assetLoader = assetLoader,
+        timeoutMs = timeoutMs,
+        hiddenWebViewFactory = hiddenFactory,
         forceFallbackInjection = forceFallback,
-        hiddenWebViewFactory = hiddenFactory ?: { webViewWithAssetLoader() },
         fallbackInjectionDelegate = delegate,
-        extractionTimeoutMs = timeoutMs,
-        allowedPageOrigin = assetOrigin,
-        targetApiHost = "appassets.androidplatform.net",
     )
 
     @Test
@@ -248,17 +237,25 @@ class ExtractionEngineTest {
 
     @Test
     fun cancellingMidFlightTearsDownHiddenWebView() = runTest {
+        val created = CompletableDeferred<Unit>()
+        val factoryEngine = engine(
+            hiddenFactory = { context ->
+                WebViewFixtures.assetWebView(context, assetLoader).also { created.complete(Unit) }
+            },
+        )
         val scope = CoroutineScope(Dispatchers.Main + Job())
         var cancelled = false
-        val job: Job = scope.launch {
+        val job = scope.launch {
             try {
-                engine().extractForAdd(context, noApiPageUrl)
+                factoryEngine.extractForAdd(context, noApiPageUrl)
             } catch (e: CancellationException) {
                 cancelled = true
                 throw e
             }
         }
-        withContext(Dispatchers.IO) { Thread.sleep(2_000) }
+        // Refactor D10: deterministic start signal - cancel only after the
+        // hidden WebView was actually created, instead of a fixed sleep.
+        created.await()
         job.cancelAndJoin()
         assertTrue("extraction should have been cancelled", cancelled)
         scope.cancel()
@@ -271,6 +268,72 @@ class ExtractionEngineTest {
             ExtractionResult.Failure(ExtractionResult.FailureReason.PARSE_ERROR),
             result,
         )
+    }
+
+    @Test
+    fun unavailableInjectionPathFailsFastWithParseError() = runTest {
+        // Refactor D12: no document-start support AND no rewrite delegate ->
+        // InjectionPath.Unavailable. The page still loads, but extraction
+        // fails fast instead of burning the timeout (refactor H5). A bare
+        // WebView (no client) + forced fallback with a null delegate produces
+        // exactly that path.
+        val unavailableEngine = engine(
+            hiddenFactory = { WebView(it) },
+            forceFallback = true,
+            delegate = null,
+        )
+        val result = unavailableEngine.extractForAdd(context, testPageUrl)
+        assertEquals(
+            ExtractionResult.Failure(ExtractionResult.FailureReason.PARSE_ERROR),
+            result,
+        )
+    }
+
+    @Test
+    fun mainFrameLoadErrorReportsNetworkError() = runTest {
+        // Refactor D12: a main-frame WebView load error must map to an
+        // explicit NETWORK_ERROR. Deterministic fixture: the main document is
+        // intercepted with a broken (null-data) response, which Chromium
+        // reports as a main-frame load failure via onReceivedError -
+        // unlike connection-refused hosts, which some WebView builds never
+        // deliver the callback for.
+        val failingEngine = engine(
+            hiddenFactory = { context ->
+                WebView(context).apply {
+                    webViewClient = object : WebViewClient() {
+                        override fun shouldInterceptRequest(
+                            view: WebView,
+                            request: WebResourceRequest,
+                        ): WebResourceResponse? =
+                            if (request.isForMainFrame) {
+                                WebResourceResponse("text/html", "UTF-8", null)
+                            } else {
+                                null
+                            }
+                    }
+                }
+            },
+        )
+        val result = failingEngine.extractForAdd(context, testPageUrl)
+        assertEquals(
+            ExtractionResult.Failure(ExtractionResult.FailureReason.NETWORK_ERROR),
+            result,
+        )
+    }
+
+    @Test
+    fun hiddenExtractionTimeoutReturnsTimeoutWithinBudget() = runTest {
+        // Refactor D12: a page that never delivers the API response times out
+        // at the configured budget instead of running indefinitely.
+        val start = System.currentTimeMillis()
+        val result = engine(timeoutMs = 2_000)
+            .extractForAdd(context, "https://appassets.androidplatform.net/SlowPage")
+        val elapsed = System.currentTimeMillis() - start
+        assertEquals(
+            ExtractionResult.Failure(ExtractionResult.FailureReason.TIMEOUT),
+            result,
+        )
+        assertTrue("timeout must fire near the 2s budget, took ${elapsed}ms", elapsed < 8_000)
     }
 
     // --- Refactor H3: the capture wrapper only accepts the official page
