@@ -18,11 +18,14 @@ sealed interface AddUiStatus {
     data object Working : AddUiStatus
 
     /** Localized message: a string resource id + format args (resolved by the
-     *  screen via stringResource so the active app locale is used). */
+     *  screen via stringResource so the active app locale is used). When
+     *  [campaignName] is set (the add-success message), the screen localizes
+     *  it through the campaign glossary before formatting (refactor L8). */
     data class Message(
         @StringRes val resId: Int,
         val isError: Boolean,
         val formatArgs: List<Any> = emptyList(),
+        val campaignName: String? = null,
     ) : AddUiStatus
 }
 
@@ -72,7 +75,7 @@ class AddVoucherViewModel(
                         AddUiStatus.Message(
                             R.string.add_added,
                             isError = false,
-                            formatArgs = listOf(result.voucher.campaignName),
+                            campaignName = result.voucher.campaignName,
                         )
                     is AddVoucherResult.AddedUnverified ->
                         AddUiStatus.Message(R.string.add_added_unverified, isError = false)

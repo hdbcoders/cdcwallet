@@ -4,6 +4,13 @@ import com.cdcwallet.data.token.VoucherToken
 import java.net.URI
 
 /**
+ * Result of the voucher-link format check: whether the link is plausible, and
+ * - when it is - the canonical token already derived from it (01 §1.4), so
+ * callers never parse the URL a second time (refactor L10).
+ */
+data class VoucherLinkValidation(val isValid: Boolean, val token: String?)
+
+/**
  * Format check for pasted/shared voucher links (spec 03 §3.2 step 1).
  *
  * Accepts only the official link shape (refactor H2 - confirmed production
@@ -25,25 +32,28 @@ import java.net.URI
 class VoucherLinkValidator(
     private val allowedHost: String = "voucher.redeem.gov.sg",
 ) {
-    /** True when the input looks like a voucher link worth proceeding on. */
-    fun isPlausibleVoucherLink(input: String): Boolean {
+    /** Validates the input and returns the derived canonical token with it. */
+    fun validate(input: String): VoucherLinkValidation {
         val trimmed = input.trim()
-        if (trimmed.isEmpty()) return false
-        val uri = runCatching { URI(trimmed) }.getOrNull() ?: return false
+        if (trimmed.isEmpty()) return VoucherLinkValidation(false, null)
+        val uri = runCatching { URI(trimmed) }.getOrNull()
+            ?: return VoucherLinkValidation(false, null)
         // https only: http, scheme-relative ("//host/..."), and every other
         // scheme are rejected. The voucher link is a bearer credential; only
         // the encrypted channel may ever carry it.
-        if (uri.scheme != "https") return false
-        if (!uri.host.equals(allowedHost, ignoreCase = true)) return false
-        if (uri.userInfo != null) return false
-        if (uri.port != -1) return false
+        if (uri.scheme != "https") return VoucherLinkValidation(false, null)
+        if (!uri.host.equals(allowedHost, ignoreCase = true)) return VoucherLinkValidation(false, null)
+        if (uri.userInfo != null) return VoucherLinkValidation(false, null)
+        if (uri.port != -1) return VoucherLinkValidation(false, null)
         // Official path shape: exactly one token segment. The token segment
         // itself comes from the canonical function below, not from this check.
-        val path = uri.path ?: return false
+        val path = uri.path ?: return VoucherLinkValidation(false, null)
         val segments = path.trim('/').split('/')
-        if (segments.size != 1 || segments[0].isBlank()) return false
+        if (segments.size != 1 || segments[0].isBlank()) return VoucherLinkValidation(false, null)
         // Token segment extraction is the canonical contract (01 §1.4) - never
         // reimplemented here (00 §0.3.2).
-        return VoucherToken.tokenFromUrl(trimmed) != null
+        val token = VoucherToken.tokenFromUrl(trimmed)
+            ?: return VoucherLinkValidation(false, null)
+        return VoucherLinkValidation(true, token)
     }
 }

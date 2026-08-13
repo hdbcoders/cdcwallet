@@ -95,25 +95,70 @@ fun badgeState(voucher: VoucherGroup, today: LocalDate = LocalDate.now()): Badge
 private fun totalRemaining(voucher: VoucherGroup): BigDecimal =
     voucher.categoryBalances.fold(BigDecimal.ZERO) { acc, b -> acc + b.remainingValue }
 
+/** Semantic tone of a badge state; the UI maps it to theme colors. */
+enum class BadgeTone { DANGER, WARNING, OK, NEUTRAL }
+
+/** Leading glyph rendered for a badge state's expiry row. */
+enum class BadgeGlyph { CHECK, WARNING, NONE }
+
 /**
- * Spec 04 §4.2 accessibility: exactly one label per badge state - no
- * fall-through (UNVERIFIED must never announce blank/default). The label is a
+ * Spec 04 §4.2: exactly one label per badge state - no fall-through
+ * (UNVERIFIED must never announce blank/default). The label is a
  * string-resource reference (localized); the days-left variant carries its
  * count so the caller can resolve the plural form.
+ *
+ * This is the SINGLE presentation source for badge states (refactor L3):
+ * components render from this model only - tone, glyph, and body banner are
+ * all derived here, never re-derived from [BadgeState] in the UI.
  */
-data class BadgeLabel(val resId: Int, val pluralCount: Long? = null)
+data class BadgePresentation(
+    val labelResId: Int,
+    val pluralCount: Long? = null,
+    val tone: BadgeTone,
+    val glyph: BadgeGlyph,
+    /** Body banner text; null means the card body shows category pills. */
+    val bannerResId: Int? = null,
+    /** Banner renders on the neutral raised surface instead of the danger tint. */
+    val bannerNeutral: Boolean = false,
+)
 
-fun badgeLabel(state: BadgeState): BadgeLabel = when (state) {
-    is BadgeState.Active ->
-        if (state.daysRemaining != null) {
-            BadgeLabel(R.plurals.badge_days_left, state.daysRemaining)
+fun badgePresentation(state: BadgeState): BadgePresentation = when (state) {
+    is BadgeState.Active -> {
+        val (resId, count) = if (state.daysRemaining != null) {
+            R.plurals.badge_days_left to state.daysRemaining
         } else {
-            BadgeLabel(R.string.badge_no_expiry)
+            R.string.badge_no_expiry to null
         }
-    BadgeState.Expired -> BadgeLabel(R.string.badge_expired)
-    BadgeState.NoBalance -> BadgeLabel(R.string.badge_fully_used)
-    BadgeState.NotStarted -> BadgeLabel(R.string.badge_not_started)
-    BadgeState.Unverified -> BadgeLabel(R.string.badge_unverified)
+        when (state.urgency) {
+            Urgency.URGENT -> BadgePresentation(resId, count, BadgeTone.DANGER, BadgeGlyph.WARNING)
+            Urgency.SOON -> BadgePresentation(resId, count, BadgeTone.WARNING, BadgeGlyph.WARNING)
+            Urgency.FINE -> BadgePresentation(resId, count, BadgeTone.OK, BadgeGlyph.CHECK)
+        }
+    }
+    BadgeState.Expired -> BadgePresentation(
+        R.string.badge_expired,
+        tone = BadgeTone.DANGER,
+        glyph = BadgeGlyph.WARNING,
+        bannerResId = R.string.expired_footer,
+    )
+    BadgeState.NoBalance -> BadgePresentation(
+        R.string.badge_fully_used,
+        tone = BadgeTone.DANGER,
+        glyph = BadgeGlyph.WARNING,
+        bannerResId = R.string.no_balance_banner,
+    )
+    BadgeState.NotStarted -> BadgePresentation(
+        R.string.badge_not_started,
+        tone = BadgeTone.NEUTRAL,
+        glyph = BadgeGlyph.NONE,
+    )
+    BadgeState.Unverified -> BadgePresentation(
+        R.string.badge_unverified,
+        tone = BadgeTone.NEUTRAL,
+        glyph = BadgeGlyph.NONE,
+        bannerResId = R.string.unverified_footer,
+        bannerNeutral = true,
+    )
 }
 
 /**

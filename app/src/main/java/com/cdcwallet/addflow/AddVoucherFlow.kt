@@ -4,7 +4,6 @@ import android.content.Context
 import com.cdcwallet.data.VoucherRepository
 import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.data.model.VoucherGroup
-import com.cdcwallet.data.token.VoucherToken
 import com.cdcwallet.extraction.ExtractionResult
 import com.cdcwallet.extraction.VoucherExtractor
 import com.cdcwallet.extraction.persistedName
@@ -48,9 +47,13 @@ class AddVoucherFlow(
 
     suspend fun add(context: Context, rawUrl: String): AddVoucherResult {
         val url = rawUrl.trim()
-        if (!validator.isPlausibleVoucherLink(url)) return AddVoucherResult.InvalidFormat
+        // Refactor L10: the validator derives the canonical token once and
+        // returns it - the add flow reuses it instead of parsing the URL a
+        // second time.
+        val validation = validator.validate(url)
+        if (!validation.isValid) return AddVoucherResult.InvalidFormat
 
-        val token = VoucherToken.tokenFromUrl(url)
+        val token = validation.token
             ?: return AddVoucherResult.InvalidFormat
         val existing = repository.findByToken(token)
         if (existing != null) return AddVoucherResult.Duplicate(existing)

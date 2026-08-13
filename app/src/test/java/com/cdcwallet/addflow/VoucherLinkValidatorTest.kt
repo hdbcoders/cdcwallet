@@ -1,6 +1,8 @@
 package com.cdcwallet.addflow
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -10,19 +12,25 @@ class VoucherLinkValidatorTest {
 
     @Test
     fun validRedeemSgLinkAccepted() {
-        assertTrue(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/ABC123"))
+        val result = validator.validate("https://voucher.redeem.gov.sg/ABC123")
+        assertTrue(result.isValid)
+        assertEquals("ABC123", result.token)
     }
 
     @Test
     fun trailingSlashStillYieldsATokenSegment() {
         // The canonical tokenizer trims slashes, so this normalizes to the same
         // token as the slash-less form - not junk.
-        assertTrue(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/ABC123/"))
+        val result = validator.validate("https://voucher.redeem.gov.sg/ABC123/")
+        assertTrue(result.isValid)
+        assertEquals("ABC123", result.token)
     }
 
     @Test
     fun queryParamsAreAllowed() {
-        assertTrue(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/ABC123?utm_source=sms"))
+        val result = validator.validate("https://voucher.redeem.gov.sg/ABC123?utm_source=sms")
+        assertTrue(result.isValid)
+        assertEquals("ABC123", result.token)
     }
 
     @Test
@@ -30,26 +38,26 @@ class VoucherLinkValidatorTest {
         // Refactor H2: the confirmed production policy is HTTPS only. The link
         // is a bearer credential; an http URL could leak it or serve a
         // tampered page.
-        assertFalse(validator.isPlausibleVoucherLink("http://voucher.redeem.gov.sg/ABC123"))
+        assertFalse(validator.validate("http://voucher.redeem.gov.sg/ABC123").isValid)
     }
 
     @Test
     fun schemeRelativeUrlRejected() {
         // "//host/token" has no scheme: it would resolve against whatever the
         // surrounding context is, which is not a self-contained voucher link.
-        assertFalse(validator.isPlausibleVoucherLink("//voucher.redeem.gov.sg/ABC123"))
+        assertFalse(validator.validate("//voucher.redeem.gov.sg/ABC123").isValid)
     }
 
     @Test
     fun userInfoRejected() {
-        assertFalse(validator.isPlausibleVoucherLink("https://user@voucher.redeem.gov.sg/ABC123"))
+        assertFalse(validator.validate("https://user@voucher.redeem.gov.sg/ABC123").isValid)
     }
 
     @Test
     fun unexpectedPortRejected() {
-        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg:8443/ABC123"))
+        assertFalse(validator.validate("https://voucher.redeem.gov.sg:8443/ABC123").isValid)
         // Even the "correct" port written explicitly is not the official shape.
-        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg:443/ABC123"))
+        assertFalse(validator.validate("https://voucher.redeem.gov.sg:443/ABC123").isValid)
     }
 
     @Test
@@ -57,60 +65,65 @@ class VoucherLinkValidatorTest {
         // The official voucher path is exactly /{token}; deeper paths are not
         // voucher links and could smuggle a token that the stored URL then
         // disagrees with.
-        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/a/b/ABC123"))
-        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/groups/ABC123"))
+        assertFalse(validator.validate("https://voucher.redeem.gov.sg/a/b/ABC123").isValid)
+        assertFalse(validator.validate("https://voucher.redeem.gov.sg/groups/ABC123").isValid)
     }
 
     @Test
     fun hostIsMatchedCaseInsensitively() {
-        assertTrue(validator.isPlausibleVoucherLink("https://VOUCHER.REDEEM.GOV.SG/ABC123"))
+        assertTrue(validator.validate("https://VOUCHER.REDEEM.GOV.SG/ABC123").isValid)
     }
 
     @Test
     fun wrongHostRejected() {
-        assertFalse(validator.isPlausibleVoucherLink("https://evil.example.com/ABC123"))
-        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg.evil.com/ABC123"))
-        assertFalse(validator.isPlausibleVoucherLink("https://api-cdc.redeem.gov.sg/ABC123"))
+        assertFalse(validator.validate("https://evil.example.com/ABC123").isValid)
+        assertFalse(validator.validate("https://voucher.redeem.gov.sg.evil.com/ABC123").isValid)
+        assertFalse(validator.validate("https://api-cdc.redeem.gov.sg/ABC123").isValid)
     }
 
     @Test
     fun junkInputRejected() {
-        assertFalse(validator.isPlausibleVoucherLink(""))
-        assertFalse(validator.isPlausibleVoucherLink("   "))
-        assertFalse(validator.isPlausibleVoucherLink("hello world"))
-        assertFalse(validator.isPlausibleVoucherLink("12345"))
-        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg"))
-        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/"))
+        assertFalse(validator.validate("").isValid)
+        assertFalse(validator.validate("   ").isValid)
+        assertFalse(validator.validate("hello world").isValid)
+        assertFalse(validator.validate("12345").isValid)
+        assertFalse(validator.validate("https://voucher.redeem.gov.sg").isValid)
+        assertFalse(validator.validate("https://voucher.redeem.gov.sg/").isValid)
     }
 
     @Test
     fun unsupportedSchemeRejected() {
-        assertFalse(validator.isPlausibleVoucherLink("ftp://voucher.redeem.gov.sg/ABC123"))
-        assertFalse(validator.isPlausibleVoucherLink("javascript:voucher.redeem.gov.sg/ABC123"))
+        assertFalse(validator.validate("ftp://voucher.redeem.gov.sg/ABC123").isValid)
+        assertFalse(validator.validate("javascript:voucher.redeem.gov.sg/ABC123").isValid)
     }
 
     @Test
     fun whitespaceSurroundingInputIsIgnored() {
-        assertTrue(validator.isPlausibleVoucherLink("  https://voucher.redeem.gov.sg/ABC123  "))
+        val result = validator.validate("  https://voucher.redeem.gov.sg/ABC123  ")
+        assertTrue(result.isValid)
+        assertEquals("ABC123", result.token)
     }
 
     @Test
     fun queryParamsAndFragmentAreStrippedByCanonicalTokenFunction() {
-        assertTrue(
-            validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/TokenABC?a=1#frag"),
-        )
+        // Refactor L10: the fragment is stripped by the canonical token
+        // function (01 §1.4) - a URL differing only in its fragment is the
+        // same voucher.
+        val result = validator.validate("https://voucher.redeem.gov.sg/TokenABC?a=1#frag")
+        assertTrue(result.isValid)
+        assertEquals("TokenABC", result.token)
     }
 
     @Test
     fun trailingSlashUrlIsValidViaCanonicalTokenFunction() {
-        assertTrue(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/TokenABC/"))
+        assertTrue(validator.validate("https://voucher.redeem.gov.sg/TokenABC/").isValid)
     }
 
     @Test
     fun hostCaseVariantsAcceptedButWrongHostAndEmptySegmentRejected() {
-        assertTrue(validator.isPlausibleVoucherLink("https://Voucher.Redeem.Gov.Sg/TokenABC"))
-        assertFalse(validator.isPlausibleVoucherLink("https://wronghost.redeem.gov.sg/TokenABC"))
-        assertFalse(validator.isPlausibleVoucherLink("https://voucher.redeem.gov.sg/"))
+        assertTrue(validator.validate("https://Voucher.Redeem.Gov.Sg/TokenABC").isValid)
+        assertFalse(validator.validate("https://wronghost.redeem.gov.sg/TokenABC").isValid)
+        assertFalse(validator.validate("https://voucher.redeem.gov.sg/").isValid)
     }
 
     @Test
@@ -118,7 +131,14 @@ class VoucherLinkValidatorTest {
         // Test-only custom hosts must remain available through injected
         // validators, never through the production policy.
         val fixtureValidator = VoucherLinkValidator(allowedHost = "appassets.androidplatform.net")
-        assertTrue(fixtureValidator.isPlausibleVoucherLink("https://appassets.androidplatform.net/TestToken1"))
-        assertFalse(validator.isPlausibleVoucherLink("https://appassets.androidplatform.net/TestToken1"))
+        assertTrue(fixtureValidator.validate("https://appassets.androidplatform.net/TestToken1").isValid)
+        assertFalse(validator.validate("https://appassets.androidplatform.net/TestToken1").isValid)
+    }
+
+    @Test
+    fun rejectedInputsCarryNoToken() {
+        assertNull(validator.validate("https://voucher.redeem.gov.sg/").token)
+        assertNull(validator.validate("https://evil.example.com/ABC123").token)
+        assertNull(validator.validate("").token)
     }
 }

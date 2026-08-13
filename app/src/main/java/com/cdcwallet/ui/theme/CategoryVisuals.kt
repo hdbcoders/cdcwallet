@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
  * Visual identity for a category: its hue, the soft tint used as chip/badge
  * container, and the icon shown on the tinted square. Matching is
  * case-insensitive (extracted names vary). Unknown categories fall back to a
- * neutral star. Uses [LocalRedesignColors] tokens so both themes agree.
+ * neutral star on the [RedesignColors.categoryFallback] tokens (refactor L7).
  */
 data class CategoryVisuals(
     val color: Color,
@@ -27,8 +27,8 @@ internal fun categoryVisuals(category: String, dark: Boolean): CategoryVisuals {
         "heartland" -> CategoryVisuals(r.heart, r.heartSoft, Icons.Outlined.Storefront)
         "supermarket" -> CategoryVisuals(r.market, r.marketSoft, Icons.Outlined.ShoppingCart)
         else -> CategoryVisuals(
-            Color(0xFF8A8578),
-            Color(0x338A8578),
+            r.categoryFallback,
+            r.categoryFallbackSoft,
             Icons.Outlined.Star,
         )
     }

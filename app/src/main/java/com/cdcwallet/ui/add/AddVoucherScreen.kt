@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcwallet.R
 import com.cdcwallet.addflow.AddVoucherFlow
+import com.cdcwallet.ui.theme.LocalAppLanguage
+import com.cdcwallet.ui.theme.localizeCampaignName
 import kotlinx.coroutines.delay
 
 /**
@@ -106,7 +108,12 @@ fun AddVoucherScreen(
             when (val s = vm.status) {
                 is AddUiStatus.Working -> CircularProgressIndicator()
                 is AddUiStatus.Message -> Text(
-                    text = stringResource(s.resId, *s.formatArgs.toTypedArray()),
+                    // Refactor L8: the campaign name in the add-success
+                    // message goes through the same glossary localization as
+                    // the cards and detail before it is formatted in.
+                    text = s.campaignName?.let {
+                        stringResource(s.resId, localizeCampaignName(it, LocalAppLanguage.current))
+                    } ?: stringResource(s.resId, *s.formatArgs.toTypedArray()),
                     color = if (s.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 )
                 is AddUiStatus.Idle -> {}

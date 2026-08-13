@@ -53,7 +53,7 @@ class BackupImportValidator(
                 throw InvalidBackupPayloadException("voucher url too long")
             }
             // The strict add-flow policy: https, exact host, official path shape.
-            if (!linkValidator.isPlausibleVoucherLink(row.url)) {
+            if (!linkValidator.validate(row.url).isValid) {
                 throw InvalidBackupPayloadException("invalid voucher url")
             }
             // Identity consistency: the row's token must be the token of its

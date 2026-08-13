@@ -29,6 +29,19 @@ data class RedesignColors(
     val heart: Color,
     val heartSoft: Color,
     val ok: Color,
+    /**
+     * Amber urgency hue ("soon" state). Deliberately identical across both
+     * themes - it was a hardcoded literal before centralization (refactor L6)
+     * and no product-approved dark variant exists yet.
+     */
+    val warning: Color,
+    /**
+     * Fallback visuals for unknown categories (refactor L7): neutral warm
+     * gray hue + its soft tint. Shared by both themes, same as the literals
+     * previously hardcoded in CategoryVisuals.
+     */
+    val categoryFallback: Color,
+    val categoryFallbackSoft: Color,
     val summaryStart: Color,
     val summaryEnd: Color,
     val summaryBorder: Color,
@@ -59,6 +72,9 @@ val LightRedesignColors = RedesignColors(
     heart = Color(0xFF1E7F4C),
     heartSoft = Color(0x1F1E7F4C), // rgba(30,127,76,0.12)
     ok = Color(0xFF2E9358),
+    warning = Color(0xFFC58A1F),
+    categoryFallback = Color(0xFF8A8578),
+    categoryFallbackSoft = Color(0x338A8578),
     summaryStart = Color(0xFFF3E3C4),
     summaryEnd = Color(0xFFECD7A9),
     summaryBorder = Color(0x59B07F27), // rgba(176,127,39,0.35)
@@ -86,6 +102,9 @@ val DarkRedesignColors = RedesignColors(
     heart = Color(0xFF3CAD74),
     heartSoft = Color(0x243CAD74), // rgba(60,173,116,0.14)
     ok = Color(0xFF6FBF8B),
+    warning = Color(0xFFC58A1F),
+    categoryFallback = Color(0xFF8A8578),
+    categoryFallbackSoft = Color(0x338A8578),
     summaryStart = Color(0xFF2A2013),
     summaryEnd = Color(0xFF1B140C),
     summaryBorder = Color(0x4DC9A24B), // rgba(201,162,75,0.30)

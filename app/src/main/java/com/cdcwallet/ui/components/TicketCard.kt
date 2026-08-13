@@ -43,8 +43,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cdcwallet.R
 import com.cdcwallet.data.model.VoucherGroup
-import com.cdcwallet.ui.list.BadgeState
-import com.cdcwallet.ui.list.Urgency
+import com.cdcwallet.ui.list.BadgeGlyph
+import com.cdcwallet.ui.list.BadgePresentation
+import com.cdcwallet.ui.list.BadgeTone
+import com.cdcwallet.ui.list.badgePresentation
 import com.cdcwallet.ui.list.badgeState
 import com.cdcwallet.ui.list.formatSgd
 import com.cdcwallet.ui.theme.LocalAppIsDark
@@ -75,7 +77,7 @@ fun TicketCard(
     menuContent: @Composable ColumnScope.() -> Unit,
 ) {
     val c = LocalRedesignColors.current
-    val badge = badgeState(voucher)
+    val presentation = badgePresentation(badgeState(voucher))
     val datePattern = stringResource(R.string.date_pattern)
     val locale = LocalConfiguration.current.locales[0]
     val dateText = voucher.expiryDate?.let { date ->
@@ -90,7 +92,7 @@ fun TicketCard(
             1.dp,
             c.hairline,
         ),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
     ) {
@@ -149,7 +151,7 @@ fun TicketCard(
             // red warning + status label for expired / fully used. A failed
             // refresh (refactor M5) swaps the line for the neutral stale
             // status instead of the expiry text.
-            ExpiryRow(badge, expiryText, stale = voucher.lastRefreshError != null)
+            ExpiryRow(presentation, expiryText, stale = voucher.lastRefreshError != null)
 
             // Perforated divider.
             Canvas(
@@ -167,21 +169,18 @@ fun TicketCard(
             }
 
             // Body: pills + amounts, or the status banner. Driven exclusively by
-            // BadgeState (refactor H10, spec 04 §4.2): the "no balance" banner
-            // applies only to an ACTIVE zero-balance row - a UNVERIFIED /
-            // NOT_STARTED row with no extracted balances must never read as
-            // "fully used".
-            when {
-                badge is BadgeState.Expired ->
-                    StatusBanner(text = stringResource(R.string.expired_footer))
-                badge is BadgeState.NoBalance ->
-                    StatusBanner(text = stringResource(R.string.no_balance_banner))
-                badge is BadgeState.Unverified ->
-                    StatusBanner(
-                        text = stringResource(R.string.unverified_footer),
-                        neutral = true,
-                    )
-                else -> CategoryPills(voucher, Modifier.padding(horizontal = 18.dp, vertical = 8.dp))
+            // BadgeState via BadgePresentation (refactor H10, spec 04 §4.2): the
+            // "no balance" banner applies only to an ACTIVE zero-balance row -
+            // a UNVERIFIED / NOT_STARTED row with no extracted balances must
+            // never read as "fully used".
+            val bannerResId = presentation.bannerResId
+            if (bannerResId != null) {
+                StatusBanner(
+                    text = stringResource(bannerResId),
+                    neutral = presentation.bannerNeutral,
+                )
+            } else {
+                CategoryPills(voucher, Modifier.padding(horizontal = 18.dp, vertical = 8.dp))
             }
         }
     }
@@ -190,67 +189,57 @@ fun TicketCard(
 /** Expiry row: green ✓ + days-left (fine), amber/red warning (soon/urgent),
  *  red warning + status text (expired / fully used). FlowRow: status and
  *  expiry wrap to their own lines instead of ellipsizing at large font
- *  scales. */
+ *  scales. Renders exclusively from [BadgePresentation] (refactor L3). */
 @Composable
-private fun ExpiryRow(badge: BadgeState, expiryText: String?, stale: Boolean = false) {
+private fun ExpiryRow(
+    presentation: BadgePresentation,
+    expiryText: String?,
+    stale: Boolean = false,
+) {
     val c = LocalRedesignColors.current
+    val statusColor = when (presentation.tone) {
+        BadgeTone.DANGER -> c.danger
+        BadgeTone.WARNING -> c.warning
+        BadgeTone.OK -> c.ok
+        BadgeTone.NEUTRAL -> c.textSecondary
+    }
     FlowRow(
         itemVerticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
         modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 8.dp),
     ) {
-        when (badge) {
-            is BadgeState.Active -> when (badge.urgency) {
-                Urgency.URGENT -> WarningDot(Modifier.size(16.dp), c.danger)
-                Urgency.SOON -> WarningDot(Modifier.size(16.dp), Color(0xFFC58A1F))
-                Urgency.FINE -> {
-                    Box(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .background(c.ok, CircleShape),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        // Icon, not a "✓" text glyph: the glyph sits high in
-                        // its line box (no descender), so it looked off-center.
-                        Icon(
-                            Icons.Filled.Check,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(11.dp),
-                        )
-                    }
+        when (presentation.glyph) {
+            BadgeGlyph.CHECK -> {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .background(c.ok, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    // Icon, not a "✓" text glyph: the glyph sits high in
+                    // its line box (no descender), so it looked off-center.
+                    Icon(
+                        Icons.Filled.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(11.dp),
+                    )
                 }
             }
-            BadgeState.Expired, BadgeState.NoBalance -> WarningDot(Modifier.size(16.dp), c.danger)
-            else -> Spacer(Modifier.size(16.dp))
+            BadgeGlyph.WARNING -> WarningDot(Modifier.size(16.dp), statusColor)
+            BadgeGlyph.NONE -> Spacer(Modifier.size(16.dp))
         }
 
-        val statusText: String? = when (badge) {
-            is BadgeState.Active -> daysLeftText(badge)
-            is BadgeState.Expired -> stringResource(R.string.badge_expired)
-            is BadgeState.NoBalance -> stringResource(R.string.badge_fully_used)
-            is BadgeState.NotStarted -> stringResource(R.string.badge_not_started)
-            is BadgeState.Unverified -> stringResource(R.string.badge_unverified)
-            else -> null
-        }
-        val statusColor = when (badge) {
-            is BadgeState.Active -> when (badge.urgency) {
-                Urgency.URGENT -> c.danger
-                Urgency.SOON -> Color(0xFFC58A1F)
-                Urgency.FINE -> c.ok
-            }
-            BadgeState.Expired, BadgeState.NoBalance -> c.danger
-            else -> c.textSecondary
-        }
-        if (statusText != null) {
-            Text(
-                text = statusText,
-                fontSize = 12.5.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = statusColor,
-            )
-        }
+        val statusText = presentation.pluralCount?.let { count ->
+            pluralStringResource(presentation.labelResId, count.toInt(), count.toInt())
+        } ?: stringResource(presentation.labelResId)
+        Text(
+            text = statusText,
+            fontSize = 12.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = statusColor,
+        )
         // Refactor M5: a failed refresh replaces the EXPIRY segment with the
         // neutral stale status - the badge label itself is untouched (spec 04
         // §4.2) - so cached values never LOOK current after a failure.
@@ -275,13 +264,6 @@ private fun WarningDot(modifier: Modifier, color: Color) {
             modifier = Modifier.size(14.dp),
         )
     }
-}
-
-@Composable
-private fun daysLeftText(badge: BadgeState.Active): String = when {
-    badge.daysRemaining != null ->
-        pluralStringResource(R.plurals.badge_days_left, badge.daysRemaining.toInt(), badge.daysRemaining.toInt())
-    else -> stringResource(R.string.badge_no_expiry)
 }
 
 /** Red soft banner for expired / fully-redeemed vouchers. Mockup: plain text,

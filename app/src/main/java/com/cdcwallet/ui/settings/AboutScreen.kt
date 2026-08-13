@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,12 +51,20 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             )
         },
     ) { padding ->
+        // Refactor L9: scrollable content - long translations or the Huge
+        // text setting scroll inside the screen instead of clipping. The
+        // version line stays pinned to the lower-right corner (product
+        // decision): the scroll column reserves bottom space so the last
+        // content line can never hide behind it.
         Box(
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 56.dp),
             ) {
                 Text(
                     text = stringResource(R.string.about_description),

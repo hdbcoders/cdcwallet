@@ -4,9 +4,10 @@ import com.cdcwallet.R
 import com.cdcwallet.data.model.CategoryBalance
 import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.data.model.VoucherGroup
-import com.cdcwallet.ui.list.BadgeLabel
+import com.cdcwallet.ui.list.BadgeGlyph
+import com.cdcwallet.ui.list.BadgeTone
 import com.cdcwallet.ui.list.Urgency
-import com.cdcwallet.ui.list.badgeLabel
+import com.cdcwallet.ui.list.badgePresentation
 import com.cdcwallet.ui.list.badgeState
 import com.cdcwallet.ui.list.formatSgd
 import com.cdcwallet.ui.list.sortActive
@@ -151,7 +152,12 @@ class VoucherListLogicTest {
     @Test
     fun unverifiedGetsDistinctNeutralBadge() {
         val state = badgeState(voucher("u", ValidityStatus.UNVERIFIED), today)
-        assertEquals(R.string.badge_unverified, badgeLabel(state).resId)
+        val p = badgePresentation(state)
+        assertEquals(R.string.badge_unverified, p.labelResId)
+        assertEquals(BadgeTone.NEUTRAL, p.tone)
+        assertEquals(BadgeGlyph.NONE, p.glyph)
+        assertEquals(R.string.unverified_footer, p.bannerResId)
+        assertTrue(p.bannerNeutral)
     }
 
     @Test
@@ -160,19 +166,28 @@ class VoucherListLogicTest {
             voucher("n", ValidityStatus.NOT_STARTED, today.plusDays(2)),
             today,
         )
-        assertEquals(R.string.badge_not_started, badgeLabel(state).resId)
+        val p = badgePresentation(state)
+        assertEquals(R.string.badge_not_started, p.labelResId)
+        assertEquals(BadgeTone.NEUTRAL, p.tone)
+        assertEquals(BadgeGlyph.NONE, p.glyph)
+        assertEquals(null, p.bannerResId)
     }
 
     @Test
     fun expiredStatusGetsExpiredBadge() {
         val state = badgeState(voucher("e", ValidityStatus.EXPIRED, today.minusDays(1)), today)
-        assertEquals(R.string.badge_expired, badgeLabel(state).resId)
+        val p = badgePresentation(state)
+        assertEquals(R.string.badge_expired, p.labelResId)
+        assertEquals(BadgeTone.DANGER, p.tone)
+        assertEquals(BadgeGlyph.WARNING, p.glyph)
+        assertEquals(R.string.expired_footer, p.bannerResId)
+        assertTrue(!p.bannerNeutral)
     }
 
     @Test
     fun activeWithPastDateReadsAsExpired() {
         val state = badgeState(voucher("a", ValidityStatus.ACTIVE, today.minusDays(1)), today)
-        assertEquals(R.string.badge_expired, badgeLabel(state).resId)
+        assertEquals(R.string.badge_expired, badgePresentation(state).labelResId)
     }
 
     @Test
@@ -206,9 +221,12 @@ class VoucherListLogicTest {
             ),
             today,
         )
-        val label = badgeLabel(state)
-        assertEquals(R.plurals.badge_days_left, label.resId)
+        val label = badgePresentation(state)
+        assertEquals(R.plurals.badge_days_left, label.labelResId)
         assertEquals(12L, label.pluralCount)
+        // 12 days to expiry is SOON territory.
+        assertEquals(BadgeTone.WARNING, label.tone)
+        assertEquals(BadgeGlyph.WARNING, label.glyph)
     }
 
     @Test
@@ -223,7 +241,10 @@ class VoucherListLogicTest {
             today,
         ) as com.cdcwallet.ui.list.BadgeState.Active
         assertEquals(Urgency.FINE, state.urgency)
-        assertEquals(R.string.badge_no_expiry, badgeLabel(state).resId)
+        val p = badgePresentation(state)
+        assertEquals(R.string.badge_no_expiry, p.labelResId)
+        assertEquals(BadgeTone.OK, p.tone)
+        assertEquals(BadgeGlyph.CHECK, p.glyph)
     }
 
     @Test
@@ -253,14 +274,16 @@ class VoucherListLogicTest {
         )
         assertEquals(
             listOf(
-                BadgeLabel(R.string.badge_unverified),
-                BadgeLabel(R.string.badge_not_started),
-                BadgeLabel(R.string.badge_expired),
-                BadgeLabel(R.plurals.badge_days_left, 5L),
-                BadgeLabel(R.string.badge_fully_used),
+                R.string.badge_unverified,
+                R.string.badge_not_started,
+                R.string.badge_expired,
+                R.plurals.badge_days_left,
+                R.string.badge_fully_used,
             ),
-            states.map(::badgeLabel),
+            states.map { badgePresentation(it).labelResId },
         )
+        // The days-left label resolves the plural count the UI renders with.
+        assertEquals(5L, badgePresentation(states[3]).pluralCount)
     }
 
     @Test
@@ -282,7 +305,12 @@ class VoucherListLogicTest {
             com.cdcwallet.ui.list.BadgeState.NoBalance,
             zero,
         )
-        assertEquals(R.string.badge_fully_used, badgeLabel(zero).resId)
+        val p = badgePresentation(zero)
+        assertEquals(R.string.badge_fully_used, p.labelResId)
+        assertEquals(BadgeTone.DANGER, p.tone)
+        assertEquals(BadgeGlyph.WARNING, p.glyph)
+        assertEquals(R.string.no_balance_banner, p.bannerResId)
+        assertTrue(!p.bannerNeutral)
 
         // Empty categoryBalances (nothing unused) also means zero balance.
         val empty = badgeState(voucher("e2", ValidityStatus.ACTIVE, today.plusDays(149)), today)
@@ -351,8 +379,8 @@ class VoucherListLogicTest {
             today,
         )
         assertEquals(Urgency.FINE, (state as com.cdcwallet.ui.list.BadgeState.Active).urgency)
-        val label = badgeLabel(state)
-        assertEquals(R.plurals.badge_days_left, label.resId)
+        val label = badgePresentation(state)
+        assertEquals(R.plurals.badge_days_left, label.labelResId)
         assertEquals(149L, label.pluralCount)
     }
 
@@ -367,28 +395,28 @@ class VoucherListLogicTest {
             ),
             today,
         )
-        assertEquals(R.string.badge_expired, badgeLabel(state).resId)
+        assertEquals(R.string.badge_expired, badgePresentation(state).labelResId)
     }
 
     @Test
     fun nonActiveStatesIgnoreZeroBalance() {
         assertEquals(
             R.string.badge_not_started,
-            badgeLabel(badgeState(
+            badgePresentation(badgeState(
                 voucher("n", ValidityStatus.NOT_STARTED, today.plusDays(2)),
                 today,
-            )).resId,
+            )).labelResId,
         )
         assertEquals(
             R.string.badge_expired,
-            badgeLabel(badgeState(
+            badgePresentation(badgeState(
                 voucher("e", ValidityStatus.EXPIRED, today.minusDays(1)),
                 today,
-            )).resId,
+            )).labelResId,
         )
         assertEquals(
             R.string.badge_unverified,
-            badgeLabel(badgeState(voucher("u", ValidityStatus.UNVERIFIED), today)).resId,
+            badgePresentation(badgeState(voucher("u", ValidityStatus.UNVERIFIED), today)).labelResId,
         )
     }
 

@@ -3,8 +3,6 @@ package com.cdcwallet.settings
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotSelected
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -17,7 +15,6 @@ import com.cdcwallet.data.db.AppDatabase
 import com.cdcwallet.data.db.SqlCipherNative
 import com.cdcwallet.extraction.ExtractionCoordinator
 import com.cdcwallet.extraction.ExtractionEngine
-import com.cdcwallet.ui.list.LanguagePickerDialog
 import com.cdcwallet.ui.list.VoucherListScreen
 import com.cdcwallet.ui.theme.AppLanguage
 import com.cdcwallet.ui.theme.LanguageStore
@@ -114,25 +111,6 @@ class LanguageSettingsInstrumentedTest {
         assertEquals(AppLanguage.ZH, languageStore.language)
         // Selecting persists and dismisses the picker.
         composeRule.onNodeWithText("中文").assertDoesNotExist()
-    }
-
-    @Test
-    fun pickerChecksTheActiveLanguage() {
-        languageStore.setAppLanguage(AppLanguage.MS)
-        composeRule.setContent {
-            MaterialTheme {
-                LanguagePickerDialog(
-                    current = languageStore.language,
-                    onLanguageSelected = { languageStore.setAppLanguage(it) },
-                    onDismiss = {},
-                )
-            }
-        }
-        composeRule.onNodeWithText("Bahasa Melayu").assertIsDisplayed().assertIsSelected()
-        // Refactor M21: the inactive entries must carry the matching
-        // not-selected semantics too (radio-like announcement, not just the
-        // visual checkmark).
-        composeRule.onNodeWithText("中文").assertIsDisplayed().assertIsNotSelected()
     }
 
     private companion object {

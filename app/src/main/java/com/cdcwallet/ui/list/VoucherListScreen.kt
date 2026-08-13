@@ -1,6 +1,5 @@
 package com.cdcwallet.ui.list
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.tween
@@ -18,26 +17,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Link
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcwallet.R
@@ -46,11 +33,13 @@ import com.cdcwallet.data.model.VoucherGroup
 import com.cdcwallet.extraction.ExtractionCoordinator
 import com.cdcwallet.ui.components.AppHeader
 import com.cdcwallet.ui.components.BalanceHero
+import com.cdcwallet.ui.components.CopyUrlEffect
 import com.cdcwallet.ui.components.DashedAddRow
+import com.cdcwallet.ui.components.RowMenuMiddleAction
 import com.cdcwallet.ui.components.TicketCard
+import com.cdcwallet.ui.components.VoucherRowMenuContent
 import com.cdcwallet.ui.theme.AppLanguage
 import com.cdcwallet.ui.theme.LanguageStore
-import com.cdcwallet.ui.theme.LocalRedesignColors
 import com.cdcwallet.ui.theme.rememberReduceMotion
 
 /**
@@ -85,20 +74,9 @@ fun VoucherListScreen(
     val reduceMotion = rememberReduceMotion()
     val sorted = remember(vouchers) { sortActive(vouchers) }
     val summary = remember(sorted) { summarizeActive(sorted) }
-    val clipboardManager = LocalClipboardManager.current
-    // Toast on Copy URL (REQ-10 feedback): the activity context is wrapped
-    // with the active app locale, so the message follows the app language.
-    val context = LocalContext.current
-    val linkCopiedLabel = stringResource(R.string.link_copied)
-    // Copy-URL effect (refactor M16): the ACTION is requested in the
-    // ViewModel; the screen executes clipboard + toast here and consumes it.
-    LaunchedEffect(vm.copyRequest) {
-        vm.copyRequest?.let { url ->
-            clipboardManager.setText(AnnotatedString(url))
-            Toast.makeText(context, linkCopiedLabel, Toast.LENGTH_SHORT).show()
-            vm.consumeCopyRequest()
-        }
-    }
+    // Copy-URL effect (refactor M16 + L11): the ACTION is requested in the
+    // ViewModel; the shared bridge executes clipboard + toast and consumes it.
+    CopyUrlEffect(copyRequest = vm.copyRequest, onConsumed = { vm.consumeCopyRequest() })
     // The LazyColumn scrolls via this state (overflow-menu / row animations).
     val listState = rememberLazyListState()
 
@@ -162,39 +140,17 @@ fun VoucherListScreen(
                                 Modifier.animateItem()
                             },
                         ) {
-                            val c = LocalRedesignColors.current
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.copy_url)) },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Link, contentDescription = null, tint = c.textSecondary)
-                                },
-                                onClick = {
+                            VoucherRowMenuContent(
+                                onCopyUrl = {
                                     vm.setMenu(null)
                                     vm.requestCopy(voucher.url)
                                 },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.archive)) },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Folder, contentDescription = null, tint = c.textSecondary)
-                                },
-                                onClick = {
+                                middleAction = RowMenuMiddleAction.ARCHIVE,
+                                onMiddleClick = {
                                     vm.setMenu(null)
                                     vm.archive(voucher)
                                 },
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 12.dp),
-                                color = c.hairline,
-                            )
-                            DropdownMenuItem(
-                                text = {
-                                    Text(stringResource(R.string.delete), color = c.danger)
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Delete, contentDescription = null, tint = c.danger)
-                                },
-                                onClick = {
+                                onDelete = {
                                     vm.setMenu(null)
                                     vm.requestDelete(voucher)
                                 },
