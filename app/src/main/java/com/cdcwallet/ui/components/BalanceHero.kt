@@ -126,12 +126,7 @@ fun BalanceHero(
                         end = androidx.compose.ui.geometry.Offset(900f, 900f),
                     ),
                 )
-                .padding(
-                    start = 20.dp,
-                    top = if (collapsed) 6.dp else 18.dp,
-                    end = 20.dp,
-                    bottom = if (collapsed) 6.dp else 10.dp,
-                ),
+                .padding(horizontal = 20.dp, vertical = 4.dp),
         ) {
             if (collapsed) {
                 CollapsedBalance(summary, c, eyebrowColor)
@@ -482,7 +477,7 @@ private fun CategoryRows(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = modifier,
     ) {
         summary.categoryTotals
