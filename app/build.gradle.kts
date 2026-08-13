@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -6,6 +7,14 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+}
+
+// Release signing (Play upload key). Credentials live in keystore/ which is
+// gitignored - never commit the keystore or its passwords. `keystore
+// -genkeypair` once, keep backups; a lost upload key means a lost app.
+val keystoreProperties = Properties().apply {
+    val f = rootProject.file("keystore/keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
 }
 
 android {
@@ -21,8 +30,24 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            if (keystoreProperties.isNotEmpty()) {
+                storeFile = rootProject.file("keystore/${keystoreProperties["storeFile"]}")
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // Only wire the signing config when the keystore exists; the
+            // task-level check below refuses to actually build unsigned.
+            if (keystoreProperties.isNotEmpty()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -110,6 +135,21 @@ tasks.matching { it.name == "connectedDebugAndroidTest" }.configureEach {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
+    }
+}
+
+// Fail-fast: never produce an unsigned release artifact. The check runs only
+// when a release bundle/APK is actually requested, so debug builds and tests
+// stay unaffected when keystore/ is absent (e.g. a fresh clone).
+tasks.matching {
+    it.name.contains("Release") &&
+        (it.name.startsWith("bundle") || it.name.startsWith("assemble") || it.name.startsWith("package"))
+}.configureEach {
+    doFirst {
+        check(keystoreProperties.isNotEmpty()) {
+            "Release signing config missing: keystore/keystore.properties not found. " +
+                "Create it with a generated keystore (keytool -genkeypair), see the release notes."
+        }
     }
 }
 

@@ -16,3 +16,4 @@ captures/
 tmp/
 .env
 reasonix.toml
+keystore/
