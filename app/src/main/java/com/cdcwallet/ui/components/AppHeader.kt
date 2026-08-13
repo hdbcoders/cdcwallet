@@ -264,11 +264,19 @@ fun AppHeader(
                         tint = c.textSecondary,
                         modifier = Modifier.size(14.dp),
                     )
+                    // Same treatment as the language toggle: the inherited
+                    // bodyLarge lineHeight (24sp) would make the box ~2x the
+                    // glyph, inflating the pill at large text sizes. Pin the
+                    // box to the font size and drop font padding.
                     Text(
                         text = stringResource(R.string.archived),
-                        fontSize = 12.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = c.textSecondary,
+                        style = LocalTextStyle.current.copy(
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = c.textSecondary,
+                            lineHeight = 12.5.sp,
+                            platformStyle = PlatformTextStyle(includeFontPadding = false),
+                        ),
                     )
                     Box(
                         modifier = Modifier
@@ -279,10 +287,15 @@ fun AppHeader(
                     ) {
                         Text(
                             text = archivedCount.toString(),
-                            fontFamily = PlexMonoFontFamily,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            color = Color(0xFF17130A),
+                            // Same line-box pinning as the label above.
+                            style = LocalTextStyle.current.copy(
+                                fontFamily = PlexMonoFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                color = Color(0xFF17130A),
+                                lineHeight = 11.sp,
+                                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                            ),
                             modifier = Modifier.testTag("archived-count"),
                         )
                     }
