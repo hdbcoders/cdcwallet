@@ -4,6 +4,7 @@ import com.cdcwallet.data.model.CategoryBalance
 import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.data.model.VoucherGroup
 import com.cdcwallet.R
+import com.cdcwallet.ui.theme.canonicalizeCategoryForDisplay
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
@@ -62,7 +63,7 @@ fun badgeState(voucher: VoucherGroup, today: LocalDate = LocalDate.now()): Badge
             if (expiry == null) {
                 // A spent voucher is terminal regardless of a missing end
                 // date; only fall through to urgency when value remains.
-                if (totalRemaining(voucher) == BigDecimal.ZERO) {
+                if (totalRemaining(voucher).compareTo(BigDecimal.ZERO) == 0) {
                     BadgeState.NoBalance
                 } else {
                     BadgeState.Active(daysRemaining = null, urgency = Urgency.FINE)
@@ -71,7 +72,7 @@ fun badgeState(voucher: VoucherGroup, today: LocalDate = LocalDate.now()): Badge
                 val days = ChronoUnit.DAYS.between(today, expiry)
                 if (days < 0) {
                     BadgeState.Expired
-                } else if (totalRemaining(voucher) == BigDecimal.ZERO) {
+                } else if (totalRemaining(voucher).compareTo(BigDecimal.ZERO) == 0) {
                     // Nothing left to spend - urgency to spend before expiry
                     // is moot; the real page reports the balance as zero.
                     BadgeState.NoBalance
@@ -133,7 +134,16 @@ fun summarizeActive(vouchers: List<VoucherGroup>): ListSummary {
     val byCategory = linkedMapOf<String, BigDecimal>()
     active.forEach { voucher ->
         voucher.categoryBalances.forEach { balance ->
-            byCategory.merge(balance.category, balance.remainingValue, BigDecimal::add)
+            // Display-only canonical key (refactor M8): aggregation groups
+            // case-insensitively so "heartland"/"Heartland" sum into ONE row;
+            // the stored raw value is never mutated. The emitted category is
+            // the display-canonical form, so every renderer shows capitalized
+            // first letters regardless of the raw spelling.
+            byCategory.merge(
+                canonicalizeCategoryForDisplay(balance.category).lowercase(),
+                balance.remainingValue,
+                BigDecimal::add,
+            )
         }
     }
     val total = active.fold(BigDecimal.ZERO) { acc, voucher ->
@@ -141,7 +151,9 @@ fun summarizeActive(vouchers: List<VoucherGroup>): ListSummary {
     }
     return ListSummary(
         total = total,
-        categoryTotals = byCategory.map { (category, value) -> CategoryBalance(category, value) }
+        categoryTotals = byCategory.map { (category, value) ->
+            CategoryBalance(canonicalizeCategoryForDisplay(category), value)
+        }
             .filter { it.remainingValue.signum() != 0 }
             .sortedBy { it.category },
         linkCount = active.size,

@@ -24,7 +24,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcwallet.R
 import com.cdcwallet.data.VoucherRepository
@@ -56,12 +56,15 @@ import com.cdcwallet.ui.theme.localizeCampaignName
  * instance after rotation must not re-extract or reload, which the VM's
  * `refreshStarted` guard ensures. A `WebChromeClient` for progress reporting
  * is fine here; the engine owns the `WebViewClient` slot.
+ *
+ * TEST-ONLY SEAM (refactor M17): `webViewFactory` is injectable for the
+ * instrumented fixtures; production always uses the default
+ * (engine.acquireVisibleWebView).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VoucherWebViewScreen(
     voucherId: String,
-    voucherUrl: String,
     repository: VoucherRepository,
     extractionEngine: ExtractionEngine,
     extractionCoordinator: ExtractionCoordinator,
@@ -72,11 +75,11 @@ fun VoucherWebViewScreen(
     val vm: DetailViewModel = viewModel(
         key = "detail-$voucherId",
         initializer = {
-            DetailViewModel(repository, extractionEngine, extractionCoordinator, voucherId, voucherUrl)
+            DetailViewModel(repository, extractionCoordinator, voucherId)
         },
     )
     val snackbarHostState = remember { SnackbarHostState() }
-    val state by vm.uiState.collectAsState()
+    val state by vm.uiState.collectAsStateWithLifecycle()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
     /**

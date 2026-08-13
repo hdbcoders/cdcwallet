@@ -293,6 +293,53 @@ class VoucherListLogicTest {
     }
 
     @Test
+    fun scaledZeroValuesAlsoReadAsNoBalance() {
+        // Refactor M9: BigDecimal equality is scale-sensitive - "0.00" is NOT
+        // == BigDecimal.ZERO, but its value IS zero. All scaled-zero forms
+        // must read as NoBalance, never as expiry urgency.
+        val doubleZero = badgeState(
+            voucher(
+                "sz1",
+                ValidityStatus.ACTIVE,
+                today.plusDays(30),
+                listOf(CategoryBalance("heartland", BigDecimal("0.00"))),
+            ),
+            today,
+        )
+        assertEquals(com.cdcwallet.ui.list.BadgeState.NoBalance, doubleZero)
+
+        val mixedScaled = badgeState(
+            voucher(
+                "sz2",
+                ValidityStatus.ACTIVE,
+                today.plusDays(30),
+                listOf(
+                    CategoryBalance("heartland", BigDecimal("5.00")),
+                    CategoryBalance("supermarket", BigDecimal("-5.0")),
+                ),
+            ),
+            today,
+        )
+        assertEquals(com.cdcwallet.ui.list.BadgeState.NoBalance, mixedScaled)
+
+        // A scaled zero in one category plus real value elsewhere is NOT
+        // zero-balance: urgency must win.
+        val withValue = badgeState(
+            voucher(
+                "sz3",
+                ValidityStatus.ACTIVE,
+                today.plusDays(30),
+                listOf(
+                    CategoryBalance("heartland", BigDecimal("0.00")),
+                    CategoryBalance("supermarket", BigDecimal("1")),
+                ),
+            ),
+            today,
+        )
+        assertTrue(withValue is com.cdcwallet.ui.list.BadgeState.Active)
+    }
+
+    @Test
     fun activeWithPositiveBalanceKeepsExpiryUrgency() {
         val state = badgeState(
             voucher(
@@ -397,9 +444,9 @@ class VoucherListLogicTest {
         assertEquals(2, summary.linkCount)
         assertEquals(
             listOf(
-                CategoryBalance("groceries", BigDecimal("10")),
-                CategoryBalance("heartland", BigDecimal("50")),
-                CategoryBalance("supermarket", BigDecimal("25.5")),
+                CategoryBalance("Groceries", BigDecimal("10")),
+                CategoryBalance("Heartland", BigDecimal("50")),
+                CategoryBalance("Supermarket", BigDecimal("25.5")),
             ),
             summary.categoryTotals,
         )
@@ -411,6 +458,34 @@ class VoucherListLogicTest {
         assertEquals(BigDecimal.ZERO, summary.total)
         assertEquals(0, summary.linkCount)
         assertTrue(summary.categoryTotals.isEmpty())
+    }
+
+    @Test
+    fun mixedCaseCategoriesAggregateIntoOneCanonicalRow() {
+        // Refactor M8: raw stored values keep their exact spelling, but the
+        // summary groups by a display-only canonical key - "heartland" and
+        // "Heartland" must sum into ONE row emitted in canonical form.
+        val summary = summarizeActive(
+            listOf(
+                voucher(
+                    "a",
+                    ValidityStatus.ACTIVE,
+                    today.plusDays(10),
+                    listOf(CategoryBalance("heartland", BigDecimal("50"))),
+                ),
+                voucher(
+                    "b",
+                    ValidityStatus.ACTIVE,
+                    today.plusDays(20),
+                    listOf(CategoryBalance("Heartland", BigDecimal("10"))),
+                ),
+            ),
+        )
+        assertEquals(BigDecimal("60"), summary.total)
+        assertEquals(
+            listOf(CategoryBalance("Heartland", BigDecimal("60"))),
+            summary.categoryTotals,
+        )
     }
 
     @Test
@@ -439,7 +514,7 @@ class VoucherListLogicTest {
         )
         assertEquals(BigDecimal("50.00"), summary.total)
         assertEquals(
-            listOf(CategoryBalance("heartland", BigDecimal("50"))),
+            listOf(CategoryBalance("Heartland", BigDecimal("50"))),
             summary.categoryTotals,
         )
     }

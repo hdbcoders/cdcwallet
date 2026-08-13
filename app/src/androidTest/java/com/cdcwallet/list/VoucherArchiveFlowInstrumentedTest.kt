@@ -371,8 +371,7 @@ class VoucherArchiveFlowInstrumentedTest {
             MaterialTheme {
                 VoucherWebViewScreen(
                     voucherId = slow.id,
-                    voucherUrl = url,
-                    repository = repository,
+                                        repository = repository,
                     extractionEngine = ExtractionEngine(),
                     extractionCoordinator = coordinator(repository),
                     onBack = {},

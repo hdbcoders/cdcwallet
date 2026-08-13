@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.cdcwallet.R
 import com.cdcwallet.addflow.AddVoucherFlow
 import com.cdcwallet.addflow.AddVoucherResult
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 sealed interface AddUiStatus {
@@ -35,13 +36,20 @@ class AddVoucherViewModel(
     var status by mutableStateOf<AddUiStatus>(AddUiStatus.Idle)
         private set
 
-    private var autoSubmitted = false
+    /** The active submit job - cancelled when a NEW url arrives, so a
+     *  re-shared link reuses the add screen instead of stacking a second
+     *  in-flight extraction (refactor M7, latest-add-wins). */
+    private var submitJob: Job? = null
 
-    /** Called once from LaunchedEffect with the share intent URL. Survives
-     *  rotation (the flag lives in the VM), so a rotation never re-submits. */
-    fun setInitialUrl(value: String) {
-        if (autoSubmitted) return
-        autoSubmitted = true
+    /** The URL already submitted; re-delivery (rotation) is ignored, a NEW
+     *  value resubmits. */
+    private var submittedUrl: String? = null
+
+    /** Called with the share-intent / pasted URL. Survives rotation (a
+     *  re-delivered same URL is ignored, so a rotation never re-submits). */
+    fun onUrlArrived(value: String) {
+        if (submittedUrl == value) return
+        submittedUrl = value
         url = value
         submit()
     }
@@ -49,22 +57,34 @@ class AddVoucherViewModel(
     fun onUrlChange(value: String) { url = value }
 
     fun submit() {
-        if (status is AddUiStatus.Working) return
+        // Supersede any in-flight add: the previous extraction's hidden
+        // WebView is torn down by the engine's cancellation path (02 §2.7).
+        submitJob?.cancel()
         status = AddUiStatus.Working
-        viewModelScope.launch {
-            status = when (val result = flow.add(appContext, url)) {
-                is AddVoucherResult.InvalidFormat ->
-                    AddUiStatus.Message(R.string.add_invalid, isError = true)
-                is AddVoucherResult.Duplicate ->
-                    AddUiStatus.Message(R.string.add_duplicate, isError = false)
-                is AddVoucherResult.Added ->
-                    AddUiStatus.Message(
-                        R.string.add_added,
-                        isError = false,
-                        formatArgs = listOf(result.voucher.campaignName),
-                    )
-                is AddVoucherResult.AddedUnverified ->
-                    AddUiStatus.Message(R.string.add_added_unverified, isError = false)
+        submitJob = viewModelScope.launch {
+            status = try {
+                when (val result = flow.add(appContext, url)) {
+                    is AddVoucherResult.InvalidFormat ->
+                        AddUiStatus.Message(R.string.add_invalid, isError = true)
+                    is AddVoucherResult.Duplicate ->
+                        AddUiStatus.Message(R.string.add_duplicate, isError = false)
+                    is AddVoucherResult.Added ->
+                        AddUiStatus.Message(
+                            R.string.add_added,
+                            isError = false,
+                            formatArgs = listOf(result.voucher.campaignName),
+                        )
+                    is AddVoucherResult.AddedUnverified ->
+                        AddUiStatus.Message(R.string.add_added_unverified, isError = false)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Screen abandonment: the scope is tearing down, let it.
+                throw e
+            } catch (e: Exception) {
+                // Refactor M3: every add must reach a terminal UI state - an
+                // unexpected storage failure must never strand the screen in
+                // Working.
+                AddUiStatus.Message(R.string.add_failed_generic, isError = true)
             }
         }
     }

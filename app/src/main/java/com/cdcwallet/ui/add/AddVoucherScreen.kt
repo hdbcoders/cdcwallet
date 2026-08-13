@@ -54,8 +54,8 @@ fun AddVoucherScreen(
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(Unit) {
-        initialUrl?.let { vm.setInitialUrl(it) }
+    LaunchedEffect(initialUrl) {
+        initialUrl?.let { vm.onUrlArrived(it) }
         // Auto-activate the paste field on arrival so the user can type or
         // paste without an extra tap. Skipped when a share intent already
         // pre-filled the URL - there the user only needs to confirm, so we

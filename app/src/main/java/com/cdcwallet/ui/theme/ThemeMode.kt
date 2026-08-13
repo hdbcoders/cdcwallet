@@ -54,6 +54,16 @@ internal fun resolveInitialMode(isSystemDark: Boolean, stored: String?): ThemeMo
     }
 
 /**
+ * True when the stored value is not a concrete mode and must be rewritten to
+ * the resolved one (refactor M22): first launch, the legacy "system" value,
+ * AND any unknown/corrupted value (including case variants). Rewriting bakes
+ * the system default exactly once - a later system-theme change must never
+ * flip the app's mode.
+ */
+internal fun storedModeNeedsRewrite(stored: String?): Boolean =
+    stored != "light" && stored != "dark"
+
+/**
  * Persists the theme choice in SharedPreferences (same pattern as
  * SqlCipherPassphraseStore). The mode is held in Compose snapshot state so a
  * theme change recomposes the whole app instantly.
@@ -67,13 +77,13 @@ class ThemeModeStore(context: Context) {
         private set
 
     init {
-        // First launch (or a legacy "Follow system" install): snapshot the
-        // system dark/light default into a concrete persisted mode, then stop
-        // following the system - the hamburger toggle is the only way to
-        // change it afterwards.
+        // First launch (or a legacy "Follow system" install, or any unknown
+        // stored value - refactor M22): snapshot the system dark/light default
+        // into a concrete persisted mode, then stop following the system - the
+        // hamburger toggle is the only way to change it afterwards.
         val stored = prefs.getString(KEY_MODE, null)
         mode = resolveInitialMode(isSystemDark(context), stored)
-        if (stored == null || stored == "system") {
+        if (storedModeNeedsRewrite(stored)) {
             prefs.edit().putString(KEY_MODE, mode.name.lowercase()).apply()
         }
     }

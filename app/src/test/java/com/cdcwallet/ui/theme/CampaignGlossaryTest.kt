@@ -27,11 +27,13 @@ class CampaignGlossaryTest {
     }
 
     @Test
-    fun unknownCategoriesFallBackToRaw() {
-        // The raw string passes through unchanged (case, spacing, everything).
+    fun unknownCategoriesFallBackToDisplayCanonicalForm() {
+        // Refactor M8: unknown raw strings pass through in their DISPLAY
+        // canonical form - trimmed, first letter capitalized.
         assertEquals("Other", localizeCategory("Other", AppLanguage.ZH))
-        assertEquals("dining", localizeCategory("dining", AppLanguage.MS))
+        assertEquals("Dining", localizeCategory("dining", AppLanguage.MS))
         assertEquals("Community Development Council", localizeCategory("Community Development Council", AppLanguage.TA))
+        assertEquals("Dining", localizeCategory("  dining ", AppLanguage.EN))
     }
 
     @Test

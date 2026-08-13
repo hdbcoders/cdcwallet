@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -236,6 +237,10 @@ fun AppHeader(
                                         langOpen = false
                                         onLanguageSelected(lang)
                                     },
+                                    // Refactor M21: selected-state semantics for
+                                    // TalkBack (radio-like announcement), not just
+                                    // the visual checkmark.
+                                    modifier = Modifier.semantics { this.selected = selected },
                                 )
                             }
                         }

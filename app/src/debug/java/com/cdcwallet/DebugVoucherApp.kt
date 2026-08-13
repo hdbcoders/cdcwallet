@@ -40,9 +40,13 @@ class DebugVoucherApp : VoucherApp() {
         )
         if (DevActions.autoSeedEnabled(this)) {
             // Best-effort warm seed on every launch: seeds only if missing, so
-            // it's a no-op once the fixtures exist.
+            // it's a no-op once the fixtures exist. Awaits the database
+            // bootstrap (refactor M2) before touching the repository.
             seedScope.launch {
-                runCatching { DevSeeder.seedIfEmpty(container.repository) }
+                runCatching {
+                    container.databaseBootstrap.awaitReady()
+                    DevSeeder.seedIfEmpty(container.repository)
+                }
             }
         }
     }

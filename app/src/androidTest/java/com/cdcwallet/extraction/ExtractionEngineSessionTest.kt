@@ -115,8 +115,8 @@ class ExtractionEngineSessionTest {
     fun concurrentHiddenAndVisibleExtractionsOnSameEngineBothSucceed() = runTest {
         // The visible WebView comes from the engine itself (the long-lived
         // instance per 02 §2.4 revision 2026-08-03); the asset loader is
-        // chained as the epoch notifier's delegate so it works on API 24-25
-        // too, where a pre-existing client cannot be read back.
+        // chained as the fallback delegate so it works on API 24-25 too,
+        // where a pre-existing client cannot be read back.
         val engine = engine()
         var hidden: ExtractionResult? = null
         var visible: ExtractionResult? = null
@@ -147,6 +147,24 @@ class ExtractionEngineSessionTest {
         val result = engine.extractForAdd(context, testPageUrl)
         assertTrue("expected Success after timeout, got $result", result is ExtractionResult.Success)
         assertEquals("CDC Vouchers 2026", (result as ExtractionResult.Success).campaignName)
+    }
+
+    /**
+     * Refactor M17: the PRODUCTION acquisition path - an engine built with no
+     * test seams - must yield exactly one long-lived visible instance
+     * (02 §2.4 revision 2026-08-03): acquire twice, same instance, never a
+     * second one.
+     */
+    @Test
+    fun productionEngineAcquiresSingleLongLivedVisibleWebView() = runTest {
+        val engine = ExtractionEngine()
+        val first = withContext(Dispatchers.Main) { engine.acquireVisibleWebView(context) }
+        val second = withContext(Dispatchers.Main) { engine.acquireVisibleWebView(context) }
+        assertTrue("acquire must return the same long-lived instance", first === second)
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            runCatching { first.stopLoading() }
+            runCatching { first.destroy() }
+        }
     }
 
     /**

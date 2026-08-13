@@ -37,6 +37,7 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -128,8 +129,7 @@ class VoucherWebViewScreenTest {
                 MaterialTheme {
                     VoucherWebViewScreen(
                         voucherId = unverified.id,
-                        voucherUrl = url,
-                        repository = repository,
+                                                repository = repository,
                         extractionEngine = extractionEngine(),
                         extractionCoordinator = ExtractionCoordinator(repository, extractionEngine()),
                         onBack = {},
@@ -150,12 +150,13 @@ class VoucherWebViewScreenTest {
             val updated = repository.findByToken("TestToken1")
             assertEquals(ValidityStatus.ACTIVE, updated?.validityStatus)
             assertEquals("CDC Vouchers 2026", updated?.campaignName)
-            // Category names are canonicalized to capitalized form on every
-            // repository write (see VoucherRepository.normalizedCategories).
+            // Refactor M8: raw scraped category values are stored verbatim -
+            // the repository never mutates them. Capitalization happens only
+            // at display time (canonicalizeCategoryForDisplay).
             assertEquals(
                 listOf(
-                    CategoryBalance("Heartland", BigDecimal("50")),
-                    CategoryBalance("Supermarket", BigDecimal("25.5")),
+                    CategoryBalance("heartland", BigDecimal("50")),
+                    CategoryBalance("supermarket", BigDecimal("25.5")),
                 ),
                 updated?.categoryBalances,
             )
@@ -186,8 +187,7 @@ class VoucherWebViewScreenTest {
                 MaterialTheme {
                     VoucherWebViewScreen(
                         voucherId = cached.id,
-                        voucherUrl = url,
-                        repository = repository,
+                                                repository = repository,
                         extractionEngine = extractionEngine(),
                         extractionCoordinator = ExtractionCoordinator(repository, extractionEngine()),
                         onBack = {},
@@ -247,8 +247,7 @@ class VoucherWebViewScreenTest {
                 if (showDetail) {
                     VoucherWebViewScreen(
                         voucherId = "id-detach-1",
-                        voucherUrl = url,
-                        repository = repository,
+                                                repository = repository,
                         extractionEngine = extractionEngine(),
                         extractionCoordinator = ExtractionCoordinator(repository, extractionEngine()),
                         onBack = {},
@@ -310,8 +309,7 @@ class VoucherWebViewScreenTest {
                 if (showDetail) {
                     VoucherWebViewScreen(
                         voucherId = "id-detach-2",
-                        voucherUrl = url,
-                        repository = repository,
+                                                repository = repository,
                         extractionEngine = extractionEngine(),
                         extractionCoordinator = ExtractionCoordinator(repository, extractionEngine()),
                         onBack = {},
@@ -346,6 +344,40 @@ class VoucherWebViewScreenTest {
             if (Build.VERSION.SDK_INT >= 26) {
                 assertNull("the screen must release its progress client", webView.webChromeClient)
             }
+        }
+    }
+
+    /**
+     * Refactor M18: the extraction must never start before the row lookup
+     * confirms the row exists - a missing row pops the screen back and the
+     * WebView never loads anything.
+     */
+    @Test
+    fun missingRowPopsBackWithoutLoading() {
+        val repository = RoomVoucherRepository(database) // empty DB
+        var backCalled = false
+        val captured = arrayOfNulls<WebView>(1)
+        composeRule.setContent {
+            MaterialTheme {
+                VoucherWebViewScreen(
+                    voucherId = "does-not-exist",
+                    repository = repository,
+                    extractionEngine = extractionEngine(),
+                    extractionCoordinator = ExtractionCoordinator(repository, extractionEngine()),
+                    onBack = { backCalled = true },
+                    webViewFactory = { ctx -> assetWebView(ctx).also { captured[0] = it } },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        // The row lookup completes with null -> the screen pops back.
+        composeRule.waitUntil(5_000) { backCalled }
+        assertTrue("screen must pop back for a missing row", backCalled)
+        // The WebView may be created by the factory, but the row-gated VM
+        // must never have launched an extraction - no loadUrl ever fired.
+        composeRule.runOnUiThread {
+            assertNull("missing row must never start a load", captured[0]?.url)
         }
     }
 }

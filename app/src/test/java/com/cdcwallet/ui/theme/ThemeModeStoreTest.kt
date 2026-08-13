@@ -1,6 +1,8 @@
 package com.cdcwallet.ui.theme
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -41,5 +43,24 @@ class ThemeModeStoreTest {
     fun unknownStoredValueResolvesFromDevice() {
         assertEquals(ThemeMode.LIGHT, resolveInitialMode(isSystemDark = false, stored = "bogus"))
         assertEquals(ThemeMode.DARK, resolveInitialMode(isSystemDark = true, stored = "bogus"))
+    }
+
+    @Test
+    fun unknownStoredValueIsMarkedForRewrite() {
+        // Refactor M22: every non-concrete stored value - first launch, the
+        // legacy "system" value, and any unknown/corrupted value including
+        // case variants - must be rewritten to the resolved concrete mode, so
+        // a later system-theme change can never flip the app's mode.
+        assertTrue(storedModeNeedsRewrite(null))
+        assertTrue(storedModeNeedsRewrite("system"))
+        assertTrue(storedModeNeedsRewrite("bogus"))
+        assertTrue(storedModeNeedsRewrite("Light"))
+        assertTrue(storedModeNeedsRewrite("DARK"))
+    }
+
+    @Test
+    fun concreteStoredValuesAreNotRewritten() {
+        assertFalse(storedModeNeedsRewrite("light"))
+        assertFalse(storedModeNeedsRewrite("dark"))
     }
 }

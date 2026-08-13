@@ -59,6 +59,7 @@
     <string name="add_duplicate">Link not added. Voucher already in your list.</string>
     <string name="add_added">Added: %1$s</string>
     <string name="add_added_unverified">Added, but couldn\'t verify it yet; tap the entry to check later.</string>
+    <string name="add_failed_generic">Something went wrong adding this link. Please try again.</string>
 
     <!-- Detail / WebView screen. -->
     <string name="detail_parse_error">Website data failed to parse</string>
@@ -74,6 +75,10 @@
     <string name="expired_footer">This voucher link has expired</string>
     <string name="no_balance_banner">This voucher link has no more balance</string>
     <string name="unverified_footer">No balance information yet — tap this entry to check.</string>
+    <string name="fatal_startup_error">The app could not start. Please restart the app to try again.</string>
+    <string name="stale_refresh_status">Couldn\'t refresh · tap to retry</string>
+    <string name="hero_expanded_desc">Expanded</string>
+    <string name="hero_collapsed_desc">Collapsed</string>
 
     <!-- Badges (spec 04 §4.2) - one label per state. -->
     <string name="badge_no_expiry">No expiry date</string>

@@ -19,7 +19,12 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -34,6 +39,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
@@ -75,6 +82,10 @@ class MainActivity : ComponentActivity() {
 
     private var navControllerRef: NavController? = null
 
+    /** A share URL that arrived while navigation was not ready yet (refactor
+     *  M7): queued instead of dropped, consumed by the NavHost when it exists. */
+    private var pendingShareUrl by mutableStateOf<String?>(null)
+
     override fun attachBaseContext(newBase: Context) {
         // In-app language (LanguageStore): wrap the base context so resource
         // resolution uses the app language before the activity is created.
@@ -98,25 +109,37 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // Refactor M7: accept only genuine text shares - everything else is
+        // ignored (no URL, no navigation).
+        if (intent.action != Intent.ACTION_SEND) return
+        if (intent.type != "text/plain") return
         val sharedUrl = intent.getStringExtra(Intent.EXTRA_TEXT)
-        if (!sharedUrl.isNullOrBlank()) {
-            // Warm share into an already-running app (singleTask): route to the
-            // add screen with the link, mirroring the cold-start path below.
-            setIntent(intent)
-            navControllerRef?.navigate("add?url=${Uri.encode(sharedUrl)}")
+        if (sharedUrl.isNullOrBlank()) return
+        // Warm share into an already-running app (singleTask): route to the
+        // add screen with the link, mirroring the cold-start path below. If
+        // navigation is not ready yet (startup race), queue the URL instead
+        // of dropping it - the NavHost consumes the queue when it exists.
+        setIntent(intent)
+        val nav = navControllerRef
+        if (nav == null) {
+            pendingShareUrl = sharedUrl
+        } else {
+            nav.navigate("add?url=${Uri.encode(sharedUrl)}") { launchSingleTop = true }
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // API 31+: install the OS splash and keep it on screen until the
-        // list's first DB read completes - the user never lands on an empty
-        // list, and the splash doubles as the load mask (no Compose splash
-        // needed on this path).
+        // database bootstrap settles (refactor M2): readiness now keys on the
+        // IO-backed bootstrap, not on the first DB read from the main thread.
+        // A Failed state also releases the splash - the UI then shows the
+        // fatal error screen instead of hanging.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val ready = java.util.concurrent.atomic.AtomicBoolean(false)
             installSplashScreen().setKeepOnScreenCondition { !ready.get() }
             lifecycleScope.launch {
-                container.repository.observeActive().first()
+                container.databaseBootstrap.state
+                    .first { it !is DatabaseBootstrapState.Initializing }
                 ready.set(true)
             }
         }
@@ -151,6 +174,8 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     fontScaleStore = container.fontScaleStore,
                     onLanguageSelected = { language -> setAppLanguage(language) },
+                    pendingShareUrl = pendingShareUrl,
+                    onPendingShareUrlConsumed = { pendingShareUrl = null },
                 )
                 }
             }
@@ -167,10 +192,36 @@ private fun AppNavHost(
     navController: NavHostController,
     fontScaleStore: FontScaleStore,
     onLanguageSelected: (AppLanguage) -> Unit,
+    pendingShareUrl: String?,
+    onPendingShareUrlConsumed: () -> Unit,
 ) {
+    // Database readiness gate (refactor M2): the whole UI waits for the
+    // IO-backed bootstrap. Failed -> fatal error screen (the splash must
+    // never hang); Initializing -> Compose splash on API < 31 (API 31+ is
+    // covered by the OS splash held via keepOnScreenCondition).
+    val bootstrap by container.databaseBootstrap.state.collectAsState()
+    if (bootstrap is DatabaseBootstrapState.Failed) {
+        FatalErrorScreen()
+        return
+    }
+    if (bootstrap is DatabaseBootstrapState.Initializing) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            SplashScreen()
+        }
+        return
+    }
+
     if (isColdStart && sharedUrl != null) {
         LaunchedEffect(Unit) {
-            navController.navigate("add?url=${Uri.encode(sharedUrl)}")
+            navController.navigate("add?url=${Uri.encode(sharedUrl)}") { launchSingleTop = true }
+        }
+    }
+
+    // Refactor M7: consume a share that arrived before navigation was ready.
+    LaunchedEffect(pendingShareUrl) {
+        pendingShareUrl?.let { url ->
+            onPendingShareUrlConsumed()
+            navController.navigate("add?url=${Uri.encode(url)}") { launchSingleTop = true }
         }
     }
 
@@ -197,7 +248,7 @@ private fun AppNavHost(
                     extractionCoordinator = container.extractionCoordinator,
                     onAddClick = { navController.navigate("add") },
                     onOpenVoucher = { voucher ->
-                        navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
+                        navController.navigate("detail/${voucher.id}")
                     },
                     onArchivedClick = { navController.navigate("archived") },
                     onSettingsClick = { navController.navigate("settings") },
@@ -238,7 +289,7 @@ private fun AppNavHost(
                             extractionCoordinator = container.extractionCoordinator,
                             onAddClick = { navController.navigate("add") },
                             onOpenVoucher = { voucher ->
-                                navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
+                                navController.navigate("detail/${voucher.id}")
                             },
                             onArchivedClick = { navController.navigate("archived") },
                             onSettingsClick = { navController.navigate("settings") },
@@ -266,7 +317,7 @@ private fun AppNavHost(
                 repository = container.repository,
                 extractionCoordinator = container.extractionCoordinator,
                 onOpenVoucher = { voucher ->
-                    navController.navigate("detail/${voucher.id}?url=${Uri.encode(voucher.url)}")
+                    navController.navigate("detail/${voucher.id}")
                 },
                 onBack = { navController.popBackStack() },
             )
@@ -317,14 +368,9 @@ private fun AppNavHost(
             )
         }
         composable(
-            route = "detail/{voucherId}?url={url}",
+            route = "detail/{voucherId}",
             arguments = listOf(
                 navArgument("voucherId") { type = NavType.StringType },
-                navArgument("url") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                },
             ),
             enterTransition = { drillInEnter(reduceMotion) },
             exitTransition = { drillInExit(reduceMotion) },
@@ -333,7 +379,6 @@ private fun AppNavHost(
         ) { entry ->
             VoucherWebViewScreen(
                 voucherId = entry.arguments?.getString("voucherId").orEmpty(),
-                voucherUrl = entry.arguments?.getString("url").orEmpty(),
                 repository = container.repository,
                 extractionEngine = container.extractionEngine,
                 extractionCoordinator = container.extractionCoordinator,
@@ -395,3 +440,26 @@ private fun layerPopEnter(reduceMotion: Boolean): EnterTransition =
 private fun layerPopExit(reduceMotion: Boolean): ExitTransition =
     if (reduceMotion) ExitTransition.None
     else slideOutVertically(tween(NAV_TRANSITION_MS)) { it } + fadeOut(tween(NAV_TRANSITION_MS))
+
+/**
+ * Shown when the database bootstrap failed (refactor M2): the splash must
+ * never hang on an initialization failure - it resolves into an explicit,
+ * readable error state instead.
+ */
+@Composable
+private fun FatalErrorScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(32.dp),
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Text(
+                text = stringResource(R.string.fatal_startup_error),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        }
+    }
+}

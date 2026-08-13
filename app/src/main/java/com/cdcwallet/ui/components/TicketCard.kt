@@ -116,7 +116,7 @@ fun TicketCard(
                 Box {
                     IconButton(
                         onClick = { onMenuExpandedChange(true) },
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(48.dp),
                     ) {
                         Icon(
                             Icons.Default.MoreVert,
@@ -146,8 +146,10 @@ fun TicketCard(
             }
 
             // Expiry row: green ✓ + days-left for fine; warning for soon/urgent;
-            // red warning + status label for expired / fully used.
-            ExpiryRow(badge, expiryText)
+            // red warning + status label for expired / fully used. A failed
+            // refresh (refactor M5) swaps the line for the neutral stale
+            // status instead of the expiry text.
+            ExpiryRow(badge, expiryText, stale = voucher.lastRefreshError != null)
 
             // Perforated divider.
             Canvas(
@@ -190,7 +192,7 @@ fun TicketCard(
  *  expiry wrap to their own lines instead of ellipsizing at large font
  *  scales. */
 @Composable
-private fun ExpiryRow(badge: BadgeState, expiryText: String?) {
+private fun ExpiryRow(badge: BadgeState, expiryText: String?, stale: Boolean = false) {
     val c = LocalRedesignColors.current
     FlowRow(
         itemVerticalAlignment = Alignment.CenterVertically,
@@ -226,10 +228,11 @@ private fun ExpiryRow(badge: BadgeState, expiryText: String?) {
 
         val statusText: String? = when (badge) {
             is BadgeState.Active -> daysLeftText(badge)
-            BadgeState.Expired -> stringResource(R.string.badge_expired)
-            BadgeState.NoBalance -> stringResource(R.string.badge_fully_used)
-            BadgeState.NotStarted -> stringResource(R.string.badge_not_started)
-            BadgeState.Unverified -> stringResource(R.string.badge_unverified)
+            is BadgeState.Expired -> stringResource(R.string.badge_expired)
+            is BadgeState.NoBalance -> stringResource(R.string.badge_fully_used)
+            is BadgeState.NotStarted -> stringResource(R.string.badge_not_started)
+            is BadgeState.Unverified -> stringResource(R.string.badge_unverified)
+            else -> null
         }
         val statusColor = when (badge) {
             is BadgeState.Active -> when (badge.urgency) {
@@ -248,7 +251,11 @@ private fun ExpiryRow(badge: BadgeState, expiryText: String?) {
                 color = statusColor,
             )
         }
-        expiryText?.let {
+        // Refactor M5: a failed refresh replaces the EXPIRY segment with the
+        // neutral stale status - the badge label itself is untouched (spec 04
+        // §4.2) - so cached values never LOOK current after a failure.
+        val expirySegment = if (stale) stringResource(R.string.stale_refresh_status) else expiryText
+        expirySegment?.let {
             Text(
                 text = "· $it",
                 fontSize = 12.5.sp,

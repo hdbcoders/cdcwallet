@@ -14,7 +14,11 @@ import com.cdcwallet.data.backup.BackupFileStore
 import com.cdcwallet.data.backup.BackupFlow
 import com.cdcwallet.data.backup.InvalidBackupPayloadException
 import com.cdcwallet.data.model.VoucherBackupPayload
+import com.cdcwallet.ui.theme.AppFontScale
+import com.cdcwallet.ui.theme.FontScaleStore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -60,6 +64,7 @@ class SettingsViewModel(
     private val backupFlow: BackupFlow,
     private val repository: VoucherRepository,
     private val appContext: Context,
+    private val fontScaleStore: FontScaleStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -106,18 +111,22 @@ class SettingsViewModel(
     private fun exportBackup(password: String) {
         _uiState.update { it.copy(busyPhase = BusyPhase.EXPORTING) }
         viewModelScope.launch {
-            try {
-                val ok = runCatching {
-                    withTimeout(BACKUP_OP_TIMEOUT_MS) { backupFlow.export(appContext, password) }
-                }.isSuccess
-                _events.trySend(
-                    SettingsEvent.Snackbar(
-                        if (ok) R.string.snackbar_backup_saved else R.string.snackbar_save_failed,
-                    ),
-                )
+            val message = try {
+                withTimeout(BACKUP_OP_TIMEOUT_MS) { backupFlow.export(appContext, password) }
+                R.string.snackbar_backup_saved
+            } catch (e: TimeoutCancellationException) {
+                // The 10s cap is a failure, not a cancellation.
+                R.string.snackbar_save_failed
+            } catch (e: CancellationException) {
+                // Refactor M13: genuine cancellation (ViewModel teardown) is
+                // re-thrown - no events or state updates may follow it.
+                throw e
+            } catch (e: Exception) {
+                R.string.snackbar_save_failed
             } finally {
                 _uiState.update { it.copy(busyPhase = null) }
             }
+            _events.trySend(SettingsEvent.Snackbar(message))
         }
     }
 
@@ -130,7 +139,16 @@ class SettingsViewModel(
     fun onFilePicked(uri: Uri) {
         viewModelScope.launch {
             val bytes = withContext(Dispatchers.IO) {
-                runCatching { BackupFileStore.open(appContext, uri).readBytes() }.getOrNull()
+                runCatching {
+                    // Refactor M12: size-check before reading - an arbitrarily
+                    // large file must never be loaded fully into memory.
+                    val length = queryBackupSize(uri)
+                    if (length > MAX_BACKUP_BYTES) {
+                        throw java.io.IOException("backup file too large")
+                    }
+                    // Refactor M12: the stream is always closed via use.
+                    BackupFileStore.open(appContext, uri).use { it.readBytes() }
+                }.getOrNull()
             }
             if (bytes == null) {
                 _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
@@ -140,6 +158,23 @@ class SettingsViewModel(
             }
         }
     }
+
+    /** Content length of the picked file, or -1 when unknown. */
+    private fun queryBackupSize(uri: Uri): Long =
+        appContext.contentResolver.query(
+            uri,
+            arrayOf(android.provider.OpenableColumns.SIZE),
+            null,
+            null,
+            null,
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val index = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE)
+                if (index >= 0 && !cursor.isNull(index)) cursor.getLong(index) else -1L
+            } else {
+                -1L
+            }
+        } ?: -1L
 
     fun onImportPasswordConfirmed(password: String) {
         val bytes = pendingImportBytes ?: return
@@ -151,10 +186,15 @@ class SettingsViewModel(
                     withTimeout(BACKUP_OP_TIMEOUT_MS) { backupFlow.decryptBackup(bytes, password) }
                 }
                 _uiState.update { it.copy(summaryPayload = payload) }
+            } catch (e: TimeoutCancellationException) {
+                // The 10s cap is a failure, not a cancellation.
+                _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
             } catch (e: InvalidBackupPayloadException) {
                 // The file decrypted, but its rows are invalid (refactor H4):
                 // "check your password" would be the wrong hint here.
                 _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_import_failed))
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
             } finally {
@@ -186,8 +226,12 @@ class SettingsViewModel(
                                 pluralCount = imported,
                             ),
                         )
+                    } catch (e: TimeoutCancellationException) {
+                        _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
                     } catch (e: InvalidBackupPayloadException) {
                         _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_import_failed))
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         _events.trySend(SettingsEvent.Snackbar(R.string.backup_generic_error))
                     } finally {
@@ -208,6 +252,10 @@ class SettingsViewModel(
             try {
                 withTimeout(BACKUP_OP_TIMEOUT_MS) { backupFlow.importReplace(payload) }
                 _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_backup_imported))
+            } catch (e: TimeoutCancellationException) {
+                _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_import_failed))
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _events.trySend(SettingsEvent.Snackbar(R.string.snackbar_import_failed))
             } finally {
@@ -218,11 +266,22 @@ class SettingsViewModel(
 
     fun onReplaceDismissed() { _uiState.update { it.copy(pendingReplace = null) } }
 
+    /** Refactor M16: the font-scale ACTION lives in the ViewModel - the
+     *  screen never mutates the preference store directly. */
+    fun setFontScale(scale: AppFontScale) {
+        fontScaleStore.setFontScale(scale)
+    }
+
     private companion object {
         /** Hard cap on any backup op (decrypt/export/merge/replace): PBKDF2 at
          *  600k iterations is the dominant cost (~1–2s worst case), so 10s is
          *  generous headroom - fail-soft clears the progress dialog and shows
          *  the operation's error message instead of hanging forever. */
         const val BACKUP_OP_TIMEOUT_MS = 10_000L
+
+        /** Hard cap on the imported backup FILE size (refactor M12): real
+         *  exports are a few KB; 20 MB leaves enormous headroom while making
+         *  an arbitrarily large file impossible to load fully into memory. */
+        const val MAX_BACKUP_BYTES = 20L * 1024L * 1024L
     }
 }

@@ -52,6 +52,7 @@
     <string name="add_duplicate">Pautan tidak ditambah. Baucar sudah ada dalam senarai anda.</string>
     <string name="add_added">Ditambah: %1$s</string>
     <string name="add_added_unverified">Ditambah, tetapi belum dapat disahkan; ketik untuk semak kemudian.</string>
+    <string name="add_failed_generic">Sesuatu telah berlaku semasa menambah pautan ini. Sila cuba lagi.</string>
 
     <string name="detail_parse_error">Data laman web gagal diproses</string>
     <string name="detail_network_error">Tidak dapat memuatkan laman web</string>
@@ -64,6 +65,10 @@
     <string name="expired_footer">Pautan baucar ini telah luput</string>
     <string name="no_balance_banner">Pautan baucar ini tiada baki lagi</string>
     <string name="unverified_footer">Tiada maklumat baki lagi — ketik entri ini untuk menyemak.</string>
+    <string name="fatal_startup_error">Aplikasi tidak dapat dimulakan. Sila mulakan semula aplikasi untuk mencuba lagi.</string>
+    <string name="stale_refresh_status">Tidak dapat dikemas kini · ketik untuk cuba semula</string>
+    <string name="hero_expanded_desc">Dikembangkan</string>
+    <string name="hero_collapsed_desc">Dilipat</string>
 
     <string name="badge_no_expiry">Tiada tarikh luput</string>
     <string name="badge_expired">Telah luput</string>

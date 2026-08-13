@@ -63,6 +63,13 @@ import kotlinx.coroutines.withTimeout
  * document-start scripts AND no delegate response to rewrite - H5), the page
  * still loads normally but extraction fails fast instead of burning the
  * timeout.
+ *
+ * TEST-ONLY SEAMS (refactor M17): every constructor parameter with a default
+ * value - `forceFallbackInjection`, `hiddenWebViewFactory`,
+ * `fallbackInjectionDelegate`, `extractionTimeoutMs`, `allowedPageOrigin`,
+ * `targetApiHost` - exists for the instrumented fixtures. Production uses the
+ * defaults only; the production acquisition path is tested separately
+ * (ExtractionEngineSessionTest.productionEngineAcquiresSingleLongLivedVisibleWebView).
  */
 class ExtractionEngine(
     private val forceFallbackInjection: Boolean = false,

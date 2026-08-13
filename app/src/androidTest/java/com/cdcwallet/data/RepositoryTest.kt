@@ -74,7 +74,7 @@ class RepositoryTest {
         assertEquals("Campaign TokenA", found?.campaignName)
         assertEquals(ValidityStatus.ACTIVE, found?.validityStatus)
         assertEquals(LocalDate.of(2026, 12, 31), found?.expiryDate)
-        assertEquals(listOf(CategoryBalance("Heartland", BigDecimal("10"))), found?.categoryBalances)
+        assertEquals(listOf(CategoryBalance("heartland", BigDecimal("10"))), found?.categoryBalances)
         assertNull(found?.lastRefreshedAt)
         assertFalse(found?.isArchived ?: true)
     }
@@ -120,8 +120,8 @@ class RepositoryTest {
         assertEquals(LocalDate.of(2027, 3, 1), updated.expiryDate)
         assertEquals(
             listOf(
-                CategoryBalance("Heartland", BigDecimal("100")),
-                CategoryBalance("Supermarket", BigDecimal("200.50")),
+                CategoryBalance("heartland", BigDecimal("100")),
+                CategoryBalance("supermarket", BigDecimal("200.50")),
             ),
             updated.categoryBalances,
         )
@@ -166,7 +166,7 @@ class RepositoryTest {
         val after = repository.findByToken("TokenA")!!
         assertEquals("Unable to load website", after.lastRefreshError)
         assertEquals("Fresh", after.campaignName)
-        assertEquals(listOf(CategoryBalance("Heartland", BigDecimal("42"))), after.categoryBalances)
+        assertEquals(listOf(CategoryBalance("heartland", BigDecimal("42"))), after.categoryBalances)
         assertEquals(Instant.parse("2026-08-01T10:00:00Z"), after.lastRefreshedAt)
     }
 

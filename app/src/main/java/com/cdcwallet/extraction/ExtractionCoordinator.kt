@@ -131,14 +131,9 @@ class ExtractionCoordinator(
             )
             is ExtractionResult.Failure -> repository.recordRefreshFailure(
                 voucherId,
-                // Spec 02 §2.7: a 10s timeout with no interception is treated
-                // as a parse error (the page yielded no parseable data), so it
-                // is recorded under the same classification.
-                if (result.reason == ExtractionResult.FailureReason.TIMEOUT) {
-                    ExtractionResult.FailureReason.PARSE_ERROR.name
-                } else {
-                    result.reason.name
-                },
+                // Shared classification (refactor M5): timeout persists as
+                // PARSE_ERROR - identical to the add-time save path.
+                result.reason.persistedName,
             )
         }
     }

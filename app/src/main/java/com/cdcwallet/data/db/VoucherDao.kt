@@ -78,6 +78,11 @@ interface VoucherDao {
     @Query("DELETE FROM voucher_groups")
     suspend fun deleteAll(): Int
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertAll(vouchers: List<VoucherGroup>)
+    /**
+     * Bulk insert with conflict-IGNORE semantics (refactor M10): duplicates are
+     * skipped INSIDE the single transaction instead of aborting it - callers
+     * count real insertions from the returned row ids (-1 = skipped).
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAll(vouchers: List<VoucherGroup>): List<Long>
 }

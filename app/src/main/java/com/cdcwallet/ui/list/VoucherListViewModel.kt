@@ -11,7 +11,6 @@ import com.cdcwallet.extraction.ExtractionCoordinator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -23,15 +22,6 @@ class VoucherListViewModel(
     val vouchers: StateFlow<List<VoucherGroup>> = repository.observeActive()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /**
-     * True once the repository's active-voucher flow has emitted its first
-     * (real) value - distinguishes "DB still loading/decrypting" (splash shown)
-     * from "DB is empty" (empty list is a valid loaded state).
-     */
-    val isLoaded: StateFlow<Boolean> = repository.observeActive()
-        .map { true }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
-
     val archivedCount: StateFlow<Int> = repository.observeArchivedCount()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
@@ -40,7 +30,19 @@ class VoucherListViewModel(
     var pendingDelete by mutableStateOf<VoucherGroup?>(null)
         private set
 
+    /**
+     * One-shot Copy-URL request (refactor M16): the ACTION lives in the
+     * ViewModel; the screen executes clipboard + toast as an effect and
+     * consumes the request.
+     */
+    var copyRequest by mutableStateOf<String?>(null)
+        private set
+
     fun setMenu(id: String?) { menuForId = id }
+
+    fun requestCopy(url: String) { copyRequest = url }
+
+    fun consumeCopyRequest() { copyRequest = null }
 
     fun requestDelete(voucher: VoucherGroup) { pendingDelete = voucher }
     fun dismissDelete() { pendingDelete = null }

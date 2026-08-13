@@ -28,7 +28,13 @@ class ArchivedVoucherViewModel(
     var pendingDelete by mutableStateOf<VoucherGroup?>(null)
         private set
 
+    /** One-shot Copy-URL request (refactor M16) - see VoucherListViewModel. */
+    var copyRequest by mutableStateOf<String?>(null)
+        private set
+
     fun setMenu(id: String?) { menuForId = id }
+    fun requestCopy(url: String) { copyRequest = url }
+    fun consumeCopyRequest() { copyRequest = null }
     fun requestDelete(voucher: VoucherGroup) { pendingDelete = voucher }
     fun dismissDelete() { pendingDelete = null }
     fun restore(id: String) { viewModelScope.launch { repository.restore(id) } }

@@ -36,7 +36,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -88,6 +88,8 @@ fun SettingsScreen(
     fontScaleStore: FontScaleStore,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    // TEST-ONLY SEAM (refactor M17): injects bytes instead of the system file
+    // picker in the instrumented backup tests; production always passes null.
     backupBytesProvider: (() -> ByteArray?)? = null,
 ) {
     val context = LocalContext.current
@@ -98,11 +100,11 @@ fun SettingsScreen(
     var pendingSnackbar by remember { mutableStateOf<SettingsEvent.Snackbar?>(null) }
 
     val vm: SettingsViewModel = viewModel(
-        initializer = { SettingsViewModel(backupFlow, repository, context.applicationContext) },
+        initializer = { SettingsViewModel(backupFlow, repository, context.applicationContext, fontScaleStore) },
     )
-    val state by vm.uiState.collectAsState()
-    val activeCount by vm.activeCount.collectAsState()
-    val archivedCount by vm.archivedCount.collectAsState()
+    val state by vm.uiState.collectAsStateWithLifecycle()
+    val activeCount by vm.activeCount.collectAsStateWithLifecycle()
+    val archivedCount by vm.archivedCount.collectAsStateWithLifecycle()
 
     // API 24-28 write to the public Downloads directory directly (scoped
     // storage starts at 29), which needs WRITE_EXTERNAL_STORAGE granted at
@@ -200,7 +202,7 @@ fun SettingsScreen(
                 Slider(
                     value = currentScale.ordinal.toFloat(),
                     onValueChange = { position ->
-                        fontScaleStore.setFontScale(AppFontScale.entries[position.roundToInt()])
+                        vm.setFontScale(AppFontScale.entries[position.roundToInt()])
                     },
                     valueRange = 0f..AppFontScale.entries.lastIndex.toFloat(),
                     steps = AppFontScale.entries.size - 2,
@@ -530,6 +532,9 @@ private fun ConfirmReplaceDialog(
     onReplace: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    // Refactor M20: "Cancel" is the default-focused button, same convention
+    // as the delete dialog - an accidental confirm-tap must not wipe data.
+    val cancelFocus = remember { FocusRequester() }
     AppDialogSurface(onDismissRequest = onCancel) {
         Text(
             text = stringResource(R.string.replace_all_title),
@@ -547,6 +552,15 @@ private fun ConfirmReplaceDialog(
             confirmLabel = stringResource(R.string.replace_confirm),
             onConfirm = onReplace,
             destructive = true,
+            cancelModifier = Modifier.focusRequester(cancelFocus),
         )
+    }
+    // Same retry block as the delete dialog (M3 dialogs can steal focus
+    // during mount); delete this if a future Compose/M3 update fixes it.
+    LaunchedEffect(Unit) {
+        repeat(10) {
+            cancelFocus.requestFocus()
+            delay(50)
+        }
     }
 }

@@ -11,12 +11,13 @@ import com.cdcwallet.R
 import com.cdcwallet.data.VoucherRepository
 import com.cdcwallet.data.model.VoucherGroup
 import com.cdcwallet.extraction.ExtractionCoordinator
-import com.cdcwallet.extraction.ExtractionEngine
 import com.cdcwallet.extraction.ExtractionResult
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class DetailUiState(
     val isLoaded: Boolean = false,
@@ -25,16 +26,19 @@ data class DetailUiState(
 
 class DetailViewModel(
     private val repository: VoucherRepository,
-    private val extractionEngine: ExtractionEngine,
     private val extractionCoordinator: ExtractionCoordinator,
     private val voucherId: String,
-    private val voucherUrl: String,
 ) : ViewModel() {
 
     /** `isLoaded` goes true after the first DB emission, distinguishing
      *  "still loading" from "row missing" (replaces the nullable sentinel in MainActivity).
      *  Observes by id with no archived filter (spec 05 §5.4): a tap on an archived
-     *  voucher must open its detail screen just like a main-list tap. */
+     *  voucher must open its detail screen just like a main-list tap.
+     *
+     *  The URL is derived from THIS reactive row (refactor M6): navigation
+     *  carries only the id, so the extraction always uses the row's current
+     *  URL - imports/replacements can never leave the screen loading a stale
+     *  bearer URL baked into a navigation argument. */
     val uiState: StateFlow<DetailUiState> = repository.observeById(voucherId)
         .map { voucher -> DetailUiState(isLoaded = true, voucher = voucher) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetailUiState())
@@ -52,6 +56,23 @@ class DetailViewModel(
     var refreshMessageRes by mutableStateOf<Int?>(null)
         private set
 
+    /** The WebView attached by the current screen, until the row lookup lands. */
+    private var pendingWebView: WebView? = null
+
+    init {
+        // Refactor M18: the extraction must not start before the row lookup
+        // confirms the row EXISTS. When the row arrives before the WebView
+        // attaches, the attach path below launches; when it arrives after,
+        // this observer launches it.
+        viewModelScope.launch {
+            val firstRow = repository.observeById(voucherId).first()
+            val webView = pendingWebView
+            if (firstRow != null && webView != null) {
+                launchIfNeeded(firstRow, webView)
+            }
+        }
+    }
+
     fun onPageProgressChanged(progress: Int) { pageProgress = progress }
 
     fun onNewWebViewReady(webView: WebView) {
@@ -60,13 +81,24 @@ class DetailViewModel(
             // in-flight load survived, so there is nothing to do.
             return
         }
+        pendingWebView = webView
+        val state = uiState.value
+        if (state.isLoaded) {
+            state.voucher?.let { row -> launchIfNeeded(row, webView) }
+        }
+        // Not loaded yet: the init observer launches once the row lands.
+    }
+
+    private fun launchIfNeeded(row: VoucherGroup, webView: WebView) {
+        if (refreshStarted) return
         refreshStarted = true
         // Delegate to the app-scoped coordinator: the extraction runs in a
         // scope that survives screen exit (02 §2.7), so backing out mid-load
-        // still updates the row. The banner is best-effort UI state.
+        // still updates the row. The banner is best-effort UI state. The URL
+        // comes from the reactive row - never from a navigation argument.
         extractionCoordinator.launchVisible(
-            voucherId = voucherId,
-            voucherUrl = voucherUrl,
+            voucherId = row.id,
+            voucherUrl = row.url,
             webView = webView,
             onResult = { result ->
                 if (result is ExtractionResult.Failure) {

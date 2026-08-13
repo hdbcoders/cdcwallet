@@ -22,7 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcwallet.R
 import com.cdcwallet.data.VoucherRepository
@@ -59,7 +60,7 @@ fun ArchivedVoucherScreen(
     val vm: ArchivedVoucherViewModel = viewModel(
         initializer = { ArchivedVoucherViewModel(repository, extractionCoordinator) },
     )
-    val sorted by vm.vouchers.collectAsState()
+    val sorted by vm.vouchers.collectAsStateWithLifecycle()
     val reduceMotion = rememberReduceMotion()
     val clipboardManager = LocalClipboardManager.current
     // Toast on Copy URL (REQ-10 feedback): the activity context is wrapped
@@ -68,6 +69,14 @@ fun ArchivedVoucherScreen(
     // Resolved at composition time (lint-clean locale-aware resolution); the
     // toast shows this string.
     val linkCopiedLabel = stringResource(R.string.link_copied)
+    // Copy-URL effect (refactor M16) - see VoucherListScreen.
+    LaunchedEffect(vm.copyRequest) {
+        vm.copyRequest?.let { url ->
+            clipboardManager.setText(AnnotatedString(url))
+            Toast.makeText(context, linkCopiedLabel, Toast.LENGTH_SHORT).show()
+            vm.consumeCopyRequest()
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -121,12 +130,7 @@ fun ArchivedVoucherScreen(
                             },
                             onClick = {
                                 vm.setMenu(null)
-                                clipboardManager.setText(AnnotatedString(voucher.url))
-                                Toast.makeText(
-                                    context,
-                                    linkCopiedLabel,
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                                vm.requestCopy(voucher.url)
                             },
                         )
                         DropdownMenuItem(

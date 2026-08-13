@@ -3,6 +3,7 @@ package com.cdcwallet.settings
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -128,6 +129,10 @@ class LanguageSettingsInstrumentedTest {
             }
         }
         composeRule.onNodeWithText("Bahasa Melayu").assertIsDisplayed().assertIsSelected()
+        // Refactor M21: the inactive entries must carry the matching
+        // not-selected semantics too (radio-like announcement, not just the
+        // visual checkmark).
+        composeRule.onNodeWithText("中文").assertIsDisplayed().assertIsNotSelected()
     }
 
     private companion object {

@@ -38,6 +38,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -98,6 +100,10 @@ fun BalanceHero(
     val dark = LocalAppIsDark.current
     val reduceMotion = rememberReduceMotion()
     val eyebrowColor = if (dark) c.textTertiary else Color(0xFF8A6220)
+    // Refactor M21: expanded/collapsed state is announced to TalkBack.
+    val expandStateDescription = stringResource(
+        if (collapsed) R.string.hero_collapsed_desc else R.string.hero_expanded_desc,
+    )
     Surface(
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, c.summaryBorder),
@@ -108,6 +114,7 @@ fun BalanceHero(
                 animationSpec = if (reduceMotion) tween(0) else tween(220),
             )
             .clickable(onClick = onToggle)
+            .semantics { stateDescription = expandStateDescription }
             .testTag("balance-hero"),
     ) {
         Box(

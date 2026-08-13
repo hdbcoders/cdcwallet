@@ -69,8 +69,10 @@ class BackupFlow(
         // never trip the unique index inside bulkInsert (01 §1.4 semantics).
         val merged = dedupeByToken(mergeVouchers(existing, validated))
         if (merged.isEmpty()) return 0
-        repository.bulkInsert(merged)
-        return merged.size
+        // Refactor M11: report the ACTUAL insertion count the repository
+        // performed (conflict-ignore skips any token that raced in), not the
+        // size of the filtered list.
+        return repository.bulkInsert(merged)
     }
 
     /**
@@ -88,8 +90,10 @@ class BackupFlow(
 
 /**
  * Pure merge computation, kept testable. Duplicate detection uses the
- * canonical `VoucherToken.isDuplicate` (01 §1.4 / 06 §6.3) - never a second
- * implementation. O(n+m): the existing token set is built once.
+ * canonical `VoucherToken.isDuplicate` semantics (01 §1.4 / 06 §6.3): exact,
+ * case-sensitive token equality - which is precisely HashSet equality, so the
+ * set's O(1) `contains` IS the canonical comparison (never a second
+ * implementation, just the same predicate over a hash index). O(n+m).
  */
 fun mergeVouchers(
     existing: List<VoucherGroup>,
@@ -97,20 +101,19 @@ fun mergeVouchers(
 ): List<VoucherGroup> {
     val existingTokens = existing.mapTo(HashSet()) { it.token }
     return incoming.filter { candidate ->
-        existingTokens.none { existingToken ->
-            VoucherToken.isDuplicate(candidate.token, existingToken)
-        }
+        candidate.token !in existingTokens
     }
 }
 
 /**
  * Dedupe a list by token using the canonical comparison, keeping the first
  * occurrence of each token (01 §1.4 semantics for in-payload duplicates).
+ * O(n): HashSet `add` returns false exactly when the canonical comparison
+ * already matched (see mergeVouchers).
  */
 fun dedupeByToken(vouchers: List<VoucherGroup>): List<VoucherGroup> {
     val seen = HashSet<String>()
     return vouchers.filter { voucher ->
-        seen.none { seenToken -> VoucherToken.isDuplicate(voucher.token, seenToken) } &&
-            seen.add(voucher.token)
+        seen.add(voucher.token)
     }
 }

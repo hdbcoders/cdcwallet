@@ -28,7 +28,11 @@ class SqlCipherPassphraseStore(context: Context) {
         val wrapped = prefs.getString(KEY_WRAPPED, null)
         if (wrapped != null) return unwrap(wrapped)
         val passphrase = generatePassphrase()
-        prefs.edit().putString(KEY_WRAPPED, wrap(passphrase)).apply()
+        // Synchronous persistence (refactor M1): the wrapped key must be
+        // durable on disk BEFORE the database is opened - a process kill in
+        // between would otherwise leave the database without a recoverable
+        // key. Runs on the DatabaseBootstrap's IO scope, never on main.
+        prefs.edit().putString(KEY_WRAPPED, wrap(passphrase)).commit()
         return passphrase
     }
 

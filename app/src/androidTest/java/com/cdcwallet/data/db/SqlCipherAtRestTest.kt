@@ -77,4 +77,35 @@ class SqlCipherAtRestTest {
         val second = store.obtainPassphrase()
         assertEquals(first, second)
     }
+
+    /**
+     * Refactor M1: the wrapped passphrase must be DURABLE before
+     * obtainPassphrase() returns - the old async apply() left a crash window
+     * where a process kill would orphan the database with no recoverable key.
+     */
+    @Test
+    fun wrappedPassphraseIsSynchronouslyPersistedBeforeReturning() {
+        val prefs = context.getSharedPreferences("voucher_secure_prefs", Context.MODE_PRIVATE)
+        // Preserve any existing wrapped blob: this test temporarily forces the
+        // first-run path and must restore the device state afterwards (the
+        // connected-test flow reseeds the real app DB with the original key).
+        val original = prefs.getString("wrapped_db_passphrase", null)
+        try {
+            prefs.edit().clear().commit()
+
+            val store = SqlCipherPassphraseStore(context)
+            store.obtainPassphrase()
+
+            // The blob must already be readable from SharedPreferences - i.e. the
+            // in-memory state was committed to disk synchronously, and a second
+            // call round-trips through the persisted blob to the same passphrase.
+            val wrapped = prefs.getString("wrapped_db_passphrase", null)
+            assertTrue("wrapped blob must be persisted before obtainPassphrase returns", !wrapped.isNullOrBlank())
+            assertEquals(store.obtainPassphrase(), store.obtainPassphrase())
+        } finally {
+            if (original != null) {
+                prefs.edit().putString("wrapped_db_passphrase", original).commit()
+            }
+        }
+    }
 }

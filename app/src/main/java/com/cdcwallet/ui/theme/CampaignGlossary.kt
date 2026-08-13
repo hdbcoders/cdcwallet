@@ -77,14 +77,26 @@ object CampaignGlossary {
 }
 
 /**
- * Localizes a scraped category name for display. Case-insensitive exact
- * match against the glossary; unknown categories pass through raw (the
- * real page's name stays the source of truth). English is the source
- * language - it is returned unchanged.
+ * Display-time canonical form of a category name (refactor M8): trimmed with
+ * the first letter capitalized. Raw scraped values are stored verbatim and
+ * only the RENDERED text is canonicalized - this is the single choke point
+ * every category renderer goes through (via [localizeCategory]).
  */
-fun localizeCategory(raw: String, language: AppLanguage): String =
-    if (language == AppLanguage.EN) raw
-    else CampaignGlossary.categories[raw.trim().lowercase()]?.forLanguage(language) ?: raw
+fun canonicalizeCategoryForDisplay(raw: String): String =
+    raw.trim().replaceFirstChar { it.uppercase() }
+
+/**
+ * Localizes a scraped category name for display. Case-insensitive exact
+ * match against the glossary; unknown categories pass through their
+ * display-canonical form (trimmed, first letter capitalized - the real
+ * page's name stays the source of truth). English is the source
+ * language - it is returned in canonical form unchanged.
+ */
+fun localizeCategory(raw: String, language: AppLanguage): String {
+    val canonical = canonicalizeCategoryForDisplay(raw)
+    return if (language == AppLanguage.EN) canonical
+    else CampaignGlossary.categories[raw.trim().lowercase()]?.forLanguage(language) ?: canonical
+}
 
 /**
  * Localizes a scraped campaign name for display. Tokenizes the raw name,

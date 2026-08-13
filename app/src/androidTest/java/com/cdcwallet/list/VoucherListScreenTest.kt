@@ -4,16 +4,22 @@ import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.unit.dp
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -163,6 +169,16 @@ class VoucherListScreenTest {
         composeRule.onNodeWithText("No balance information yet", substring = true).assertIsDisplayed()
         composeRule.onAllNodesWithText("This voucher link has no more balance").assertCountEquals(0)
 
+        // Refactor M21: accessibility semantics, not just visible text -
+        // the kebab is a 48dp touch target and the hero announces its
+        // expanded state. (Badge + expiry are announced together for TalkBack
+        // by the card's own merged clickable semantics - no separate
+        // mergeDescendants needed, which also keeps per-node finders working
+        // in the merged tree.)
+        composeRule.onNodeWithContentDescription("More options for Link Expired")
+            .assertWidthIsEqualTo(48.dp)
+        composeRule.onNodeWithTag("balance-hero")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Expanded"))
         // Spec 04 §4.3: the total counts only ACTIVE entries (refactor H9) -
         // the UNVERIFIED row and the NOT_STARTED/EXPIRED balances contribute
         // nothing to the value or the count. The hero renders the eyebrow in
@@ -189,6 +205,43 @@ class VoucherListScreenTest {
         composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Link Forty"))
         composeRule.onNodeWithText("Link Forty").assertIsDisplayed()
         composeRule.onNodeWithText("40 days left").assertIsDisplayed()
+    }
+
+    @Test
+    fun staleRowShowsRefreshFailedStatusInsteadOfExpiry() {
+        // Refactor M5: a row whose last refresh failed swaps its expiry
+        // segment for the neutral stale status - the badge label itself is
+        // untouched, and cached expiry must never LOOK current.
+        val repository = RoomVoucherRepository(database)
+        runBlocking {
+            repository.insert(
+                voucher(
+                    "stale1", "Stale Link", ValidityStatus.ACTIVE, LocalDate.now().plusDays(30),
+                    listOf(CategoryBalance("heartland", BigDecimal("10"))),
+                    lastRefreshError = "NETWORK_ERROR",
+                ),
+            )
+        }
+
+        composeRule.setContent {
+            MaterialTheme {
+                VoucherListScreen(
+                    repository = repository,
+                    extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
+                    onAddClick = {},
+                    onOpenVoucher = {},
+                    onArchivedClick = {}, onSettingsClick = {}, onAboutClick = {},
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Stale Link").assertIsDisplayed()
+        composeRule.onNodeWithText("30 days left").assertIsDisplayed()
+        composeRule.onNodeWithText("· Couldn't refresh · tap to retry").assertIsDisplayed()
+        // The stale swap REPLACES the expiry segment.
+        composeRule.onAllNodesWithText("· Expires", substring = true).assertCountEquals(0)
     }
 
     @Test

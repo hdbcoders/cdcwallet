@@ -31,6 +31,9 @@ private class FakeRepository : VoucherRepository {
     val findCalls = AtomicInteger(0)
     val insertCalls = AtomicInteger(0)
 
+    /** Simulates the unique-token backstop rejecting a row (refactor M3). */
+    var failInsert = false
+
     override fun observeActive(): Flow<List<VoucherGroup>> = flowOf(rows.filterNot { it.isArchived })
     override fun observeArchived(): Flow<List<VoucherGroup>> = flowOf(rows.filter { it.isArchived })
     override fun observeActiveCount(): Flow<Int> = flowOf(rows.count { !it.isArchived })
@@ -39,6 +42,7 @@ private class FakeRepository : VoucherRepository {
 
     override suspend fun insert(voucher: VoucherGroup): Boolean {
         insertCalls.incrementAndGet()
+        if (failInsert) return false
         if (rows.any { it.token == voucher.token }) return false
         rows.add(voucher)
         return true
@@ -82,6 +86,18 @@ private class SuspendingExtractor : VoucherExtractor {
     override suspend fun extractForAdd(context: Context, url: String): ExtractionResult {
         gate.await()
         return ExtractionResult.Failure(ExtractionResult.FailureReason.TIMEOUT)
+    }
+}
+
+/** Extraction completes only when the test releases it (refactor M4). */
+private class GateExtractor : VoucherExtractor {
+    private val gate = CompletableDeferred<ExtractionResult>()
+
+    override suspend fun extractForAdd(context: Context, url: String): ExtractionResult =
+        gate.await()
+
+    fun release(result: ExtractionResult) {
+        gate.complete(result)
     }
 }
 
@@ -207,6 +223,46 @@ class AddVoucherFlowTest {
         assertTrue("flow must not return a result after cancellation", outcome == "not-run")
         assertEquals(0, repo.rows.size)
         assertEquals(0, repo.insertCalls.get())
+        scope.cancel()
+    }
+
+    @Test
+    fun rejectedInsertReportsDuplicateInsteadOfSilentSuccess() = runTest {
+        // Refactor M3: the unique-token backstop can reject the row after the
+        // duplicate pre-check (concurrent add won the race). The add must
+        // report a Duplicate - never a success with no saved row.
+        val repo = FakeRepository().apply { failInsert = true }
+        val flow = AddVoucherFlow(repo, FakeExtractor(success))
+
+        val result = flow.add(context, "https://voucher.redeem.gov.sg/TokenABC")
+
+        assertTrue("rejected insert must surface as Duplicate, got $result", result is AddVoucherResult.Duplicate)
+        assertEquals(1, repo.insertCalls.get())
+        assertEquals(0, repo.rows.size)
+    }
+
+    @Test
+    fun cancelledBetweenExtractionAndInsertSavesNothing() = runTest {
+        // Refactor M4: cancellation that lands while the extraction is still
+        // resolving must be caught by the pre-insert ensureActive check - the
+        // row must never be saved from an abandoned add.
+        val repo = FakeRepository()
+        val extractor = GateExtractor()
+        val flow = AddVoucherFlow(repo, extractor)
+        val scope = CoroutineScope(Dispatchers.Default + Job())
+        var outcome: Any? = "not-run"
+        val job = scope.launch {
+            outcome = flow.add(context, "https://voucher.redeem.gov.sg/TokenZZZ")
+        }
+        withContext(Dispatchers.Default) { Thread.sleep(100) }
+        job.cancel()
+        // The extraction completes only AFTER the cancellation - exactly the
+        // window the ensureActive check closes.
+        extractor.release(success)
+        job.join()
+        assertTrue("flow must not return a result after cancellation", outcome == "not-run")
+        assertEquals(0, repo.insertCalls.get())
+        assertEquals(0, repo.rows.size)
         scope.cancel()
     }
 }
