@@ -99,7 +99,7 @@ fun BalanceHero(
     val c = LocalRedesignColors.current
     val dark = LocalAppIsDark.current
     val reduceMotion = rememberReduceMotion()
-    val eyebrowColor = if (dark) c.textTertiary else Color(0xFF8A6220)
+    val eyebrowColor = if (dark) c.gold else Color(0xFF8A6220)
     // Refactor M21: expanded/collapsed state is announced to TalkBack.
     val expandStateDescription = stringResource(
         if (collapsed) R.string.hero_collapsed_desc else R.string.hero_expanded_desc,
