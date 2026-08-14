@@ -13,7 +13,7 @@
     <string name="about_credit_design">ChatGPT 5.6 Luna (high) : வடிவமைப்பு மற்றும் பட உருவாக்கம்</string>
     <string name="about_credit_code">DeepSeek v4 Flash-0731 : குறியீடு செயலாக்கம்</string>
     <string name="about_source_label">மூலக் குறியீட்டை இங்கே காணலாம்:</string>
-    <string name="about_source_link">LINK TO BE CONFIRMED</string>
+    <string name="about_source_link">https://github.com/hdbcoders/cdcwallet</string>
     <string name="about_privacy_policy">தனியுரிமைக் கொள்கை</string>
     <string name="about_version">பதிப்பு %1$s</string>
     <string name="cancel">ரத்து</string>

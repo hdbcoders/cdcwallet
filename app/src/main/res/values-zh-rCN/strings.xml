@@ -13,7 +13,7 @@
     <string name="about_credit_design">ChatGPT 5.6 Luna (high) : 设计与图像生成</string>
     <string name="about_credit_code">DeepSeek v4 Flash-0731 : 代码实现</string>
     <string name="about_source_label">源代码可在此查看：</string>
-    <string name="about_source_link">LINK TO BE CONFIRMED</string>
+    <string name="about_source_link">https://github.com/hdbcoders/cdcwallet</string>
     <string name="about_privacy_policy">隐私政策</string>
     <string name="about_version">版本 %1$s</string>
     <string name="cancel">取消</string>

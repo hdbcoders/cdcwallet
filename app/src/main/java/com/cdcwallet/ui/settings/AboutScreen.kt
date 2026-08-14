@@ -110,6 +110,9 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         text = stringResource(R.string.about_source_link),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            openUrl(context, context.getString(R.string.about_source_link))
+                        },
                     )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -122,7 +125,7 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable {
-                            openPrivacyPolicy(context)
+                            openUrl(context, PRIVACY_POLICY_URL)
                         },
                     )
                 }
@@ -139,7 +142,7 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
-/** Opens the hosted privacy policy in the device browser. */
-private fun openPrivacyPolicy(context: Context) {
-    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
+/** Opens a URL in the device browser (privacy policy / source code links). */
+private fun openUrl(context: Context, url: String) {
+    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 }
