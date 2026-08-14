@@ -12,7 +12,7 @@ This policy explains what information the App handles, where it is stored, and y
 
 - **Voucher links** - the URLs and tokens of government voucher pages that you add, paste, or share into the App.
 - **Voucher details** - the information shown on those pages (campaign name, categories, remaining balances, expiry dates), read on your device when you open or refresh a voucher.
-- **App preferences** - your display choices (theme, language, text size, collapsed or expanded hero state) and your encrypted backup files (if you create one).
+- **App preferences** - your display choices (theme, language, text size, collapsed or expanded summary) and your encrypted backup files (if you create one).
 
 All of this data is **yours and stays on your device**. Nothing is uploaded to any server operated by the developer.
 
