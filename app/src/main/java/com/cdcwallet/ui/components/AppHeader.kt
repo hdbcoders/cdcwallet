@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Accessibility
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
@@ -53,7 +54,7 @@ import com.cdcwallet.ui.theme.AppLanguage
 import com.cdcwallet.ui.theme.AppScaledContent
 import com.cdcwallet.ui.theme.LocalAppIsDark
 import com.cdcwallet.ui.theme.LocalRedesignColors
-import com.cdcwallet.ui.theme.PlexMonoFontFamily
+import com.cdcwallet.ui.theme.LocalAppTypefaces
 
 /**
  * The redesign's app header (mockup): hamburger with a Dark/Light Mode
@@ -76,10 +77,12 @@ fun AppHeader(
     onArchivedClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onAboutClick: () -> Unit,
+    onAccessibilityClick: () -> Unit = {},
     onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val c = LocalRedesignColors.current
+    val typefaces = LocalAppTypefaces.current
     var menuOpen by remember { mutableStateOf(false) }
     var langOpen by remember { mutableStateOf(false) }
 
@@ -154,6 +157,16 @@ fun AppHeader(
                             },
                         )
                         DropdownMenuItem(
+                            text = { MenuLabel(stringResource(R.string.accessibility)) },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Accessibility, contentDescription = null, tint = c.textSecondary)
+                            },
+                            onClick = {
+                                menuOpen = false
+                                onAccessibilityClick()
+                            },
+                        )
+                        DropdownMenuItem(
                             text = { MenuLabel(stringResource(R.string.about_app)) },
                             leadingIcon = {
                                 Icon(Icons.Filled.Info, contentDescription = null, tint = c.textSecondary)
@@ -191,7 +204,7 @@ fun AppHeader(
                             // glyphs and the contentPadding is the visible
                             // breathing room.
                             style = LocalTextStyle.current.copy(
-                                fontFamily = PlexMonoFontFamily,
+                                fontFamily = typefaces.mono,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 13.sp,
                                 // 1em line: the CJK fallback's default line
@@ -289,7 +302,7 @@ fun AppHeader(
                             text = archivedCount.toString(),
                             // Same line-box pinning as the label above.
                             style = LocalTextStyle.current.copy(
-                                fontFamily = PlexMonoFontFamily,
+                                fontFamily = typefaces.mono,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp,
                                 color = Color(0xFF17130A),

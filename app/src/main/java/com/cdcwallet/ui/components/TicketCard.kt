@@ -50,7 +50,7 @@ import com.cdcwallet.ui.list.badgePresentation
 import com.cdcwallet.ui.list.badgeState
 import com.cdcwallet.ui.list.formatSgd
 import com.cdcwallet.ui.theme.LocalAppIsDark
-import com.cdcwallet.ui.theme.FrauncesDisplayFontFamily
+import com.cdcwallet.ui.theme.LocalAppTypefaces
 import com.cdcwallet.ui.theme.LocalRedesignColors
 import com.cdcwallet.ui.theme.AppScaledContent
 import com.cdcwallet.ui.theme.categoryVisuals
@@ -77,6 +77,7 @@ fun TicketCard(
     menuContent: @Composable ColumnScope.() -> Unit,
 ) {
     val c = LocalRedesignColors.current
+    val typefaces = LocalAppTypefaces.current
     val presentation = badgePresentation(badgeState(voucher))
     val datePattern = stringResource(R.string.date_pattern)
     val locale = LocalConfiguration.current.locales[0]
@@ -110,7 +111,7 @@ fun TicketCard(
                     text = localizeCampaignName(voucher.campaignName, LocalAppLanguage.current),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Medium,
-                    fontFamily = FrauncesDisplayFontFamily,
+                    fontFamily = typefaces.display,
                     color = c.textPrimary,
                     lineHeight = 20.sp,
                     modifier = Modifier.weight(1f),
@@ -299,6 +300,7 @@ private fun StatusBanner(text: String, neutral: Boolean = false) {
 private fun CategoryPills(voucher: VoucherGroup, modifier: Modifier = Modifier) {
     val dark = LocalAppIsDark.current
     val c = LocalRedesignColors.current
+    val typefaces = LocalAppTypefaces.current
     FlowRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
@@ -337,7 +339,7 @@ private fun CategoryPills(voucher: VoucherGroup, modifier: Modifier = Modifier) 
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Medium,
                     color = c.textPrimary,
-                    fontFamily = FrauncesDisplayFontFamily,
+                    fontFamily = typefaces.display,
                 )
             }
         }

@@ -52,11 +52,10 @@ import com.cdcwallet.R
 import com.cdcwallet.data.model.CategoryBalance
 import com.cdcwallet.ui.list.ListSummary
 import com.cdcwallet.ui.list.formatSgd
-import com.cdcwallet.ui.theme.FrauncesDisplayFontFamily
 import com.cdcwallet.ui.theme.LocalAppIsDark
 import com.cdcwallet.ui.theme.LocalAppLanguage
+import com.cdcwallet.ui.theme.LocalAppTypefaces
 import com.cdcwallet.ui.theme.LocalRedesignColors
-import com.cdcwallet.ui.theme.PlexMonoFontFamily
 import com.cdcwallet.ui.theme.RedesignColors
 import com.cdcwallet.ui.theme.categoryVisuals
 import com.cdcwallet.ui.theme.localizeCategory
@@ -163,6 +162,7 @@ private fun CollapsedBalance(
     c: RedesignColors,
     eyebrowColor: Color,
 ) {
+    val typefaces = LocalAppTypefaces.current
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -177,7 +177,7 @@ private fun CollapsedBalance(
                 // the amount (headlineLarge) is now the dominant element.
                 text = stringResource(R.string.balance).uppercase(),
                 style = MaterialTheme.typography.headlineMedium.copy(
-                    fontFamily = PlexMonoFontFamily,
+                    fontFamily = typefaces.mono,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 1.2.sp,
                 ),
@@ -189,7 +189,7 @@ private fun CollapsedBalance(
                 text = "$",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                fontFamily = FrauncesDisplayFontFamily,
+                fontFamily = typefaces.display,
                 color = c.gold,
                 modifier = Modifier
                     .padding(end = 1.dp)
@@ -247,6 +247,7 @@ private fun ExpandedBalance(
     eyebrowColor: Color,
 ) {
     val density = LocalDensity.current
+    val typefaces = LocalAppTypefaces.current
     val textMeasurer = rememberTextMeasurer()
     // Measure with the same effective styles CategoryMiniRow renders with:
     // the name inherits LocalTextStyle (theme body → Inter), the amount is
@@ -257,19 +258,19 @@ private fun ExpandedBalance(
         fontWeight = FontWeight.SemiBold,
     )
     val amountStyle = TextStyle(
-        fontFamily = FrauncesDisplayFontFamily,
+        fontFamily = typefaces.display,
         fontSize = 15.sp,
         fontWeight = FontWeight.SemiBold,
     )
     // Balance row styles - mirror the Amount composable exactly, so the
     // measured `$`+total width matches what Text actually draws.
     val dollarStyle = TextStyle(
-        fontFamily = FrauncesDisplayFontFamily,
+        fontFamily = typefaces.display,
         fontSize = 21.sp,
         fontWeight = FontWeight.Medium,
     )
     val totalStyle = TextStyle(
-        fontFamily = FrauncesDisplayFontFamily,
+        fontFamily = typefaces.display,
         fontSize = 42.sp,
         fontWeight = FontWeight.Medium,
         letterSpacing = (-0.8).sp,
@@ -418,9 +419,10 @@ private fun BalanceBlock(
  *  amount. */
 @Composable
 private fun Eyebrow(eyebrowColor: Color, fontSize: TextUnit) {
+    val typefaces = LocalAppTypefaces.current
     Text(
         text = stringResource(R.string.balance_eyebrow).uppercase(),
-        fontFamily = PlexMonoFontFamily,
+        fontFamily = typefaces.mono,
         fontSize = fontSize,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 1.0.sp,
@@ -432,6 +434,7 @@ private fun Eyebrow(eyebrowColor: Color, fontSize: TextUnit) {
  *  over-wide number wraps below the `$` instead of ellipsizing. */
 @Composable
 private fun Amount(summary: ListSummary, c: RedesignColors) {
+    val typefaces = LocalAppTypefaces.current
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp),
@@ -441,7 +444,7 @@ private fun Amount(summary: ListSummary, c: RedesignColors) {
             text = "$",
             fontSize = 21.sp,
             fontWeight = FontWeight.Medium,
-            fontFamily = FrauncesDisplayFontFamily,
+            fontFamily = typefaces.display,
             color = c.gold,
             modifier = Modifier
                 .padding(end = 2.dp)
@@ -451,7 +454,7 @@ private fun Amount(summary: ListSummary, c: RedesignColors) {
             text = formatSgd(summary.total).removePrefix("$"),
             fontSize = 42.sp,
             fontWeight = FontWeight.Medium,
-            fontFamily = FrauncesDisplayFontFamily,
+            fontFamily = typefaces.display,
             color = c.textPrimary,
             lineHeight = 42.sp,
             letterSpacing = (-0.8).sp,
@@ -501,9 +504,10 @@ private fun MoreCategoriesLine(
 ) {
     val hidden = summary.categoryTotals.size - 3
     if (hidden > 0) {
+        val typefaces = LocalAppTypefaces.current
         Text(
             text = stringResource(R.string.more_categories, hidden),
-            fontFamily = PlexMonoFontFamily,
+            fontFamily = typefaces.mono,
             fontSize = 10.sp,
             lineHeight = 12.sp,
             fontWeight = FontWeight.Medium,
@@ -523,6 +527,7 @@ private fun MoreCategoriesLine(
 @Composable
 private fun CategoryMiniRow(balance: CategoryBalance, dark: Boolean) {
     val c = LocalRedesignColors.current
+    val typefaces = LocalAppTypefaces.current
     val visuals = categoryVisuals(balance.category, dark)
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -557,7 +562,7 @@ private fun CategoryMiniRow(balance: CategoryBalance, dark: Boolean) {
         }
         Text(
             text = formatSgd(balance.remainingValue),
-            fontFamily = FrauncesDisplayFontFamily,
+            fontFamily = typefaces.display,
             fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
             color = c.textPrimary,

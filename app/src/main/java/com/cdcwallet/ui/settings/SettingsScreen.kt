@@ -5,16 +5,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
@@ -29,7 +26,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -53,10 +49,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cdcwallet.R
 import com.cdcwallet.data.VoucherRepository
@@ -64,9 +58,6 @@ import com.cdcwallet.data.backup.BackupFlow
 import com.cdcwallet.data.model.VoucherBackupPayload
 import com.cdcwallet.ui.components.AppDialogSurface
 import com.cdcwallet.ui.components.DialogButtonRow
-import com.cdcwallet.ui.theme.AppFontScale
-import com.cdcwallet.ui.theme.FontScaleStore
-import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import java.time.ZoneId
@@ -85,7 +76,6 @@ import java.time.format.DateTimeFormatter
 fun SettingsScreen(
     backupFlow: BackupFlow,
     repository: VoucherRepository,
-    fontScaleStore: FontScaleStore,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     // TEST-ONLY SEAM (refactor M17): injects bytes instead of the system file
@@ -100,7 +90,7 @@ fun SettingsScreen(
     var pendingSnackbar by remember { mutableStateOf<SettingsEvent.Snackbar?>(null) }
 
     val vm: SettingsViewModel = viewModel(
-        initializer = { SettingsViewModel(backupFlow, repository, context.applicationContext, fontScaleStore) },
+        initializer = { SettingsViewModel(backupFlow, repository, context.applicationContext) },
     )
     val state by vm.uiState.collectAsStateWithLifecycle()
     val activeCount by vm.activeCount.collectAsStateWithLifecycle()
@@ -161,100 +151,6 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = stringResource(R.string.text_size),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                text = stringResource(R.string.text_size_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            // Text-size control: a left-to-right slider with 4 discrete stops
-            // (Default → Huge, app scale capped at 1.75×) and a radio dot
-            // marking each stop. The radios are non-interactive indicators:
-            // touches pass through to the slider, so the thumb drags across
-            // the whole track (radio buttons with their own tap gesture would
-            // swallow the drag and make sliding impossible), while tapping a
-            // dot still selects that level - the slider jumps to the tapped
-            // position and snaps to the nearest stop. Both write the same
-            // store, which recomposes the whole app instantly, including this
-            // row's live "Aa" preview. The current level is announced to
-            // TalkBack via the slider's state description and each radio's
-            // content description.
-            val currentScale = fontScaleStore.scale
-            val labels = AppFontScale.entries.associateWith { level ->
-                stringResource(
-                    when (level) {
-                        AppFontScale.DEFAULT -> R.string.text_size_default
-                        AppFontScale.LARGE -> R.string.text_size_large
-                        AppFontScale.EXTRA_LARGE -> R.string.text_size_extra_large
-                        AppFontScale.HUGE -> R.string.text_size_huge
-                    },
-                )
-            }
-            val currentLabel = labels.getValue(currentScale)
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                // The M3 thumb's centre travels from 10dp to width-10dp, so
-                // the radio stops sit at the same fractions of that range.
-                val trackStart = 10.dp
-                val trackEnd = maxWidth - 10.dp
-                Slider(
-                    value = currentScale.ordinal.toFloat(),
-                    onValueChange = { position ->
-                        vm.setFontScale(AppFontScale.entries[position.roundToInt()])
-                    },
-                    valueRange = 0f..AppFontScale.entries.lastIndex.toFloat(),
-                    steps = AppFontScale.entries.size - 2,
-                    modifier = Modifier
-                        .testTag("font-size-slider")
-                        .semantics { stateDescription = currentLabel },
-                )
-                AppFontScale.entries.forEachIndexed { index, level ->
-                    val fraction = index.toFloat() / (AppFontScale.entries.size - 1)
-                    val stopX = trackStart + (trackEnd - trackStart) * fraction
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            // 48dp box centred on the stop. It has no pointer
-                            // input, so touches fall through to the slider.
-                            .offset(x = stopX - 24.dp)
-                            .size(48.dp)
-                            .semantics { contentDescription = labels.getValue(level) }
-                            .testTag("font-size-radio-${level.name.lowercase()}"),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        // Non-interactive (onClick = null) so the dot never
-                        // intercepts a drag - see the section comment above.
-                        RadioButton(selected = level == currentScale, onClick = null)
-                    }
-                }
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                // "Aa" at the current level's app-wide size: X.sp paints at
-                // X × LocalDensity.fontScale, so 14.sp renders exactly like
-                // 14sp text at the selected level - and grows/shrinks live
-                // as the slider moves.
-                Text(
-                    text = "Aa",
-                    fontSize = PREVIEW_BASE_SP.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    text = currentLabel,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = multiplierHint(currentScale),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
             Text(
                 text = stringResource(R.string.backup),
                 style = MaterialTheme.typography.titleMedium,
@@ -515,16 +411,6 @@ private fun ModeOption(
         Text(label, style = MaterialTheme.typography.bodyMedium)
     }
 }
-
-/** Numeric hint for a scale level, e.g. "1×", "1.25×", "2×". */
-private fun multiplierHint(level: AppFontScale): String {
-    val m = level.multiplier
-    val text = if (m % 1f == 0f) m.toInt().toString() else m.toString()
-    return "${text}×"
-}
-
-/** Base size for the "Aa" preview row (14sp at the DEFAULT level). */
-private const val PREVIEW_BASE_SP = 14f
 
 @Composable
 private fun ConfirmReplaceDialog(

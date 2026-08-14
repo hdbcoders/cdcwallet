@@ -112,6 +112,7 @@ class ThemeModeStore(context: Context) {
 fun AppTheme(
     mode: ThemeMode,
     fontScale: AppFontScale = AppFontScale.DEFAULT,
+    dyslexiaFont: AppDyslexiaFont? = null,
     content: @Composable () -> Unit,
 ) {
     val dark = mode == ThemeMode.DARK
@@ -124,9 +125,18 @@ fun AppTheme(
     // store's scale changes.
     val base = LocalDensity.current
     val scaled = Density(base.density, effectiveFontScale(base.fontScale, fontScale.multiplier))
+    // Dyslexia-friendly typefaces: non-null swaps every text role (display,
+    // body, mono) to the chosen font; null keeps the redesign's typefaces.
+    val typefaces = if (dyslexiaFont == null) {
+        DefaultTypefaces
+    } else {
+        val family = dyslexiaFontFamily(dyslexiaFont)
+        AppTypefaces(display = family, body = family, mono = family)
+    }
     CompositionLocalProvider(
         LocalDensity provides scaled,
         LocalAppFontScale provides fontScale,
+        LocalAppTypefaces provides typefaces,
         LocalAppIsDark provides dark,
         LocalRedesignColors provides redesign,
         // M3's LocalContentColor defaults to Color.Black and MaterialTheme does
@@ -138,7 +148,7 @@ fun AppTheme(
     ) {
         MaterialTheme(
             colorScheme = if (dark) DarkScheme else LightScheme,
-            typography = AppTypography,
+            typography = typographyFor(dyslexiaFont),
             content = content,
         )
     }
@@ -238,6 +248,60 @@ internal val PlexMonoFontFamily = FontFamily(
 )
 
 /**
+ * OpenDyslexic - the classic dyslexia typeface (heavy weighted bottoms).
+ * Static Regular/Bold weights bundled; OFL 1.1 (licenses/OFL-OpenDyslexic.txt).
+ * Latin-script only - non-Latin glyphs fall back to the system font.
+ */
+internal val OpenDyslexicFontFamily = FontFamily(
+    Font(R.font.opendyslexic_regular, weight = FontWeight.Normal),
+    Font(R.font.opendyslexic_bold, weight = FontWeight.Bold),
+)
+
+/**
+ * Atkinson Hyperlegible - Braille Institute's legibility typeface. Static
+ * Regular/Bold weights bundled; OFL 1.1 (licenses/OFL-AtkinsonHyperlegible.txt).
+ * Latin-script only - non-Latin glyphs fall back to the system font.
+ */
+internal val AtkinsonFontFamily = FontFamily(
+    Font(R.font.atkinson_regular, weight = FontWeight.Normal),
+    Font(R.font.atkinson_bold, weight = FontWeight.Bold),
+)
+
+/**
+ * The three font roles the redesign's screens use directly (outside the
+ * typography roles): [display] (hero amounts, ticket titles), [body], and
+ * [mono] (balances, counts, the header pill). Components read
+ * [LocalAppTypefaces] instead of hardcoding families, so the dyslexia-font
+ * option swaps every text surface at once.
+ */
+data class AppTypefaces(
+    val display: FontFamily,
+    val body: FontFamily,
+    val mono: FontFamily,
+)
+
+/** The redesign's typefaces - the DEFAULT (dyslexia option off) set. */
+private val DefaultTypefaces = AppTypefaces(
+    display = FrauncesDisplayFontFamily,
+    body = InterFontFamily,
+    mono = PlexMonoFontFamily,
+)
+
+/**
+ * The app's active font roles, provided by [AppTheme]. Plain composition
+ * locals propagate into popup windows (DropdownMenu, Dialog), so popup
+ * content reads the swapped families too - same mechanism as
+ * [LocalAppFontScale].
+ */
+val LocalAppTypefaces = staticCompositionLocalOf { DefaultTypefaces }
+
+/** The bundled family for a dyslexia-font choice. */
+private fun dyslexiaFontFamily(font: AppDyslexiaFont): FontFamily = when (font) {
+    AppDyslexiaFont.ATKINSON -> AtkinsonFontFamily
+    AppDyslexiaFont.OPEN_DYSLEXIC -> OpenDyslexicFontFamily
+}
+
+/**
  * App-wide typography following the redesign: Fraunces for display/headline
  * (and title roles used for voucher names / banner titles), Inter for body
  * and labels. Numeric amounts inside cards use [PlexMonoFontFamily] explicitly
@@ -261,6 +325,36 @@ private val AppTypography: Typography = with(Typography()) {
         labelMedium = labelMedium.copy(fontFamily = InterFontFamily, fontWeight = FontWeight.Medium),
         labelSmall = labelSmall.copy(fontFamily = InterFontFamily, fontWeight = FontWeight.Medium),
     )
+}
+
+/**
+ * The active typography: the redesign's [AppTypography] when the dyslexia
+ * option is off; the same role sizes/weights with every role mapped to the
+ * chosen dyslexia family when on. Weights the bundled fonts lack (Medium,
+ * SemiBold) are filled by Compose's default font synthesis.
+ */
+private fun typographyFor(font: AppDyslexiaFont?): Typography {
+    if (font == null) return AppTypography
+    val family = dyslexiaFontFamily(font)
+    return with(AppTypography) {
+        Typography(
+            displayLarge = displayLarge.copy(fontFamily = family),
+            displayMedium = displayMedium.copy(fontFamily = family),
+            displaySmall = displaySmall.copy(fontFamily = family),
+            headlineLarge = headlineLarge.copy(fontFamily = family),
+            headlineMedium = headlineMedium.copy(fontFamily = family),
+            headlineSmall = headlineSmall.copy(fontFamily = family),
+            titleLarge = titleLarge.copy(fontFamily = family),
+            titleMedium = titleMedium.copy(fontFamily = family),
+            titleSmall = titleSmall.copy(fontFamily = family),
+            bodyLarge = bodyLarge.copy(fontFamily = family),
+            bodyMedium = bodyMedium.copy(fontFamily = family),
+            bodySmall = bodySmall.copy(fontFamily = family),
+            labelLarge = labelLarge.copy(fontFamily = family),
+            labelMedium = labelMedium.copy(fontFamily = family),
+            labelSmall = labelSmall.copy(fontFamily = family),
+        )
+    }
 }
 
 /* ------------------------------------------------------------------ */

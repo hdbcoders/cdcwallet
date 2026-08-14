@@ -14,8 +14,6 @@ import com.cdcwallet.data.backup.BackupFileStore
 import com.cdcwallet.data.backup.BackupFlow
 import com.cdcwallet.data.backup.InvalidBackupPayloadException
 import com.cdcwallet.data.model.VoucherBackupPayload
-import com.cdcwallet.ui.theme.AppFontScale
-import com.cdcwallet.ui.theme.FontScaleStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -64,7 +62,6 @@ class SettingsViewModel(
     private val backupFlow: BackupFlow,
     private val repository: VoucherRepository,
     private val appContext: Context,
-    private val fontScaleStore: FontScaleStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -265,12 +262,6 @@ class SettingsViewModel(
     }
 
     fun onReplaceDismissed() { _uiState.update { it.copy(pendingReplace = null) } }
-
-    /** Refactor M16: the font-scale ACTION lives in the ViewModel - the
-     *  screen never mutates the preference store directly. */
-    fun setFontScale(scale: AppFontScale) {
-        fontScaleStore.setFontScale(scale)
-    }
 
     private companion object {
         /** Hard cap on any backup op (decrypt/export/merge/replace): PBKDF2 at

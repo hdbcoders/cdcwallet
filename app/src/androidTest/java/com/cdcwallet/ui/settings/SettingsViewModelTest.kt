@@ -13,7 +13,6 @@ import com.cdcwallet.data.backup.BackupService
 import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.data.model.VoucherBackupPayload
 import com.cdcwallet.data.model.VoucherGroup
-import com.cdcwallet.ui.theme.FontScaleStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -49,7 +48,6 @@ class SettingsViewModelTest {
             backupFlow = backupFlow,
             repository = FakeVoucherRepository(),
             appContext = context,
-            fontScaleStore = FontScaleStore(context),
         )
 
     /**

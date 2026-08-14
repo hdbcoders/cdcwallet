@@ -100,6 +100,13 @@
     <string name="text_size_extra_large">மிகப் பெரியது</string>
     <string name="text_size_huge">மாபெரும்</string>
 
+    <!-- Accessibility: dyslexia-friendly fonts. -->
+    <string name="accessibility">அணுகல்திறன்</string>
+    <string name="dyslexia_font">டிஸ்லெக்சியா நட்பு எழுத்துரு</string>
+    <string name="dyslexia_font_desc">எழுத்துப் பிழை உள்ளவர்கள் எளிதாகப் படிக்க வடிவமைக்கப்பட்ட எழுத்துருவைப் பயன்படுத்துகிறது.</string>
+    <string name="dyslexia_font_atkinson">Atkinson Hyperlegible</string>
+    <string name="dyslexia_font_opendyslexic">OpenDyslexic</string>
+
     <string name="backup">காப்புப்பிரதி</string>
     <string name="export_backup">காப்புப்பிரதியை ஏற்றுமதி செய்</string>
     <string name="exporting_backup">காப்புப்பிரதியை குறியாக்கி ஏற்றுமதி செய்கிறது</string>

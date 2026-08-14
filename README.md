@@ -13,7 +13,7 @@ CDC Wallet is a simple, private app that keeps all your Singapore Government vou
 - **Tidy up** - archive vouchers you no longer need, bring them back later, or delete them for good.
 - **Move to a new phone** - export an encrypted backup file and import it on your next device. Only you can open it, with a password you choose.
 - **In your language** - English, 中文, Bahasa Melayu, and தமிழ்.
-- **Easy on the eyes** - light and dark themes, plus bigger text sizes for comfortable reading.
+- **Easy on the eyes** - light and dark themes, bigger text sizes for comfortable reading, and dyslexia-friendly fonts (Atkinson Hyperlegible or OpenDyslexic) from the Accessibility menu.
 
 ## Privacy
 

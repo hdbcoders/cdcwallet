@@ -33,7 +33,6 @@ import com.cdcwallet.data.model.ValidityStatus
 import com.cdcwallet.data.model.VoucherBackupPayload
 import com.cdcwallet.data.model.VoucherGroup
 import com.cdcwallet.ui.settings.SettingsScreen
-import com.cdcwallet.ui.theme.FontScaleStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -229,15 +228,11 @@ class VoucherBackupFlowInstrumentedTest {
         bytesProvider: () -> ByteArray?,
     ) {
         val flow = BackupFlow(repository)
-        val fontScaleStore = FontScaleStore(
-            InstrumentationRegistry.getInstrumentation().targetContext,
-        )
         composeRule.setContent {
             MaterialTheme {
                 SettingsScreen(
                     backupFlow = flow,
                     repository = repository,
-                    fontScaleStore = fontScaleStore,
                     onBack = {},
                     backupBytesProvider = bytesProvider,
                 )

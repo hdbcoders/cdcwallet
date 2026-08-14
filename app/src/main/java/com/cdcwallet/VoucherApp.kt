@@ -11,6 +11,7 @@ import com.cdcwallet.data.db.SqlCipherPassphraseStore
 import com.cdcwallet.extraction.ExtractionCoordinator
 import com.cdcwallet.extraction.ExtractionEngine
 import com.cdcwallet.ui.components.HeroCollapseStore
+import com.cdcwallet.ui.theme.DyslexiaFontStore
 import com.cdcwallet.ui.theme.FontScaleStore
 import com.cdcwallet.ui.theme.LanguageStore
 import com.cdcwallet.ui.theme.ThemeModeStore
@@ -51,6 +52,10 @@ class AppContainer(context: Context) {
         FontScaleStore(appContext)
     }
 
+    val dyslexiaFontStore: DyslexiaFontStore by lazy {
+        DyslexiaFontStore(appContext)
+    }
+
     val languageStore: LanguageStore by lazy {
         LanguageStore(appContext)
     }
@@ -58,7 +63,6 @@ class AppContainer(context: Context) {
     val heroCollapseStore: HeroCollapseStore by lazy {
         HeroCollapseStore(appContext)
     }
-
     val databaseBootstrap: DatabaseBootstrap by lazy {
         DatabaseBootstrap.create(appContext, SqlCipherPassphraseStore(appContext)).also { it.start() }
     }

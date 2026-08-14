@@ -59,6 +59,7 @@ fun VoucherListScreen(
     onArchivedClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onAboutClick: () -> Unit,
+    onAccessibilityClick: () -> Unit = {},
     languageStore: LanguageStore,
     onLanguageSelected: (AppLanguage) -> Unit,
     modifier: Modifier = Modifier,
@@ -89,6 +90,7 @@ fun VoucherListScreen(
                 onArchivedClick = onArchivedClick,
                 onSettingsClick = onSettingsClick,
                 onAboutClick = onAboutClick,
+                onAccessibilityClick = onAccessibilityClick,
                 onToggleTheme = onToggleTheme,
             )
             BalanceHero(

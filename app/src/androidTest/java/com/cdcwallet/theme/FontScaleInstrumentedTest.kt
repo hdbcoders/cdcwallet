@@ -19,20 +19,15 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.sp
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.cdcwallet.data.RoomVoucherRepository
-import com.cdcwallet.data.backup.BackupFlow
-import com.cdcwallet.data.db.AppDatabase
-import com.cdcwallet.data.db.SqlCipherNative
-import com.cdcwallet.ui.settings.SettingsScreen
+import com.cdcwallet.ui.accessibility.AccessibilityScreen
 import com.cdcwallet.ui.theme.AppFontScale
 import com.cdcwallet.ui.theme.AppScaledContent
 import com.cdcwallet.ui.theme.AppTheme
+import com.cdcwallet.ui.theme.DyslexiaFontStore
 import com.cdcwallet.ui.theme.FontScaleStore
 import com.cdcwallet.ui.theme.ThemeMode
-import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -43,8 +38,9 @@ import org.junit.runner.RunWith
 
 /**
  * App-wide text size: the multiplier applied in AppTheme must render text
- * proportionally larger (measured, not just asserted on state), the Settings
- * control must write through to the store, and the choice must persist.
+ * proportionally larger (measured, not just asserted on state), the
+ * Accessibility screen control must write through to the store, and the
+ * choice must persist.
  */
 @RunWith(AndroidJUnit4::class)
 class FontScaleInstrumentedTest {
@@ -53,24 +49,19 @@ class FontScaleInstrumentedTest {
     val composeRule = createComposeRule()
 
     private val appContext: Context = ApplicationProvider.getApplicationContext()
-    private lateinit var database: AppDatabase
 
     @Before
     fun setUp() {
-        SqlCipherNative.load()
-        database = Room.inMemoryDatabaseBuilder(appContext, AppDatabase::class.java)
-            .openHelperFactory(SupportOpenHelperFactory("test-passphrase".toByteArray()))
-            .allowMainThreadQueries()
-            .build()
         // Fresh font prefs per test - a persisted choice from a previous test
         // would leak into the default resolution.
         fontPrefs().edit().clear().commit()
+        dyslexiaPrefs().edit().clear().commit()
     }
 
     @After
     fun tearDown() {
-        database.close()
         fontPrefs().edit().clear().commit()
+        dyslexiaPrefs().edit().clear().commit()
     }
 
     @Test
@@ -98,14 +89,13 @@ class FontScaleInstrumentedTest {
     }
 
     @Test
-    fun settingsTextSizeSelectionUpdatesAndPersists() {
+    fun accessibilityTextSizeSelectionUpdatesAndPersists() {
         val store = FontScaleStore(appContext)
         store.setFontScale(AppFontScale.DEFAULT)
         composeRule.setContent {
             MaterialTheme {
-                SettingsScreen(
-                    backupFlow = BackupFlow(RoomVoucherRepository(database)),
-                    repository = RoomVoucherRepository(database),
+                AccessibilityScreen(
+                    dyslexiaFontStore = DyslexiaFontStore(appContext),
                     fontScaleStore = store,
                     onBack = {},
                 )
@@ -122,14 +112,13 @@ class FontScaleInstrumentedTest {
     }
 
     @Test
-    fun settingsRadioSelectionUpdatesAndPersists() {
+    fun accessibilityRadioSelectionUpdatesAndPersists() {
         val store = FontScaleStore(appContext)
         store.setFontScale(AppFontScale.DEFAULT)
         composeRule.setContent {
             MaterialTheme {
-                SettingsScreen(
-                    backupFlow = BackupFlow(RoomVoucherRepository(database)),
-                    repository = RoomVoucherRepository(database),
+                AccessibilityScreen(
+                    dyslexiaFontStore = DyslexiaFontStore(appContext),
                     fontScaleStore = store,
                     onBack = {},
                 )
@@ -150,9 +139,8 @@ class FontScaleInstrumentedTest {
         store.setFontScale(AppFontScale.DEFAULT)
         composeRule.setContent {
             MaterialTheme {
-                SettingsScreen(
-                    backupFlow = BackupFlow(RoomVoucherRepository(database)),
-                    repository = RoomVoucherRepository(database),
+                AccessibilityScreen(
+                    dyslexiaFontStore = DyslexiaFontStore(appContext),
                     fontScaleStore = store,
                     onBack = {},
                 )
@@ -210,4 +198,7 @@ class FontScaleInstrumentedTest {
 
     private fun fontPrefs() =
         appContext.getSharedPreferences("voucher_font_prefs", Context.MODE_PRIVATE)
+
+    private fun dyslexiaPrefs() =
+        appContext.getSharedPreferences("voucher_dyslexia_font_prefs", Context.MODE_PRIVATE)
 }

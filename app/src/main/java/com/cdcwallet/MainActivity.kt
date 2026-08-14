@@ -55,6 +55,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.cdcwallet.addflow.AddVoucherFlow
+import com.cdcwallet.ui.accessibility.AccessibilityScreen
 import com.cdcwallet.ui.add.AddVoucherScreen
 import com.cdcwallet.ui.detail.VoucherWebViewScreen
 import com.cdcwallet.ui.list.ArchivedVoucherScreen
@@ -64,6 +65,7 @@ import com.cdcwallet.ui.settings.AboutScreen
 import com.cdcwallet.ui.settings.SettingsScreen
 import com.cdcwallet.ui.theme.AppLanguage
 import com.cdcwallet.ui.theme.AppTheme
+import com.cdcwallet.ui.theme.DyslexiaFontStore
 import com.cdcwallet.ui.theme.FontScaleStore
 import com.cdcwallet.ui.theme.LocalAppLanguage
 import com.cdcwallet.ui.theme.rememberReduceMotion
@@ -147,7 +149,11 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val sharedUrl = intent?.getStringExtra(Intent.EXTRA_TEXT)
         setContent {
-            AppTheme(container.themeModeStore.mode, container.fontScaleStore.scale) {
+            AppTheme(
+                container.themeModeStore.mode,
+                container.fontScaleStore.scale,
+                dyslexiaFont = container.dyslexiaFontStore.let { if (it.enabled) it.font else null },
+            ) {
                 CompositionLocalProvider(
                     LocalAppLanguage provides container.languageStore.language,
                 ) {
@@ -173,6 +179,7 @@ class MainActivity : ComponentActivity() {
                     isColdStart = savedInstanceState == null,
                     navController = navController,
                     fontScaleStore = container.fontScaleStore,
+                    dyslexiaFontStore = container.dyslexiaFontStore,
                     onLanguageSelected = { language -> setAppLanguage(language) },
                     pendingShareUrl = pendingShareUrl,
                     onPendingShareUrlConsumed = { pendingShareUrl = null },
@@ -191,6 +198,7 @@ private fun AppNavHost(
     isColdStart: Boolean,
     navController: NavHostController,
     fontScaleStore: FontScaleStore,
+    dyslexiaFontStore: DyslexiaFontStore,
     onLanguageSelected: (AppLanguage) -> Unit,
     pendingShareUrl: String?,
     onPendingShareUrlConsumed: () -> Unit,
@@ -253,6 +261,7 @@ private fun AppNavHost(
                     onArchivedClick = { navController.navigate("archived") },
                     onSettingsClick = { navController.navigate("settings") },
                     onAboutClick = { navController.navigate("about") },
+                    onAccessibilityClick = { navController.navigate("accessibility") },
                     onToggleTheme = { container.themeModeStore.toggle() },
                     heroCollapsed = container.heroCollapseStore.collapsed,
                     onToggleHeroCollapsed = { container.heroCollapseStore.toggle() },
@@ -293,7 +302,8 @@ private fun AppNavHost(
                             },
                             onArchivedClick = { navController.navigate("archived") },
                             onSettingsClick = { navController.navigate("settings") },
-                    onAboutClick = { navController.navigate("about") },
+                            onAboutClick = { navController.navigate("about") },
+                            onAccessibilityClick = { navController.navigate("accessibility") },
                             onToggleTheme = { container.themeModeStore.toggle() },
                             heroCollapsed = container.heroCollapseStore.collapsed,
                             onToggleHeroCollapsed = { container.heroCollapseStore.toggle() },
@@ -332,6 +342,18 @@ private fun AppNavHost(
             SettingsScreen(
                 backupFlow = container.backupFlow,
                 repository = container.repository,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = "accessibility",
+            enterTransition = { layerEnter(reduceMotion) },
+            exitTransition = { layerExit(reduceMotion) },
+            popEnterTransition = { layerPopEnter(reduceMotion) },
+            popExitTransition = { layerPopExit(reduceMotion) },
+        ) {
+            AccessibilityScreen(
+                dyslexiaFontStore = dyslexiaFontStore,
                 fontScaleStore = fontScaleStore,
                 onBack = { navController.popBackStack() },
             )
