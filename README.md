@@ -28,3 +28,7 @@ CDC Wallet is available on the Google Play Store for Android phones running Andr
 ## Contact
 
 This is a personal project. For questions or feedback, please open an issue on this repository.
+
+## License
+
+CDC Wallet is free software, distributed under the terms of the **GNU General Public License v3.0**. See [LICENSE.md](LICENSE.md) for the full text. The bundled fonts (Atkinson Hyperlegible and OpenDyslexic) remain under their own SIL Open Font License 1.1.
