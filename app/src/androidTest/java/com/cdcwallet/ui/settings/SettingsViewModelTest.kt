@@ -1,9 +1,7 @@
 package com.cdcwallet.ui.settings
 
-import android.content.ContentValues
 import android.content.Context
-import android.os.Environment
-import android.provider.MediaStore
+import androidx.core.content.FileProvider
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cdcwallet.R
@@ -23,6 +21,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.io.File
 import org.junit.runner.RunWith
 import java.time.Instant
 
@@ -84,20 +83,24 @@ class SettingsViewModelTest {
     fun oversizeBackupFileIsRejectedBeforeReading() = runBlocking {
         // Refactor M12: a file above the 20 MB cap must produce the generic
         // error without ever being read into memory or opening the password
-        // dialog. A real content:// Uri (MediaStore Downloads) is used so the
-        // size column actually resolves.
-        val resolver = context.contentResolver
-        val values = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "cdcv-oversize-test.backup")
-            put(MediaStore.MediaColumns.MIME_TYPE, "application/octet-stream")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-            put(MediaStore.MediaColumns.IS_PENDING, 1)
-        }
-        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)!!
+        // dialog. The oversize file lives in the APP's cacheDir and is served
+        // by the debug-manifest FileProvider (com.cdcwallet.debug.fileprovider)
+        // as a content:// Uri whose OpenableColumns.SIZE resolves to the real
+        // byte count - the same shape the system file picker returns, on every
+        // API level. MediaStore.Downloads is API 29+, and a provider in the
+        // test apk would be a different uid than the app process, so neither
+        // can serve this file cross-API; the app's own debug provider can.
+        val file = File(context.cacheDir, "cdcv-oversize-test.backup")
         try {
-            resolver.openOutputStream(uri)!!.use { it.write(ByteArray(21 * 1024 * 1024)) }
-            values.put(MediaStore.MediaColumns.IS_PENDING, 0)
-            resolver.update(uri, values, null, null)
+            file.outputStream().use { out ->
+                val chunk = ByteArray(1 * 1024 * 1024)
+                repeat(21) { out.write(chunk) }
+            }
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.debug.fileprovider",
+                file,
+            )
 
             var vmRef: SettingsViewModel? = null
             val (event, vm) = awaitEvent(deadlineMs = 20_000) { vmArg ->
@@ -111,7 +114,7 @@ class SettingsViewModelTest {
             )
             assertNull("password dialog must not open for an oversize file", vmRef?.uiState?.value?.passwordDialogFor)
         } finally {
-            runCatching { resolver.delete(uri, null, null) }
+            file.delete()
         }
     }
 

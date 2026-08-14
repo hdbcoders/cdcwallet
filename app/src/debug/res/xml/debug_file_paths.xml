@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider roots for the debug manifest (see AndroidManifest.xml): the
+     whole app cacheDir, so instrumented tests can hand the ViewModel a
+     size-reporting content:// Uri for files they create there. -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="app" path="." />
+</paths>

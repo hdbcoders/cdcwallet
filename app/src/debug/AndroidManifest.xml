@@ -11,6 +11,22 @@
              manifest-declared receivers are silently dropped by the API 36
              background-broadcast policy. The receiver is active whenever the
              app process is running. -->
+
+        <!-- Debug-only FileProvider (never in release): serves files from the
+             app's own cacheDir as content:// Uris whose OpenableColumns.SIZE
+             resolves. The M12 oversize-backup instrumented test uses it to hand
+             the ViewModel a size-reporting content Uri on every API level
+             (MediaStore.Downloads is API 29+; a provider in the test apk would
+             be a different uid and couldn't touch the app's data dirs). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.debug.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/debug_file_paths" />
+        </provider>
     </application>
 
 </manifest>
