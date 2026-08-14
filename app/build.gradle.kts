@@ -25,7 +25,9 @@ android {
         applicationId = "com.hdbcoders.cdcwallet"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
+        // versionCode 1 was already consumed by the first Play upload; every
+        // subsequent upload needs a strictly higher code.
+        versionCode = 2
         versionName = "1.0-beta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
