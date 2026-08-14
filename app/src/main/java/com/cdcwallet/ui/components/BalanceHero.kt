@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.max
 import com.cdcwallet.R
 import com.cdcwallet.data.model.CategoryBalance
 import com.cdcwallet.ui.list.ListSummary
@@ -275,6 +276,15 @@ private fun ExpandedBalance(
         fontWeight = FontWeight.Medium,
         letterSpacing = (-0.8).sp,
     )
+    // Eyebrow style - mirror the Eyebrow composable exactly (two-column size
+    // 12.sp, mono family, SemiBold, 1.0.sp tracking), so the measured width
+    // matches what Text actually draws.
+    val eyebrowStyle = TextStyle(
+        fontFamily = typefaces.mono,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 1.0.sp,
+    )
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val spacingPx = with(density) { 14.dp.toPx() }
         val iconAndGapPx = with(density) { (21.6.dp + 6.dp).toPx() }
@@ -310,9 +320,19 @@ private fun ExpandedBalance(
                 ).size.width.toFloat()
             dollarPx + 2.dp.toPx() + digitsPx + 2.dp.toPx()
         }
-        // Responsive two-column: the balance column gets exactly what its row
-        // needs (plus the buffer); the category column gets the remainder.
-        val balanceColumnWidthPx = balanceRowWidthPx
+        // Responsive two-column: the balance column must fit BOTH the
+        // `$`+total row and the "BALANCE" eyebrow above it. The eyebrow is
+        // wider than the amount at large font scales in the dyslexia fonts
+        // (wider glyphs + synthesized SemiBold + 1.0sp tracking), so the
+        // column takes the wider of the two - if that squeezes the category
+        // column, shouldStackBalanceHero stacks instead. The eyebrow never
+        // wraps to a second line.
+        val eyebrowWidthPx = textMeasurer
+            .measure(
+                AnnotatedString(stringResource(R.string.balance_eyebrow).uppercase()),
+                eyebrowStyle,
+            ).size.width.toFloat()
+        val balanceColumnWidthPx = max(balanceRowWidthPx, eyebrowWidthPx)
         val categoryColumnWidthPx = contentWidthPx - spacingPx - balanceColumnWidthPx
         val stacked = shouldStackBalanceHero(categoryColumnWidthPx, categoryRowWidthsPx)
         Crossfade(
