@@ -53,6 +53,8 @@ import com.cdcwallet.R
 import com.cdcwallet.data.model.CategoryBalance
 import com.cdcwallet.ui.list.ListSummary
 import com.cdcwallet.ui.list.formatSgd
+import com.cdcwallet.ui.theme.AppTypefaces
+import com.cdcwallet.ui.theme.CategoryVisuals
 import com.cdcwallet.ui.theme.LocalAppIsDark
 import com.cdcwallet.ui.theme.LocalAppLanguage
 import com.cdcwallet.ui.theme.LocalAppTypefaces
@@ -348,7 +350,7 @@ private fun ExpandedBalance(
                 ) {
                     BalanceBlock(summary, c, eyebrowColor, stacked = true)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        CategoryRows(summary, c, dark)
+                        CategoryRows(summary, c, dark, stacked = true)
                         // Same convention as the two-column layout: the
                         // "+N more" line sits at the lower right of the card.
                         MoreCategoriesLine(summary, c, TextAlign.End)
@@ -499,6 +501,7 @@ private fun CategoryRows(
     summary: ListSummary,
     c: RedesignColors,
     dark: Boolean,
+    stacked: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -508,7 +511,7 @@ private fun CategoryRows(
         summary.categoryTotals
             .sortedByDescending { it.remainingValue }
             .take(3)
-            .forEach { balance -> CategoryMiniRow(balance, dark) }
+            .forEach { balance -> CategoryMiniRow(balance, dark, stacked) }
     }
 }
 
@@ -541,16 +544,128 @@ private fun MoreCategoriesLine(
 }
 
 /**
- * Category mini row as a FlowRow: the [icon + name] unit and the amount unit
- * share one line (name left, amount right via SpaceBetween) while they fit;
- * the amount wraps to its own line below the name when they would intersect.
- * Neither unit is ever truncated.
+ * Category mini row: the [icon + name] unit and the amount unit share one
+ * line (name left, amount right via SpaceBetween) while they fit. In the
+ * stacked hero ([stacked] = true) the amount must never land left-aligned on
+ * an overflow row: a multi-word name wraps word-safely (no mid-word breaks)
+ * with the amount sharing its last line, right-aligned; a single-word name -
+ * or a word forced to break mid-word - keeps the amount right-aligned on its
+ * own row below. The two-column hero keeps the legacy FlowRow behavior
+ * ([stacked] = false). Neither unit is ever truncated.
  */
 @Composable
-private fun CategoryMiniRow(balance: CategoryBalance, dark: Boolean) {
+private fun CategoryMiniRow(
+    balance: CategoryBalance,
+    dark: Boolean,
+    stacked: Boolean = false,
+) {
     val c = LocalRedesignColors.current
     val typefaces = LocalAppTypefaces.current
     val visuals = categoryVisuals(balance.category, dark)
+    val name = localizeCategory(balance.category, LocalAppLanguage.current)
+    val amount = formatSgd(balance.remainingValue)
+    if (!stacked) {
+        CategoryFlowRow(name, amount, visuals, typefaces, c)
+        return
+    }
+    // Stacked rendering, measurement-driven (same TextMeasurer pattern as
+    // ExpandedBalance): decide fit vs overflow up front, so the amount is
+    // always right-aligned in every outcome.
+    val density = LocalDensity.current
+    val textMeasurer = rememberTextMeasurer()
+    val nameStyle = LocalTextStyle.current.copy(
+        fontSize = 13.2.sp,
+        fontWeight = FontWeight.SemiBold,
+    )
+    val amountStyle = TextStyle(
+        fontFamily = typefaces.display,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.SemiBold,
+    )
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val iconAndGapPx = with(density) { (21.6.dp + 6.dp).toPx() }
+        val nameWidthPx = textMeasurer
+            .measure(AnnotatedString(name), nameStyle).size.width.toFloat()
+        val amountWidthPx = textMeasurer
+            .measure(AnnotatedString(amount), amountStyle).size.width.toFloat()
+        val contentWidthPx = with(density) { maxWidth.toPx() }
+        // 2dp safety buffer: the FlowRow wraps a hair before the arithmetic
+        // sum (same buffer as the hero's own balance-row measurement).
+        val fits = iconAndGapPx + nameWidthPx + amountWidthPx +
+            with(density) { 2.dp.toPx() } <= contentWidthPx
+        if (fits) {
+            CategoryFlowRow(name, amount, visuals, typefaces, c)
+        } else if (name.split(Regex("\\s+")).size > 1) {
+            // Rule 1: multi-word name wraps word-safely (no maxLines cap);
+            // the amount shares the name's LAST line, right-aligned.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    // Top-align the icon with the name's FIRST line - when
+                    // the name wraps to 2+ lines, CenterVertically would
+                    // float the icon on the boundary between the lines.
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    CategoryIcon(visuals)
+                    Text(
+                        text = name,
+                        style = nameStyle,
+                        color = c.textSecondary,
+                    )
+                }
+                Text(
+                    text = amount,
+                    style = amountStyle,
+                    color = c.textPrimary,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
+            }
+        } else {
+            // Rules 2/3: single-word name stays on line 1 (breaking mid-word
+            // only if the word itself exceeds the row width); the amount goes
+            // to its own row directly below, right-aligned.
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    // Top-align the icon with the first line - a word forced
+                    // to break mid-word (rule 3) makes this row 2 lines tall,
+                    // and CenterVertically would float the icon between them.
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    CategoryIcon(visuals)
+                    Text(
+                        text = name,
+                        style = nameStyle,
+                        color = c.textSecondary,
+                    )
+                }
+                Text(
+                    text = amount,
+                    style = amountStyle,
+                    color = c.textPrimary,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
+                )
+            }
+        }
+    }
+}
+
+/** The legacy one-line category row: FlowRow with SpaceBetween (name left,
+ *  amount right) and a 2-line cap. Used by the two-column hero and by the
+ *  stacked hero whenever everything fits on one line. */
+@Composable
+private fun CategoryFlowRow(
+    name: String,
+    amount: String,
+    visuals: CategoryVisuals,
+    typefaces: AppTypefaces,
+    c: RedesignColors,
+) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -562,32 +677,38 @@ private fun CategoryMiniRow(balance: CategoryBalance, dark: Boolean) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(21.6.dp)
-                    .background(visuals.color, RoundedCornerShape(7.2.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    visuals.icon,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(12.dp),
-                )
-            }
+            CategoryIcon(visuals)
             Text(
-                text = localizeCategory(balance.category, LocalAppLanguage.current),
+                text = name,
                 fontSize = 13.2.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = c.textSecondary,
             )
         }
         Text(
-            text = formatSgd(balance.remainingValue),
+            text = amount,
             fontFamily = typefaces.display,
             fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
             color = c.textPrimary,
+        )
+    }
+}
+
+/** The category's tinted square icon. */
+@Composable
+private fun CategoryIcon(visuals: CategoryVisuals) {
+    Box(
+        modifier = Modifier
+            .size(21.6.dp)
+            .background(visuals.color, RoundedCornerShape(7.2.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            visuals.icon,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(12.dp),
         )
     }
 }
