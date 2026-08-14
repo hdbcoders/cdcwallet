@@ -18,11 +18,11 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.cdcwallet"
+    namespace = "com.hdbcoders.cdcwallet"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.cdcwallet"
+        applicationId = "com.hdbcoders.cdcwallet"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -113,16 +113,16 @@ tasks.matching { it.name == "connectedDebugAndroidTest" }.configureEach {
             // the broadcast to reach it. Launch, let it register, then
             // broadcast (which also re-enables auto-seed), and relaunch so
             // the foreground app reflects the seeded data.
-            adb("shell", "am", "start", "-n", "com.cdcwallet/.MainActivity")
+            adb("shell", "am", "start", "-n", "com.hdbcoders.cdcwallet/.MainActivity")
             Thread.sleep(2500)
             val seedExit = adb(
                 "shell", "am", "broadcast", "-a",
-                "com.cdcwallet.action.SEED_DEV_DATA",
+                "com.hdbcoders.cdcwallet.action.SEED_DEV_DATA",
             )
             println("Reseeded dev data after connected tests (adb exit $seedExit)")
             Thread.sleep(2000)
-            adb("shell", "am", "force-stop", "com.cdcwallet")
-            adb("shell", "am", "start", "-n", "com.cdcwallet/.MainActivity")
+            adb("shell", "am", "force-stop", "com.hdbcoders.cdcwallet")
+            adb("shell", "am", "start", "-n", "com.hdbcoders.cdcwallet/.MainActivity")
         }.onFailure { println("WARN: reinstall/reseed-after-tests failed: $it") }
     }
     // afterTask covers both success and failure (doLast would not run on

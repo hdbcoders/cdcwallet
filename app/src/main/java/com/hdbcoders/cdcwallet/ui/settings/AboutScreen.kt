@@ -1,0 +1,148 @@
+package com.hdbcoders.cdcwallet.ui.settings
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import com.hdbcoders.cdcwallet.BuildConfig
+import com.hdbcoders.cdcwallet.R
+
+/**
+ * Hosted privacy-policy URL shown in the About page. TODO(release): replace
+ * with the real hosted URL before publishing to Google Play (the Play Console
+ * privacy-policy field must point at the same address).
+ */
+private const val PRIVACY_POLICY_URL = "https://github.com/hdbcoders/cdcwallet/blob/main/PRIVACY.md"
+
+/**
+ * About App page (drawer → About App): a short description of the app
+ * (hobby project, no data collection, internet only for the RedeemSG site,
+ * AI-made non-English translations), credits for the AI contributors, a
+ * link to the source code, and the app version pinned to the lower-right
+ * corner. Reached from the navigation drawer's About entry; back arrow
+ * returns to the list.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.about_app)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                        )
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        // Refactor L9: scrollable content - long translations or the Huge
+        // text setting scroll inside the screen instead of clipping. The
+        // version line stays pinned to the lower-right corner (product
+        // decision): the scroll column reserves bottom space so the last
+        // content line can never hide behind it.
+        Box(
+            modifier = Modifier.padding(padding).fillMaxSize(),
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 56.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.about_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = stringResource(R.string.about_credits_label),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.about_credit_architecture),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.about_credit_design),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.about_credit_code),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = stringResource(R.string.about_source_label),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.about_source_link),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            openUrl(context, context.getString(R.string.about_source_link))
+                        },
+                    )
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = stringResource(R.string.about_privacy_policy),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = PRIVACY_POLICY_URL,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            openUrl(context, PRIVACY_POLICY_URL)
+                        },
+                    )
+                }
+            }
+            Text(
+                text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+            )
+        }
+    }
+}
+
+/** Opens a URL in the device browser (privacy policy / source code links). */
+private fun openUrl(context: Context, url: String) {
+    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+}

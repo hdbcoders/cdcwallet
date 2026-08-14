@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Test-only manifest additions.
      On API <= 25 the instrumentation process runs under the TEST apk's uid
-     (com.cdcwallet.test), not the app's - so storage-permission grants meant
+     (com.hdbcoders.cdcwallet.test), not the app's - so storage-permission grants meant
      for the export tests must be requestable by the test package itself.
      Mirrors the app manifest's declaration; maxSdkVersion 28 matches it. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
