@@ -19,9 +19,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -51,7 +48,7 @@ class SettingsViewModelTest {
         )
 
     /**
-     * Drives the ViewModel's main-dispatched coroutine on a test dispatcher
+     * Drives the ViewModel's main-dispatched coroutine on the real main looper
      * while real IO (PBKDF2 decrypt, file writes) completes on its own
      * threads, until one event arrives or the deadline passes.
      */
@@ -59,23 +56,28 @@ class SettingsViewModelTest {
         deadlineMs: Long,
         trigger: (SettingsViewModel) -> Unit,
     ): Pair<SettingsEvent?, SettingsViewModel> = coroutineScope {
-        val dispatcher = StandardTestDispatcher()
-        Dispatchers.setMain(dispatcher)
-        try {
-            val vm = viewModel()
-            // Refactor D10: a CompletableDeferred completed by the collector
-            // replaces the Thread.sleep busy-wait - the runBlocking loop
-            // suspends until the real-IO collector delivers the event or the
-            // wall-clock deadline expires.
-            val done = CompletableDeferred<SettingsEvent?>()
-            val collector = launch(Dispatchers.IO) { done.complete(vm.events.first()) }
-            trigger(vm)
-            val event = withTimeoutOrNull(deadlineMs) { done.await() }
-            collector.cancel()
-            event to vm
-        } finally {
-            Dispatchers.resetMain()
+        val vm = viewModel()
+        // Refactor D10: a CompletableDeferred completed by the collector
+        // replaces the Thread.sleep busy-wait - the runBlocking loop
+        // suspends until the real-IO collector delivers the event or the
+        // wall-clock deadline expires. The ViewModel runs on the REAL main
+        // looper (instrumented environment): no Dispatchers.setMain stub -
+        // a StandardTestDispatcher would never be pumped and the ViewModel's
+        // coroutine would silently never run.
+        val done = CompletableDeferred<SettingsEvent?>()
+        val collector = launch(Dispatchers.IO) { done.complete(vm.events.first()) }
+        trigger(vm)
+        val event = withTimeoutOrNull(deadlineMs) { done.await() }
+        collector.cancel()
+        if (event == null) {
+            throw AssertionError(
+                "No SettingsEvent arrived within ${deadlineMs}ms of the trigger - the " +
+                    "ViewModel never delivered one (deadline expired). " +
+                    "uiState: passwordDialogFor=${vm.uiState.value.passwordDialogFor}, " +
+                    "busyPhase=${vm.uiState.value.busyPhase}",
+            )
         }
+        event to vm
     }
 
     @Test
