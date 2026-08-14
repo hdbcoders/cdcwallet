@@ -588,6 +588,16 @@ private fun CategoryMiniRow(
             .measure(AnnotatedString(name), nameStyle).size.width.toFloat()
         val amountWidthPx = textMeasurer
             .measure(AnnotatedString(amount), amountStyle).size.width.toFloat()
+        // Height of ONE rendered text line, measured with the actual name so
+        // the fallback font (e.g. Tamil) determines the metrics. The icon
+        // centers against the FIRST line's line box - the single-line
+        // convention. Top-aligning the icon to the block top would float it
+        // above the glyphs, because fallback fonts carry ascent padding
+        // inside the line box.
+        val firstLineHeightPx = textMeasurer
+            .measure(AnnotatedString(name), nameStyle, maxLines = 1)
+            .size.height.toFloat()
+        val iconBoxModifier = Modifier.height(with(density) { firstLineHeightPx.toDp() })
         val contentWidthPx = with(density) { maxWidth.toPx() }
         // 2dp safety buffer: the FlowRow wraps a hair before the arithmetic
         // sum (same buffer as the hero's own balance-row measurement).
@@ -604,13 +614,16 @@ private fun CategoryMiniRow(
             ) {
                 Row(
                     modifier = Modifier.weight(1f),
-                    // Top-align the icon with the name's FIRST line - when
-                    // the name wraps to 2+ lines, CenterVertically would
-                    // float the icon on the boundary between the lines.
+                    // Top-align the icon box with the name block; the box is
+                    // one line tall and centers the icon, so the icon sits
+                    // beside the name's FIRST line (matching single-line rows)
+                    // whatever the fallback font's ascent padding.
                     verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    CategoryIcon(visuals)
+                    Box(modifier = iconBoxModifier, contentAlignment = Alignment.Center) {
+                        CategoryIcon(visuals)
+                    }
                     Text(
                         text = name,
                         style = nameStyle,
@@ -630,13 +643,15 @@ private fun CategoryMiniRow(
             // to its own row directly below, right-aligned.
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(
-                    // Top-align the icon with the first line - a word forced
-                    // to break mid-word (rule 3) makes this row 2 lines tall,
-                    // and CenterVertically would float the icon between them.
+                    // Same first-line centering as rule 1: the box is one line
+                    // tall, so a word forced to break mid-word (rule 3) still
+                    // keeps the icon beside the first line.
                     verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    CategoryIcon(visuals)
+                    Box(modifier = iconBoxModifier, contentAlignment = Alignment.Center) {
+                        CategoryIcon(visuals)
+                    }
                     Text(
                         text = name,
                         style = nameStyle,
