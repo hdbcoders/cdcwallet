@@ -1,5 +1,6 @@
 package com.cdcwallet.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,10 +20,21 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import com.cdcwallet.BuildConfig
 import com.cdcwallet.R
+
+/**
+ * Hosted privacy-policy URL shown in the About page. TODO(release): replace
+ * with the real hosted URL before publishing to Google Play (the Play Console
+ * privacy-policy field must point at the same address).
+ */
+private const val PRIVACY_POLICY_URL = "https://example.com/privacy-policy"
 
 /**
  * About App page (drawer → About App): a short description of the app
@@ -35,6 +47,7 @@ import com.cdcwallet.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -99,6 +112,20 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = stringResource(R.string.about_privacy_policy),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = PRIVACY_POLICY_URL,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            openPrivacyPolicy(context)
+                        },
+                    )
+                }
             }
             Text(
                 text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
@@ -110,4 +137,9 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+/** Opens the hosted privacy policy in the device browser. */
+private fun openPrivacyPolicy(context: Context) {
+    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
 }
