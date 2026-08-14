@@ -292,27 +292,25 @@ class ExtractionEngineTest {
     @Test
     fun mainFrameLoadErrorReportsNetworkError() = runTest {
         // Refactor D12: a main-frame WebView load error must map to an
-        // explicit NETWORK_ERROR. Deterministic fixture: the main document is
-        // intercepted with a broken (null-data) response, which Chromium
-        // reports as a main-frame load failure via onReceivedError -
-        // unlike connection-refused hosts, which some WebView builds never
-        // deliver the callback for.
+        // explicit NETWORK_ERROR. The main frame is forced to fail with
+        // settings.blockNetworkLoads = true - a genuine network failure that
+        // every WebView version reports via onReceivedError, with no
+        // interception semantics involved (the old null-data-intercept fixture
+        // relied on API 26+ client read-back: on API 24-25 the engine cannot
+        // read the view's client, so a fixture client on the view is replaced
+        // and the page loads normally instead of failing).
+        //
+        // The explicit no-op delegate is required on API 24-25: the engine
+        // only installs its per-load client (the onReceivedError ->
+        // NETWORK_ERROR mapping) there when a delegate is provided, since the
+        // view's own client cannot be read back.
         val failingEngine = engine(
             hiddenFactory = { context ->
                 WebView(context).apply {
-                    webViewClient = object : WebViewClient() {
-                        override fun shouldInterceptRequest(
-                            view: WebView,
-                            request: WebResourceRequest,
-                        ): WebResourceResponse? =
-                            if (request.isForMainFrame) {
-                                WebResourceResponse("text/html", "UTF-8", null)
-                            } else {
-                                null
-                            }
-                    }
+                    settings.blockNetworkLoads = true
                 }
             },
+            delegate = WebViewClient(),
         )
         val result = failingEngine.extractForAdd(context, testPageUrl)
         assertEquals(
