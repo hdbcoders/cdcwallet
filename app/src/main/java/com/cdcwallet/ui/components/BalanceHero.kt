@@ -349,7 +349,9 @@ private fun ExpandedBalance(
                     BalanceBlock(summary, c, eyebrowColor, stacked = true)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         CategoryRows(summary, c, dark)
-                        MoreCategoriesLine(summary, c, TextAlign.Start)
+                        // Same convention as the two-column layout: the
+                        // "+N more" line sits at the lower right of the card.
+                        MoreCategoriesLine(summary, c, TextAlign.End)
                     }
                 }
             } else {
@@ -513,8 +515,8 @@ private fun CategoryRows(
 /** The "+N more" line shown under the top-3 rows when more categories exist
  *  than fit. Compact: an explicit tight [lineHeight] (the ambient body
  *  lineHeight would otherwise reserve nearly a full category row's height for
- *  a 10sp label) and a small top gap. [textAlign] right-aligns it in the
- *  two-column layout and left-aligns it in the stacked one. */
+ *  a 10sp label) and a small top gap. [textAlign] right-aligns it at the
+ *  lower right of the card in both the two-column and the stacked layouts. */
 @Composable
 private fun MoreCategoriesLine(
     summary: ListSummary,
