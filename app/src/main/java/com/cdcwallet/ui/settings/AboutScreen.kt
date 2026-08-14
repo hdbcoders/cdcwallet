@@ -34,7 +34,7 @@ import com.cdcwallet.R
  * with the real hosted URL before publishing to Google Play (the Play Console
  * privacy-policy field must point at the same address).
  */
-private const val PRIVACY_POLICY_URL = "https://example.com/privacy-policy"
+private const val PRIVACY_POLICY_URL = "https://github.com/hdbcoders/cdcwallet/blob/main/PRIVACY.md"
 
 /**
  * About App page (drawer → About App): a short description of the app
