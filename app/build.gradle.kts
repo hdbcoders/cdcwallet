@@ -48,7 +48,12 @@ android {
             if (keystoreProperties.isNotEmpty()) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            isMinifyEnabled = false
+            // R8 code shrinking (spec 01 §1.6): enabled behind the gated
+            // verification - assembleRelease must build and the release APK
+            // is smoke-tested on-device (add + WebView detail + backup
+            // export/import) before shipping. Any keep rule needed goes into
+            // proguard-rules.pro with a comment; do not weaken rules broadly.
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
