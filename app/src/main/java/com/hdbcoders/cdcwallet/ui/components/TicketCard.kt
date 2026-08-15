@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalLayoutApi::class)
+@file:OptIn(ExperimentalLayoutApi::class, ExperimentalTextApi::class)
 
 package com.hdbcoders.cdcwallet.ui.components
 
@@ -27,10 +27,13 @@ import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -105,7 +108,11 @@ fun TicketCard(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(start = 18.dp, end = 10.dp, top = 10.dp, bottom = 7.dp),
+                // Compact title band: the row's height is driven by the 48dp
+                // kebab touch target anyway, and CenterVertically leaves ~7dp
+                // of air around the 20sp name line - the former 10/7dp
+                // vertical padding was pure extra height on every ticket.
+                modifier = Modifier.padding(start = 18.dp, end = 10.dp),
             ) {
                 Text(
                     text = localizeCampaignName(voucher.campaignName, LocalAppLanguage.current),
@@ -210,37 +217,57 @@ private fun ExpiryRow(
         verticalArrangement = Arrangement.spacedBy(2.dp),
         modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 8.dp),
     ) {
-        when (presentation.glyph) {
-            BadgeGlyph.CHECK -> {
-                Box(
-                    modifier = Modifier
-                        .size(16.dp)
-                        .background(c.ok, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    // Icon, not a "✓" text glyph: the glyph sits high in
-                    // its line box (no descender), so it looked off-center.
-                    Icon(
-                        Icons.Filled.Check,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(11.dp),
-                    )
+        // Glyph + status are ONE FlowRow unit (tester-visible on the
+        // Zero-Balance ticket at large font scales): as separate items the
+        // 16dp icon fit while the status text wrapped, leaving the triangle
+        // stranded alone on its own row. The inner Row wraps them together -
+        // the icon can never split from the text it describes.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            when (presentation.glyph) {
+                BadgeGlyph.CHECK -> {
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .background(c.ok, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        // Icon, not a "✓" text glyph: the glyph sits high in
+                        // its line box (no descender), so it looked off-center.
+                        Icon(
+                            Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(11.dp),
+                        )
+                    }
                 }
+                BadgeGlyph.WARNING -> WarningDot(Modifier.size(16.dp), statusColor)
+                BadgeGlyph.NONE -> Spacer(Modifier.size(16.dp))
             }
-            BadgeGlyph.WARNING -> WarningDot(Modifier.size(16.dp), statusColor)
-            BadgeGlyph.NONE -> Spacer(Modifier.size(16.dp))
-        }
 
-        val statusText = presentation.pluralCount?.let { count ->
-            pluralStringResource(presentation.labelResId, count.toInt(), count.toInt())
-        } ?: stringResource(presentation.labelResId)
-        Text(
-            text = statusText,
-            fontSize = 12.5.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = statusColor,
-        )
+            val statusText = presentation.pluralCount?.let { count ->
+                pluralStringResource(presentation.labelResId, count.toInt(), count.toInt())
+            } ?: stringResource(presentation.labelResId)
+            // Pin the line box to the font size and drop the font's internal
+            // padding (same pattern as the AppHeader 文A / Archived pill): the
+            // default 12.5sp line box carries ~1.9x the glyph height in empty
+            // air, which at large font scales makes a wrapped expiry row look
+            // like a huge gap between "days left" and the "· expires" segment.
+            val rowTextStyle = LocalTextStyle.current.copy(
+                fontSize = 12.5.sp,
+                lineHeight = 12.5.sp,
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
+            )
+            Text(
+                text = statusText,
+                fontWeight = FontWeight.SemiBold,
+                color = statusColor,
+                style = rowTextStyle,
+            )
+        }
         // Refactor M5: a failed refresh replaces the EXPIRY segment with the
         // neutral stale status - the badge label itself is untouched (spec 04
         // §4.2) - so cached values never LOOK current after a failure.
@@ -248,8 +275,12 @@ private fun ExpiryRow(
         expirySegment?.let {
             Text(
                 text = "· $it",
-                fontSize = 12.5.sp,
                 color = c.textSecondary,
+                style = LocalTextStyle.current.copy(
+                    fontSize = 12.5.sp,
+                    lineHeight = 12.5.sp,
+                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                ),
             )
         }
     }
