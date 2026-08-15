@@ -10,7 +10,7 @@
     <string name="back">Back</string>
     <string name="settings">Settings</string>
     <string name="about_app">About App</string>
-    <string name="about_description">This voucher storing app is a personal project and is developed for anyone who keeps losing their voucher links or prefers an app based interface. Internet access is only for loading the RedeemSG site. No data or analytics is collected at all by this app. All non English translations are done by AI.</string>
+    <string name="about_description">This voucher storing app is a personal project and is developed for anyone who keeps losing their voucher links or prefers an app based interface. Internet access is only for loading the RedeemSG site and checking the Play Store for app updates. No data or analytics is collected at all by this app. All non English translations are done by AI.</string>
     <string name="about_credits_label">This project is built by:</string>
     <string name="about_credit_architecture">Claude Sonnet 5 (max) : Architecture</string>
     <string name="about_credit_design">ChatGPT 5.6 Luna (high) : Design and Image generation</string>
