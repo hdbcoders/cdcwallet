@@ -174,7 +174,7 @@ class MainActivity : ComponentActivity() {
                 }
                 AppNavHost(
                     container = container,
-                    flow = flow,
+                    flowProvider = { flow },
                     sharedUrl = sharedUrl,
                     isColdStart = savedInstanceState == null,
                     navController = navController,
@@ -193,7 +193,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun AppNavHost(
     container: AppContainer,
-    flow: AddVoucherFlow,
+    flowProvider: () -> AddVoucherFlow,
     sharedUrl: String?,
     isColdStart: Boolean,
     navController: NavHostController,
@@ -203,6 +203,13 @@ private fun AppNavHost(
     pendingShareUrl: String?,
     onPendingShareUrlConsumed: () -> Unit,
 ) {
+    // Cold-start race fix (tester crash on v1): the caller passes a lambda
+    // instead of the AddVoucherFlow instance. Evaluating the argument at the
+    // call site would force MainActivity.flow's lazy - which builds
+    // container.repository - during the FIRST composition, before the
+    // bootstrap gate below runs. The lambda is only invoked inside the "add"
+    // route below, which is composed strictly after the bootstrap reaches
+    // Ready, so container.repository is guaranteed to be available there.
     // Database readiness gate (refactor M2): the whole UI waits for the
     // IO-backed bootstrap. Failed -> fatal error screen (the splash must
     // never hang); Initializing -> Compose splash on API < 31 (API 31+ is
@@ -384,7 +391,7 @@ private fun AppNavHost(
             popExitTransition = { drillInPopExit(reduceMotion) },
         ) { entry ->
             AddVoucherScreen(
-                flow = flow,
+                flow = flowProvider(),
                 initialUrl = entry.arguments?.getString("url"),
                 onBack = { navController.popBackStack() },
             )

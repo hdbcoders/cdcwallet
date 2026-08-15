@@ -27,8 +27,9 @@ android {
         targetSdk = 36
         // versionCode 1 was already consumed by the first Play upload; every
         // subsequent upload needs a strictly higher code.
-        versionCode = 2
-        versionName = "1.0-beta"
+        // v2 = first closed-test upload; v3 = cold-start crash fix (1.0.1-beta).
+        versionCode = 3
+        versionName = "1.0.1-beta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
