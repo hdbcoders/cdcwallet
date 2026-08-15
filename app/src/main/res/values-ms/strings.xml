@@ -22,6 +22,15 @@
     <string name="link_copied">Pautan disalin</string>
     <string name="undo">Buat asal</string>
 
+    <!-- Update check (REQ-13). -->
+    <string name="check_for_update">Semak kemas kini</string>
+    <string name="tap_to_update">Ketuk untuk mengemas kini</string>
+    <string name="update_available">Kemas kini tersedia</string>
+    <string name="update_available_message">Versi baharu aplikasi ini tersedia di Gedung Play.</string>
+    <string name="update_available_badge">Kemas kini tersedia</string>
+    <string name="open_play_store">Buka Gedung Play</string>
+    <string name="not_now">Bukan sekarang</string>
+
     <string name="add_voucher">Tambah Baucar</string>
     <string name="archived">Diarkibkan</string>
     <string name="archive">Arkib</string>

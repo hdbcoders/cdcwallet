@@ -15,6 +15,10 @@ import com.hdbcoders.cdcwallet.ui.theme.DyslexiaFontStore
 import com.hdbcoders.cdcwallet.ui.theme.FontScaleStore
 import com.hdbcoders.cdcwallet.ui.theme.LanguageStore
 import com.hdbcoders.cdcwallet.ui.theme.ThemeModeStore
+import com.hdbcoders.cdcwallet.update.PlayUpdateAvailabilitySource
+import com.hdbcoders.cdcwallet.update.PrefsUpdateCheckStore
+import com.hdbcoders.cdcwallet.update.UpdateChecker
+import androidx.core.content.pm.PackageInfoCompat
 
 open class VoucherApp : Application() {
     lateinit var container: AppContainer
@@ -91,5 +95,18 @@ class AppContainer(context: Context) {
 
     val backupFlow: BackupFlow by lazy {
         BackupFlow(repository)
+    }
+
+    /** REQ-13 update check: silent 24h-throttled check on app open plus the
+     *  user-triggered "Check for update". Play binder call, never network. */
+    val updateChecker: UpdateChecker by lazy {
+        UpdateChecker(
+            store = PrefsUpdateCheckStore(appContext),
+            source = PlayUpdateAvailabilitySource(appContext),
+            installedVersionCode = {
+                val info = appContext.packageManager.getPackageInfo(appContext.packageName, 0)
+                PackageInfoCompat.getLongVersionCode(info).toInt()
+            },
+        )
     }
 }

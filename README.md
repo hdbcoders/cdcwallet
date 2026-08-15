@@ -14,6 +14,7 @@ CDC Wallet is a simple, private app that keeps all your Singapore Government vou
 - **Move to a new phone** - export an encrypted backup file and import it on your next device. Only you can open it, with a password you choose.
 - **In your language** - English, 中文, Bahasa Melayu, and தமிழ்.
 - **Easy on the eyes** - light and dark themes, bigger text sizes for comfortable reading, and dyslexia-friendly fonts (Atkinson Hyperlegible or OpenDyslexic) from the Accessibility menu.
+- **Always up to date** - the app quietly checks the Play Store for new versions (at most once a day); when an update is available, a badge appears in the menu and a single tap takes you to the Play Store.
 
 ## Privacy
 

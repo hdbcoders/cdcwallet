@@ -5,6 +5,7 @@ import androidx.core.content.ContextCompat
 import com.hdbcoders.cdcwallet.dev.DevActions
 import com.hdbcoders.cdcwallet.dev.DevSeeder
 import com.hdbcoders.cdcwallet.dev.SeedDevDataReceiver
+import com.hdbcoders.cdcwallet.dev.UpdateDevReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,6 +36,16 @@ class DebugVoucherApp : VoucherApp() {
             IntentFilter().apply {
                 addAction(DevActions.ACTION_SEED)
                 addAction(DevActions.ACTION_CLEAR)
+            },
+            ContextCompat.RECEIVER_EXPORTED,
+        )
+        // REQ-13: update-check simulation (badge / menu slot / popup testing).
+        ContextCompat.registerReceiver(
+            this,
+            UpdateDevReceiver(),
+            IntentFilter().apply {
+                addAction(DevActions.ACTION_SIMULATE_UPDATE)
+                addAction(DevActions.ACTION_CLEAR_UPDATE_SIM)
             },
             ContextCompat.RECEIVER_EXPORTED,
         )

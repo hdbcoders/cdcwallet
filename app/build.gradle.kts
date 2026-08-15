@@ -206,6 +206,10 @@ dependencies {
     implementation(libs.androidx.webkit)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
+    // Play In-App Updates (REQ-13): queries the Play Store for a newer app
+    // version via Play Services (a binder call, not a network request). The
+    // update check is user- or app-open-triggered only - never scheduled.
+    implementation(libs.play.app.update)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
