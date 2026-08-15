@@ -106,12 +106,20 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         text = stringResource(R.string.about_source_label),
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    // Resolved in composable scope (not inside the click
+                    // lambda, which is not a composable context) and captured
+                    // for the URL open.
+                    val sourceLink = stringResource(R.string.about_source_link)
                     Text(
                         text = stringResource(R.string.about_source_link),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable {
-                            openUrl(context, context.getString(R.string.about_source_link))
+                            // The click lambda is not a composable context, so
+                            // the URL is resolved once at composition time and
+                            // captured here - lint LocalContextGetResourceValueCall
+                            // forbids context.getString reads in composables.
+                            openUrl(context, sourceLink)
                         },
                     )
                 }
