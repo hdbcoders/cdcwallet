@@ -62,6 +62,9 @@ fun VoucherListScreen(
     onAccessibilityClick: () -> Unit = {},
     languageStore: LanguageStore,
     onLanguageSelected: (AppLanguage) -> Unit,
+    updateAvailable: Boolean = false,
+    onCheckForUpdate: () -> Unit = {},
+    onTapToUpdate: () -> Unit = {},
     modifier: Modifier = Modifier,
     onToggleTheme: () -> Unit = {},
     heroCollapsed: Boolean = false,
@@ -92,6 +95,9 @@ fun VoucherListScreen(
                 onAboutClick = onAboutClick,
                 onAccessibilityClick = onAccessibilityClick,
                 onToggleTheme = onToggleTheme,
+                updateAvailable = updateAvailable,
+                onCheckForUpdate = onCheckForUpdate,
+                onTapToUpdate = onTapToUpdate,
             )
             BalanceHero(
                 summary = summary,

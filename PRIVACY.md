@@ -27,6 +27,8 @@ All of this data is **yours and stays on your device**. Nothing is uploaded to a
 
 The App has **no servers and no analytics**. Internet access occurs only when **you** take an action that loads the RedeemSG website inside the App's browser view (for example, tapping a voucher to open or refresh it). Those requests go directly between your device and the RedeemSG service; the App does not observe, log, or relay them.
 
+The App also checks the Play Store for newer versions (a standard Play Services update check, at most once per day on app open, or when you tap "Check for update" in the menu). This is the same mechanism every Play Store app uses; no personal data is involved, and the check only reports whether a newer version exists.
+
 ## Permissions the App requests
 
 - **Internet** - used solely to load voucher pages you choose to open.

@@ -24,7 +24,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -35,10 +37,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -51,9 +55,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.lifecycle.lifecycleScope
+import com.hdbcoders.cdcwallet.update.UpdateCheckResult
+import com.hdbcoders.cdcwallet.update.openPlayStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.hdbcoders.cdcwallet.addflow.AddVoucherFlow
 import com.hdbcoders.cdcwallet.ui.accessibility.AccessibilityScreen
 import com.hdbcoders.cdcwallet.ui.add.AddVoucherScreen
@@ -147,6 +155,14 @@ class MainActivity : ComponentActivity() {
         }
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        // REQ-13: silent update check when the app opens - one Play query per
+        // 24h (UpdateChecker's own throttle), flag-only, never shows UI. Runs
+        // off the main thread (Play binder call via Tasks.await).
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                container.updateChecker.silentCheckIfDue()
+            }
+        }
         val sharedUrl = intent?.getStringExtra(Intent.EXTRA_TEXT)
         setContent {
             AppTheme(
@@ -242,6 +258,28 @@ private fun AppNavHost(
 
     val reduceMotion = rememberReduceMotion()
 
+    // REQ-13: update availability drives the "!" badge and the menu slot.
+    // Snapshot state read directly - recomposes the header when the silent
+    // check (or a user check) flips the flag.
+    val updateAvailable = container.updateChecker.updateAvailable
+    // The user-triggered check may surface the closeable update dialog.
+    var updateDialogVisible by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val onCheckForUpdate: () -> Unit = {
+        scope.launch {
+            val result = withContext(Dispatchers.IO) {
+                container.updateChecker.userCheck()
+            }
+            // Spec: the popup appears ONLY for a user-triggered check that
+            // finds an update - silent checks never pop it.
+            if (result == UpdateCheckResult.Available) updateDialogVisible = true
+        }
+    }
+    val appContext = LocalContext.current.applicationContext
+    val onTapToUpdate = {
+        openPlayStore(appContext, appContext.packageName)
+    }
+
     // One-shot: does the list's first DB load still need masking? Scoped here
     // (above the NavHost) so it survives back navigation and rotation but
     // resets on a true process death - the splash masks only the initial
@@ -274,6 +312,9 @@ private fun AppNavHost(
                     onToggleHeroCollapsed = { container.heroCollapseStore.toggle() },
                     languageStore = container.languageStore,
                     onLanguageSelected = onLanguageSelected,
+                    updateAvailable = updateAvailable,
+                    onCheckForUpdate = onCheckForUpdate,
+                    onTapToUpdate = onTapToUpdate,
                 )
             } else {
                 // API < 31: no system splash, so the Compose splash masks the
@@ -316,6 +357,9 @@ private fun AppNavHost(
                             onToggleHeroCollapsed = { container.heroCollapseStore.toggle() },
                             languageStore = container.languageStore,
                             onLanguageSelected = onLanguageSelected,
+                            updateAvailable = updateAvailable,
+                            onCheckForUpdate = onCheckForUpdate,
+                            onTapToUpdate = onTapToUpdate,
                         )
                     } else {
                         SplashScreen()
@@ -414,6 +458,33 @@ private fun AppNavHost(
                 onBack = { navController.popBackStack() },
             )
         }
+    }
+
+    // REQ-13: closeable update dialog - shown ONLY when a USER-triggered
+    // check finds an update (silent checks never pop it). Dismissible via
+    // "Not now", outside tap and back; "Open Play Store" deep-links to the
+    // listing (market:// with https fallback).
+    if (updateDialogVisible) {
+        AlertDialog(
+            onDismissRequest = { updateDialogVisible = false },
+            title = { Text(stringResource(R.string.update_available)) },
+            text = { Text(stringResource(R.string.update_available_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        updateDialogVisible = false
+                        onTapToUpdate()
+                    },
+                ) {
+                    Text(stringResource(R.string.open_play_store))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { updateDialogVisible = false }) {
+                    Text(stringResource(R.string.not_now))
+                }
+            },
+        )
     }
 }
 

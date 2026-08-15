@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Accessibility
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -79,6 +84,11 @@ fun AppHeader(
     onAboutClick: () -> Unit,
     onAccessibilityClick: () -> Unit = {},
     onToggleTheme: () -> Unit,
+    // REQ-13: update availability - drives the "!" badge and the exclusive
+    // "Check for update" / "Tap to update" menu slot.
+    updateAvailable: Boolean = false,
+    onCheckForUpdate: () -> Unit = {},
+    onTapToUpdate: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val c = LocalRedesignColors.current
@@ -109,6 +119,32 @@ fun AppHeader(
                                     .background(c.textSecondary, RoundedCornerShape(2.dp)),
                             )
                         }
+                    }
+                }
+                // REQ-13: "!" badge while a newer version is known to exist.
+                // Pure-graphics overlay on the hamburger; its own TalkBack
+                // node announces "Update available".
+                if (updateAvailable) {
+                    val badgeDesc = stringResource(R.string.update_available_badge)
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = 7.dp, y = (-3).dp)
+                            .semantics { contentDescription = badgeDesc }
+                            .size(17.dp)
+                            .background(c.danger, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "!",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 11.sp,
+                            style = LocalTextStyle.current.copy(
+                                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                            ),
+                        )
                     }
                 }
                 DropdownMenu(
@@ -147,16 +183,6 @@ fun AppHeader(
                             },
                         )
                         DropdownMenuItem(
-                            text = { MenuLabel(stringResource(R.string.settings)) },
-                            leadingIcon = {
-                                Icon(Icons.Filled.Settings, contentDescription = null, tint = c.textSecondary)
-                            },
-                            onClick = {
-                                menuOpen = false
-                                onSettingsClick()
-                            },
-                        )
-                        DropdownMenuItem(
                             text = { MenuLabel(stringResource(R.string.accessibility)) },
                             leadingIcon = {
                                 Icon(Icons.Filled.Accessibility, contentDescription = null, tint = c.textSecondary)
@@ -166,6 +192,42 @@ fun AppHeader(
                                 onAccessibilityClick()
                             },
                         )
+                        DropdownMenuItem(
+                            text = { MenuLabel(stringResource(R.string.settings)) },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Settings, contentDescription = null, tint = c.textSecondary)
+                            },
+                            onClick = {
+                                menuOpen = false
+                                onSettingsClick()
+                            },
+                        )
+                        // REQ-13: one slot, mutually exclusive - "Check for
+                        // update" while no update is known, "Tap to update"
+                        // (→ Play Store) once one is.
+                        if (updateAvailable) {
+                            DropdownMenuItem(
+                                text = { MenuLabel(stringResource(R.string.tap_to_update)) },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.SystemUpdate, contentDescription = null, tint = c.textSecondary)
+                                },
+                                onClick = {
+                                    menuOpen = false
+                                    onTapToUpdate()
+                                },
+                            )
+                        } else {
+                            DropdownMenuItem(
+                                text = { MenuLabel(stringResource(R.string.check_for_update)) },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.SystemUpdate, contentDescription = null, tint = c.textSecondary)
+                                },
+                                onClick = {
+                                    menuOpen = false
+                                    onCheckForUpdate()
+                                },
+                            )
+                        }
                         DropdownMenuItem(
                             text = { MenuLabel(stringResource(R.string.about_app)) },
                             leadingIcon = {

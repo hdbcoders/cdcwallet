@@ -22,6 +22,15 @@
     <string name="link_copied">链接已复制</string>
     <string name="undo">撤销</string>
 
+    <!-- Update check (REQ-13). -->
+    <string name="check_for_update">检查更新</string>
+    <string name="tap_to_update">点击更新</string>
+    <string name="update_available">有可用更新</string>
+    <string name="update_available_message">此应用的新版本已在 Play 商店中提供。</string>
+    <string name="update_available_badge">有可用更新</string>
+    <string name="open_play_store">打开 Play 商店</string>
+    <string name="not_now">暂不</string>
+
     <string name="add_voucher">添加购物券</string>
     <string name="archived">已存档</string>
     <string name="archive">存档</string>

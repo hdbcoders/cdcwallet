@@ -22,6 +22,15 @@
     <string name="link_copied">இணைப்பு நகலெடுக்கப்பட்டது</string>
     <string name="undo">செயல்தவிர்</string>
 
+    <!-- Update check (REQ-13). -->
+    <string name="check_for_update">புதுப்பிப்பைச் சரிபார்க்கவும்</string>
+    <string name="tap_to_update">புதுப்பிக்கத் தட்டவும்</string>
+    <string name="update_available">புதுப்பிப்பு கிடைக்கிறது</string>
+    <string name="update_available_message">இந்தப் பயன்பாட்டின் புதிய பதிப்பு Play Store இல் கிடைக்கிறது.</string>
+    <string name="update_available_badge">புதுப்பிப்பு கிடைக்கிறது</string>
+    <string name="open_play_store">Play Store ஐத் திறக்கவும்</string>
+    <string name="not_now">இப்போது இல்லை</string>
+
     <string name="add_voucher">வவுச்சரைச் சேர்</string>
     <string name="archived">காப்பகம்</string>
     <string name="archive">காப்பகப்படுத்து</string>
