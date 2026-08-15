@@ -27,9 +27,10 @@ android {
         targetSdk = 36
         // versionCode 1 was already consumed by the first Play upload; every
         // subsequent upload needs a strictly higher code.
-        // v2 = first closed-test upload; v3 = cold-start crash fix (1.0.1-beta).
-        versionCode = 3
-        versionName = "1.0.1-beta"
+        // v2 = first closed-test upload; v3 = cold-start crash fix (1.0.1-beta);
+        // v4 = Play language-split fix (1.0.2-beta): all locales in base module.
+        versionCode = 4
+        versionName = "1.0.2-beta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -75,6 +76,16 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+    // In-app language switcher (REQ-11): Play's default per-language split
+    // delivery only installs the device-language split (e.g. split_config.en),
+    // so values-ms/values-ta/values-zh-rCN resources are missing at runtime and
+    // the switcher falls back to English on Play-installed builds. Ship all
+    // four languages inside the base module instead.
+    bundle {
+        language {
+            enableSplit = false
         }
     }
     testOptions {
