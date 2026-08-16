@@ -3,6 +3,7 @@ package com.hdbcoders.cdcwallet.update
 import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -55,6 +56,13 @@ class UpdateFeatureInstrumentedTest {
     }
 
     private fun openHamburgerMenu() {
+        // The API<31 splash (bootstrap gate + SPLASH_MIN_MS) delays the header
+        // on slow devices while the IO bootstrap runs - the compose rule
+        // considers the app idle during it, so tests must WAIT for the header
+        // instead of racing the splash (flaky 'node not found' on API 24).
+        rule.waitUntil(timeoutMillis = 20_000) {
+            rule.onAllNodesWithTag("header-menu").fetchSemanticsNodes().isNotEmpty()
+        }
         rule.onNodeWithTag("header-menu").performClick()
         rule.waitForIdle()
     }
