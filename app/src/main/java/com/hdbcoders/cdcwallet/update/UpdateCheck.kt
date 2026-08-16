@@ -80,13 +80,20 @@ fun playStoreWebUri(packageName: String): String =
  * Opens the Play Store page for [packageName], falling back from `market://`
  * to the https listing. Fail-soft: if nothing can handle either URI (no Play
  * Store on the device), the tap is silently ignored - never a crash.
+ *
+ * Both intents carry [Intent.FLAG_ACTIVITY_NEW_TASK]: the caller passes the
+ * application context (never an Activity), and starting an activity from a
+ * non-Activity context throws `AndroidRuntimeException` without that flag -
+ * which the fail-soft catch would swallow, making the tap a no-op.
  */
 fun openPlayStore(context: Context, packageName: String) {
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(playStoreMarketUri(packageName)))
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     try {
         context.startActivity(intent)
     } catch (e: Exception) {
         val fallback = Intent(Intent.ACTION_VIEW, Uri.parse(playStoreWebUri(packageName)))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try {
             context.startActivity(fallback)
         } catch (e2: Exception) {

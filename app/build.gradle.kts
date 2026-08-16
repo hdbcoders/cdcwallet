@@ -223,6 +223,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.espresso.intents)
     // AGENTS.md: navigation in tests goes through UIAutomator selectors
     // (By.text / By.desc), never raw screen-coordinate taps.
     androidTestImplementation(libs.androidx.test.uiautomator)
