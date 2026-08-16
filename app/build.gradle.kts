@@ -28,9 +28,10 @@ android {
         // versionCode 1 was already consumed by the first Play upload; every
         // subsequent upload needs a strictly higher code.
         // v2 = first closed-test upload; v3 = cold-start crash fix (1.0.1-beta);
-        // v4 = Play language-split fix (1.0.2-beta): all locales in base module.
-        versionCode = 4
-        versionName = "1.0.2-beta"
+        // v4 = Play language-split fix (1.0.2-beta): all locales in base module;
+        // v5 = REQ-13 update check + TicketCard layout (1.0.3-beta).
+        versionCode = 5
+        versionName = "1.0.3-beta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
