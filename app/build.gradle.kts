@@ -31,8 +31,9 @@ android {
         // v4 = Play language-split fix (1.0.2-beta): all locales in base module;
         // v5 = REQ-13 update check + TicketCard layout (1.0.3-beta).
         // v6 = 1.0.4-beta: REQ-13 tap-feedback fix only; excludes TicketCard overlay.
-        versionCode = 6
-        versionName = "1.0.4-beta"
+        // v7 = 1.0.5-beta: Tap-to-update Play Store launch fix (NEW_TASK flag).
+        versionCode = 7
+        versionName = "1.0.5-beta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
