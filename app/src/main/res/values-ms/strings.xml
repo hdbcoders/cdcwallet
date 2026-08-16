@@ -30,6 +30,8 @@
     <string name="update_available_badge">Kemas kini tersedia</string>
     <string name="open_play_store">Buka Gedung Play</string>
     <string name="not_now">Bukan sekarang</string>
+    <string name="up_to_date">Anda sudah dikemas kini</string>
+    <string name="update_check_failed">Tidak dapat menyemak kemas kini. Cuba lagi kemudian.</string>
 
     <string name="add_voucher">Tambah Baucar</string>
     <string name="archived">Diarkibkan</string>

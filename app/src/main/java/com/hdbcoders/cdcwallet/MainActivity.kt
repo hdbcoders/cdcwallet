@@ -6,6 +6,7 @@ import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.Crossfade
@@ -262,20 +263,27 @@ private fun AppNavHost(
     // Snapshot state read directly - recomposes the header when the silent
     // check (or a user check) flips the flag.
     val updateAvailable = container.updateChecker.updateAvailable
-    // The user-triggered check may surface the closeable update dialog.
+    // The user-triggered check always responds visibly (a silent tap reads as
+    // a broken feature): popup on Available, toast on NotAvailable/Failed.
     var updateDialogVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val appContext = LocalContext.current.applicationContext
+    val upToDateText = stringResource(R.string.up_to_date)
+    val checkFailedText = stringResource(R.string.update_check_failed)
     val onCheckForUpdate: () -> Unit = {
         scope.launch {
             val result = withContext(Dispatchers.IO) {
                 container.updateChecker.userCheck()
             }
-            // Spec: the popup appears ONLY for a user-triggered check that
-            // finds an update - silent checks never pop it.
-            if (result == UpdateCheckResult.Available) updateDialogVisible = true
+            when (result) {
+                UpdateCheckResult.Available -> updateDialogVisible = true
+                UpdateCheckResult.NotAvailable ->
+                    Toast.makeText(appContext, upToDateText, Toast.LENGTH_SHORT).show()
+                UpdateCheckResult.Failed ->
+                    Toast.makeText(appContext, checkFailedText, Toast.LENGTH_SHORT).show()
+            }
         }
     }
-    val appContext = LocalContext.current.applicationContext
     val onTapToUpdate = {
         openPlayStore(appContext, appContext.packageName)
     }

@@ -33,6 +33,8 @@
     <string name="update_available_badge">Update available</string>
     <string name="open_play_store">Open Play Store</string>
     <string name="not_now">Not now</string>
+    <string name="up_to_date">You\'re up to date</string>
+    <string name="update_check_failed">Couldn\'t check for updates. Try again later.</string>
 
     <!-- Main list (spec 04). -->
     <string name="add_voucher">Add Voucher</string>

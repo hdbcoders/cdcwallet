@@ -30,6 +30,8 @@
     <string name="update_available_badge">有可用更新</string>
     <string name="open_play_store">打开 Play 商店</string>
     <string name="not_now">暂不</string>
+    <string name="up_to_date">您已是最新版本</string>
+    <string name="update_check_failed">无法检查更新。请稍后再试。</string>
 
     <string name="add_voucher">添加购物券</string>
     <string name="archived">已存档</string>

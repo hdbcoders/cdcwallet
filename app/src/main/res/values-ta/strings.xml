@@ -30,6 +30,8 @@
     <string name="update_available_badge">புதுப்பிப்பு கிடைக்கிறது</string>
     <string name="open_play_store">Play Store ஐத் திறக்கவும்</string>
     <string name="not_now">இப்போது இல்லை</string>
+    <string name="up_to_date">நீங்கள் புதுப்பித்த நிலையில் உள்ளீர்கள்</string>
+    <string name="update_check_failed">புதுப்பிப்புகளைச் சரிபார்க்க முடியவில்லை. பின்னர் மீண்டும் முயற்சிக்கவும்.</string>
 
     <string name="add_voucher">வவுச்சரைச் சேர்</string>
     <string name="archived">காப்பகம்</string>
