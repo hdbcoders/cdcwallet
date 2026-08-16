@@ -31,6 +31,10 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.PlatformTextStyle
@@ -39,6 +43,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -100,20 +105,38 @@ fun TicketCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            // Title row.
-            // Title row: the weighted name wraps within the space beside the
-            // kebab (never ellipsized, never pushing the kebab off the line -
-            // the kebab stays pinned to the card's right edge).
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                // Compact title band: the row's height is driven by the 48dp
-                // kebab touch target anyway, and CenterVertically leaves ~7dp
-                // of air around the 20sp name line - the former 10/7dp
-                // vertical padding was pure extra height on every ticket.
-                modifier = Modifier.padding(start = 18.dp, end = 10.dp),
-            ) {
+        // The kebab is its OWN element overlaid on the card, NOT a sibling in
+        // the name's layout flow: the campaign name wraps freely downward and
+        // the ⋮ stays anchored top-right.
+        //
+        // Font-scale-proof alignment: the title band is a fixed 48dp-tall
+        // slot (the kebab touch target's height). The name's first line is
+        // vertically centered in that slot via top padding of
+        // (48dp - ACTUAL first-line height)/2, and the kebab icon is centered
+        // in its own 48dp target - so BOTH centers sit at exactly 24dp from
+        // the card top at ANY font size.
+        //
+        // The line height is MEASURED via onTextLayout rather than assumed
+        // from lineHeight = 20.sp: with the platform's includeFontPadding the
+        // rendered line box is taller than the declared line height (verified
+        // by instrumented test: a 20.sp-based pad drifted 3-4.5px at 1.75x
+        // font scale). The measured height keeps the padding exact, so the
+        // first-line center stays pinned to 24dp as the font grows. (Clamped
+        // at 0: beyond ~2.4x font scale the line is taller than the slot and
+        // simply starts at the card top instead of clipping above it.)
+        val density = LocalDensity.current
+        var firstNameLineHeightPx by remember { mutableStateOf(0f) }
+        val titleBandPad = if (firstNameLineHeightPx > 0f) {
+            with(density) { ((48.dp.toPx() - firstNameLineHeightPx) / 2f).coerceAtLeast(0f).toDp() }
+        } else {
+            // First frame: nominal 20sp line height; onTextLayout corrects it.
+            with(density) { ((48.dp.toPx() - 20.sp.toPx()) / 2f).coerceAtLeast(0f).toDp() }
+        }
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Campaign name: free-flowing. The end inset (70dp = 48 kebab
+                // + 12 spacing + 10 edge) matches the old title row's wrap
+                // width, so existing names don't reflow.
                 Text(
                     text = localizeCampaignName(voucher.campaignName, LocalAppLanguage.current),
                     fontSize = 17.sp,
@@ -121,74 +144,92 @@ fun TicketCard(
                     fontFamily = typefaces.display,
                     color = c.textPrimary,
                     lineHeight = 20.sp,
-                    modifier = Modifier.weight(1f),
-                )
-                Box {
-                    IconButton(
-                        onClick = { onMenuExpandedChange(true) },
-                        modifier = Modifier.size(48.dp),
-                    ) {
-                        Icon(
-                            Icons.Default.MoreVert,
-                            contentDescription = stringResource(
-                                R.string.more_options,
-                                localizeCampaignName(voucher.campaignName, LocalAppLanguage.current),
-                            ),
-                            tint = c.textTertiary,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = menuExpanded,
-                        onDismissRequest = { onMenuExpandedChange(false) },
-                        shape = RoundedCornerShape(14.dp),
-                        containerColor = c.surfaceRaised,
-                        border = BorderStroke(1.dp, c.hairline),
-                    ) {
-                        // DropdownMenu content lives in a popup window whose
-                        // density ignores the app font scale - re-apply it so
-                        // the kebab menu items scale with the text-size setting.
-                        AppScaledContent {
-                            menuContent()
+                    onTextLayout = { result ->
+                        if (result.lineCount > 0) {
+                            val lineHeight = result.getLineBottom(0) - result.getLineTop(0)
+                            if (lineHeight != firstNameLineHeightPx) firstNameLineHeightPx = lineHeight
                         }
-                    }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 18.dp, end = 70.dp, top = titleBandPad),
+                )
+
+                // Expiry row: green ✓ + days-left for fine; warning for soon/urgent;
+                // red warning + status label for expired / fully used. A failed
+                // refresh (refactor M5) swaps the line for the neutral stale
+                // status instead of the expiry text.
+                ExpiryRow(presentation, expiryText, stale = voucher.lastRefreshError != null)
+
+                // Perforated divider.
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp),
+                ) {
+                    drawLine(
+                        color = c.hairline,
+                        start = Offset(0f, 0f),
+                        end = Offset(size.width, 0f),
+                        strokeWidth = 1.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f)),
+                    )
+                }
+
+                // Body: pills + amounts, or the status banner. Driven exclusively by
+                // BadgeState via BadgePresentation (refactor H10, spec 04 §4.2): the
+                // "no balance" banner applies only to an ACTIVE zero-balance row -
+                // a UNVERIFIED / NOT_STARTED row with no extracted balances must
+                // never read as "fully used".
+                val bannerResId = presentation.bannerResId
+                if (bannerResId != null) {
+                    StatusBanner(
+                        text = stringResource(bannerResId),
+                        neutral = presentation.bannerNeutral,
+                    )
+                } else {
+                    CategoryPills(voucher, Modifier.padding(horizontal = 18.dp, vertical = 8.dp))
                 }
             }
 
-            // Expiry row: green ✓ + days-left for fine; warning for soon/urgent;
-            // red warning + status label for expired / fully used. A failed
-            // refresh (refactor M5) swaps the line for the neutral stale
-            // status instead of the expiry text.
-            ExpiryRow(presentation, expiryText, stale = voucher.lastRefreshError != null)
-
-            // Perforated divider.
-            Canvas(
+            // Kebab: its OWN element, anchored to the card's top-right corner.
+            // The 48dp IconButton starts flush with the card top and its content
+            // is centered, so the 18dp icon's center is at 24dp - exactly the
+            // first name line's pinned center (see titleBandPad above). The two
+            // stay aligned as the font size grows.
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp),
+                    .align(Alignment.TopEnd)
+                    .padding(end = 10.dp),
             ) {
-                drawLine(
-                    color = c.hairline,
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = 1.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f)),
-                )
-            }
-
-            // Body: pills + amounts, or the status banner. Driven exclusively by
-            // BadgeState via BadgePresentation (refactor H10, spec 04 §4.2): the
-            // "no balance" banner applies only to an ACTIVE zero-balance row -
-            // a UNVERIFIED / NOT_STARTED row with no extracted balances must
-            // never read as "fully used".
-            val bannerResId = presentation.bannerResId
-            if (bannerResId != null) {
-                StatusBanner(
-                    text = stringResource(bannerResId),
-                    neutral = presentation.bannerNeutral,
-                )
-            } else {
-                CategoryPills(voucher, Modifier.padding(horizontal = 18.dp, vertical = 8.dp))
+                IconButton(
+                    onClick = { onMenuExpandedChange(true) },
+                    modifier = Modifier.size(48.dp),
+                ) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = stringResource(
+                            R.string.more_options,
+                            localizeCampaignName(voucher.campaignName, LocalAppLanguage.current),
+                        ),
+                        tint = c.textTertiary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { onMenuExpandedChange(false) },
+                    shape = RoundedCornerShape(14.dp),
+                    containerColor = c.surfaceRaised,
+                    border = BorderStroke(1.dp, c.hairline),
+                ) {
+                    // DropdownMenu content lives in a popup window whose
+                    // density ignores the app font scale - re-apply it so
+                    // the kebab menu items scale with the text-size setting.
+                    AppScaledContent {
+                        menuContent()
+                    }
+                }
             }
         }
     }

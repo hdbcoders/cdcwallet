@@ -114,5 +114,17 @@ object DevSeedData {
             url = "https://test.local/dev-redeem-zero",
             token = "dev-redeem-zero",
         ),
+        // 8. VERY long campaign name - stresses the ticket title band (wrap
+        // to multiple lines) and the expiry row at every font scale.
+        voucher(
+            "dev-long-name",
+            "CDC Vouchers 2026 (January) Supermarket Household Groceries & Daily Essentials Multi-Category Family Spending Programme",
+            ValidityStatus.ACTIVE,
+            LocalDate.of(2026, 8, 31),
+            listOf(
+                CategoryBalance("Supermarket", BigDecimal("200")),
+                CategoryBalance("Heartland", BigDecimal("120")),
+            ),
+        ),
     )
 }
