@@ -30,8 +30,9 @@ android {
         // v2 = first closed-test upload; v3 = cold-start crash fix (1.0.1-beta);
         // v4 = Play language-split fix (1.0.2-beta): all locales in base module;
         // v5 = REQ-13 update check + TicketCard layout (1.0.3-beta).
-        versionCode = 5
-        versionName = "1.0.3-beta"
+        // v6 = 1.0.4-beta: REQ-13 tap-feedback fix only; excludes TicketCard overlay.
+        versionCode = 6
+        versionName = "1.0.4-beta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
