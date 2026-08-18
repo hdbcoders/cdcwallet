@@ -209,7 +209,37 @@ fun AppHeader(
                             DropdownMenuItem(
                                 text = { MenuLabel(stringResource(R.string.tap_to_update)) },
                                 leadingIcon = {
-                                    Icon(Icons.Filled.SystemUpdate, contentDescription = null, tint = c.textSecondary)
+                                    Box {
+                                        Icon(
+                                            Icons.Filled.SystemUpdate,
+                                            contentDescription = null,
+                                            tint = c.textSecondary,
+                                        )
+                                        // Same badge language as the hamburger
+                                        // "!" (REQ-13): a danger dot on the
+                                        // icon. Decorative only - the item's
+                                        // own text announces it to TalkBack.
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .offset(x = 4.dp, y = (-3).dp)
+                                                .size(13.dp)
+                                                .background(c.danger, CircleShape)
+                                                .testTag("menu-update-badge"),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Text(
+                                                text = "!",
+                                                color = Color.White,
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                lineHeight = 9.sp,
+                                                style = LocalTextStyle.current.copy(
+                                                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                ),
+                                            )
+                                        }
+                                    }
                                 },
                                 onClick = {
                                     menuOpen = false

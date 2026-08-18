@@ -113,6 +113,11 @@ class UpdateFeatureInstrumentedTest {
         openHamburgerMenu()
         rule.onNodeWithText("Tap to update").assertIsDisplayed()
         rule.onNodeWithText("Check for update").assertDoesNotExist()
+        // The menu item carries the "!" dot so the update is visible there too.
+        // (Unmerged tree: the DropdownMenuItem merges descendants into one
+        // node, hiding the badge's tag; assertExists, not assertIsDisplayed -
+        // presence is the regression guard here.)
+        rule.onNodeWithTag("menu-update-badge", useUnmergedTree = true).assertExists()
     }
 
     @Test
