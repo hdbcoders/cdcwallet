@@ -32,8 +32,9 @@ android {
         // v5 = REQ-13 update check + TicketCard layout (1.0.3-beta).
         // v6 = 1.0.4-beta: REQ-13 tap-feedback fix only; excludes TicketCard overlay.
         // v7 = 1.0.5-beta: Tap-to-update Play Store launch fix (NEW_TASK flag).
-        versionCode = 7
-        versionName = "1.0.5-beta"
+        // v8 = 1.0.6-beta: TicketCard kebab overlay + expiry-row padding.
+        versionCode = 8
+        versionName = "1.0.6-beta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
