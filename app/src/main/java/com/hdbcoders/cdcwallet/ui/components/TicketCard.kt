@@ -256,7 +256,7 @@ private fun ExpiryRow(
         itemVerticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
-        modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 8.dp),
+        modifier = Modifier.padding(start = 18.dp, top = 4.dp, end = 18.dp, bottom = 8.dp),
     ) {
         // Glyph + status are ONE FlowRow unit (tester-visible on the
         // Zero-Balance ticket at large font scales): as separate items the
