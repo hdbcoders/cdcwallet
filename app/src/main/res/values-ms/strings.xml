@@ -7,7 +7,7 @@
     <string name="back">Kembali</string>
     <string name="settings">Tetapan</string>
     <string name="about_app">Tentang Apl</string>
-    <string name="about_description">Aplikasi penyimpanan baucar ini adalah projek peribadi dan dibangunkan untuk sesiapa yang sering kehilangan pautan baucar atau lebih suka antara muka berasaskan aplikasi. Akses internet hanya digunakan untuk memuatkan laman RedeemSG dan menyemak kemas kini aplikasi di Gedung Play. Tiada data atau analitik dikumpul sama sekali oleh aplikasi ini. Semua terjemahan bukan Inggeris dilakukan oleh AI.</string>
+    <string name="about_description">Aplikasi penyimpanan baucar CDC (di Redeem.gov.sg) ini dibangunkan untuk sesiapa yang sering kehilangan pautan baucar atau lebih suka antara muka berasaskan aplikasi. Akses internet hanya digunakan untuk memuatkan laman RedeemSG dan menyemak kemas kini aplikasi di Gedung Play. Tiada data atau analitik dikumpul sama sekali oleh aplikasi ini. Semua terjemahan bukan Inggeris dilakukan oleh AI.</string>
     <string name="about_credits_label">Projek ini dibina oleh:</string>
     <string name="about_credit_architecture">Claude Sonnet 5 (max) : Seni Bina</string>
     <string name="about_credit_design">ChatGPT 5.6 Luna (high) : Reka Bentuk dan Penjanaan Imej</string>
