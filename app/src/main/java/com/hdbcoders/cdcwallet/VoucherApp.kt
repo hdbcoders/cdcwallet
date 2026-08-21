@@ -3,6 +3,7 @@ package com.hdbcoders.cdcwallet
 import android.app.Application
 import android.content.Context
 import android.webkit.WebView
+import com.hdbcoders.cdcwallet.addflow.AddVoucherFlow
 import com.hdbcoders.cdcwallet.data.RoomVoucherRepository
 import com.hdbcoders.cdcwallet.data.VoucherRepository
 import com.hdbcoders.cdcwallet.data.backup.BackupFlow
@@ -23,6 +24,15 @@ import androidx.core.content.pm.PackageInfoCompat
 open class VoucherApp : Application() {
     lateinit var container: AppContainer
         private set
+
+    /**
+     * Debug/test seam: debug variants (src/debug) may supply a fixture-seamed
+     * add flow (fixture validator + fixture extraction engine, served from the
+     * app's own assets) so instrumented tests can drive the real share-intent
+     * path without touching a real RedeemSG host. Null in main/release -
+     * production always uses the default flow.
+     */
+    open fun devFixtureAddFlow(repository: VoucherRepository): AddVoucherFlow? = null
 
     override fun onCreate() {
         super.onCreate()

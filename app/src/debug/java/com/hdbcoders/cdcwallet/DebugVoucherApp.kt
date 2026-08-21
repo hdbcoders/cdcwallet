@@ -2,7 +2,10 @@ package com.hdbcoders.cdcwallet
 
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
+import com.hdbcoders.cdcwallet.addflow.AddVoucherFlow
+import com.hdbcoders.cdcwallet.data.VoucherRepository
 import com.hdbcoders.cdcwallet.dev.DevActions
+import com.hdbcoders.cdcwallet.dev.DevFixtureFlow
 import com.hdbcoders.cdcwallet.dev.DevSeeder
 import com.hdbcoders.cdcwallet.dev.SeedDevDataReceiver
 import com.hdbcoders.cdcwallet.dev.UpdateDevReceiver
@@ -27,6 +30,13 @@ import kotlinx.coroutines.launch
 class DebugVoucherApp : VoucherApp() {
 
     private val seedScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * Fixture-seamed add flow for the share-intent instrumented test (see
+     * [DevFixtureFlow]): synthetic appassets host, never a real RedeemSG host.
+     */
+    override fun devFixtureAddFlow(repository: VoucherRepository): AddVoucherFlow? =
+        DevFixtureFlow.buildAddFlow(this, repository)
 
     override fun onCreate() {
         super.onCreate()

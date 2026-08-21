@@ -2,6 +2,7 @@ package com.hdbcoders.cdcwallet
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
@@ -85,10 +86,31 @@ class MainActivity : ComponentActivity() {
     private val container: AppContainer get() = (application as VoucherApp).container
 
     private val flow: AddVoucherFlow by lazy {
-        AddVoucherFlow(
+        // Debug-seam opt-in (instrumented tests): a share intent that sets
+        // [EXTRA_DEV_FIXTURE_ADD] routes the add through the debug variant's
+        // fixture flow (synthetic appassets host, never a real RedeemSG host).
+        // Production/release builds ignore the extra entirely (the application
+        // class returns null there), so this branch is dead in release.
+        val debugAppSeam = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0 &&
+            intent?.getBooleanExtra(EXTRA_DEV_FIXTURE_ADD, false) == true
+        val flowFromSeam = if (debugAppSeam) {
+            (application as VoucherApp).devFixtureAddFlow(container.repository)
+        } else {
+            null
+        }
+        flowFromSeam ?: AddVoucherFlow(
             repository = container.repository,
             extractionEngine = container.extractionEngine,
         )
+    }
+
+    companion object {
+        /**
+         * Debug-only intent extra (see [flow]): false/absent in production,
+         * and ignored entirely by non-debuggable builds. Kept as a plain
+         * constant so the (debug-gated) instrumented tests can reference it.
+         */
+        const val EXTRA_DEV_FIXTURE_ADD = "dev_fixture_add"
     }
 
     private var navControllerRef: NavController? = null
