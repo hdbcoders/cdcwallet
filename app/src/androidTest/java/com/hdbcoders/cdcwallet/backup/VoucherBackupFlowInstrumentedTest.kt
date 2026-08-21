@@ -39,6 +39,7 @@ import kotlinx.coroutines.withTimeout
 import kotlin.experimental.xor
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
@@ -86,6 +87,53 @@ class VoucherBackupFlowInstrumentedTest {
             .build()
         testStartMillis = System.currentTimeMillis()
         preExistingBackupBytes = readCurrentBackupBytes()
+        // Wipe stale cdcvoucher* artifacts from EARLIER runs: MediaStore keeps
+        // the original DATE_ADDED when a file is re-created, so the
+        // this-run-only cleanup can miss leftovers (e.g. "cdcvoucher.backup
+        // (6)") that break the exactly-one assertions. tearDown restores the
+        // pre-existing snapshot byte-for-byte.
+        deleteAllBackupArtifacts()
+    }
+
+    /** Deletes EVERY `cdcvoucher*` entry in Downloads, stale or fresh. Both the
+     *  MediaStore row AND its physical file - this emulator's MediaStore can
+     *  leave the file behind when only the row is deleted, and a leftover
+     *  physical file makes the next insert collide on `files._data`. The
+     *  physical path is derived from the display name (the DATA column is
+     *  rejected by this MediaStore). */
+    private fun deleteAllBackupArtifacts() {
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val resolver = appContext.contentResolver
+                val rows = mutableListOf<Pair<Long, String>>()
+                resolver.query(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DISPLAY_NAME),
+                    "${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ?",
+                    arrayOf("cdcvoucher%"),
+                    null,
+                )?.use { cursor ->
+                    val idCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
+                    val nameCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
+                    while (cursor.moveToNext()) {
+                        rows.add(cursor.getLong(idCol) to cursor.getString(nameCol))
+                    }
+                }
+                val downloadsDir =
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                rows.forEach { (id, name) ->
+                    resolver.delete(
+                        ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, id),
+                        null,
+                        null,
+                    )
+                    runCatching { File(downloadsDir, name).delete() }
+                }
+            } else {
+                val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                dir.listFiles { it.name.startsWith("cdcvoucher") }?.forEach { it.delete() }
+            }
+        }
     }
 
     @After
@@ -196,6 +244,101 @@ class VoucherBackupFlowInstrumentedTest {
             }
         }
     }
+
+    /** Same API/permission gate as the export tests: storage GID is
+     *  unavailable to the test process on API 24-25 (see
+     *  [exportWritesGenuinelyEncryptedFileToDownloads]). */
+    private fun grantStorageAccess() {
+        assumeTrue("storage GID unavailable to the test process on API 24-25", Build.VERSION.SDK_INT >= 26)
+        if (Build.VERSION.SDK_INT in 24..27) {
+            InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(
+                "pm grant ${appContext.packageName} android.permission.WRITE_EXTERNAL_STORAGE",
+            )
+        }
+    }
+
+    /** Display names of every `cdcvoucher*` entry currently in Downloads
+     *  (MediaStore on API 29+, raw file listing before), sorted for stable
+     *  assertions. */
+    private fun downloadEntries(): List<String> =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = appContext.contentResolver
+            val names = mutableListOf<String>()
+            resolver.query(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.MediaColumns.DISPLAY_NAME),
+                "${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ?",
+                arrayOf("cdcvoucher%"),
+                null,
+            )?.use { cursor ->
+                while (cursor.moveToNext()) names.add(cursor.getString(0))
+            }
+            names.sorted()
+        } else {
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            dir.listFiles { it.name.startsWith("cdcvoucher") }?.map { it.name }?.sorted().orEmpty()
+        }
+
+    /** Creates a user-owned Downloads file that shares the app's backup prefix
+     *  but is NOT part of the exact export family ("cdcvoucher.backup.notes"
+     *  is the file the old prefix-match cleanup would wrongly have caught).
+     *  Deletes any leftover physical file first - MediaStore can orphan the
+     *  file when its row is removed, and a stale physical file makes the
+     *  insert collide on `files._data`. */
+    private fun writeUnrelatedDownloadsFile(bytes: ByteArray) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            File(downloadsDir, "cdcvoucher.backup.notes").delete()
+            File(downloadsDir, "cdcvoucher.backup.notes.txt").delete()
+            val resolver = appContext.contentResolver
+            val values = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "cdcvoucher.backup.notes")
+                put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+            }
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                ?: throw IllegalStateException("MediaStore insert failed for unrelated file")
+            resolver.openOutputStream(uri)?.use { it.write(bytes) }
+        } else {
+            File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "cdcvoucher.backup.notes",
+            ).writeBytes(bytes)
+        }
+    }
+
+    /** Bytes of the unrelated `cdcvoucher.backup.notes*` file, or null.
+     *  MediaStore appends the extension from the MIME type when the inserted
+     *  name has none ("cdcvoucher.backup.notes" -> "...notes.txt"), so match
+     *  by prefix. */
+    private fun readUnrelatedDownloadsFile(): ByteArray? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = appContext.contentResolver
+            var result: ByteArray? = null
+            resolver.query(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.MediaColumns._ID),
+                "${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ?",
+                arrayOf("cdcvoucher.backup.notes%"),
+                null,
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    resolver.openInputStream(
+                        ContentUris.withAppendedId(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            cursor.getLong(0),
+                        ),
+                    )?.use { result = it.readBytes() }
+                }
+            }
+            result
+        } else {
+            val f = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "cdcvoucher.backup.notes",
+            )
+            if (f.exists()) f.readBytes() else null
+        }
 
     private fun voucher(
         token: String,
@@ -337,6 +480,91 @@ class VoucherBackupFlowInstrumentedTest {
     }
 
     @Test
+    fun repeatedExportLeavesExactlyOneBackup() {
+        grantStorageAccess()
+        val repository = RoomVoucherRepository(database)
+        runBlocking { repository.insert(voucher("TokenOne", "First run")) }
+        val flow = BackupFlow(repository)
+        runBlocking { flow.export(appContext, "backup-passphrase") }
+
+        // H8 (spec 06 §6.6): re-exporting replaces the previous file, leaving
+        // exactly one cdcvoucher.backup in Downloads - never a "(1)" sibling.
+        runBlocking { repository.insert(voucher("TokenTwo", "Second run", archived = true)) }
+        runBlocking { flow.export(appContext, "backup-passphrase") }
+
+        assertEquals(
+            "repeated export must leave exactly one cdcvoucher.backup, was: ${downloadEntries()}",
+            listOf(BackupFileStore.FILE_NAME),
+            downloadEntries(),
+        )
+        // The surviving file carries the SECOND export's content (latest wins).
+        val bytes = readCurrentBackupBytes()!!
+        val decrypted = service.decryptPayload(bytes, "backup-passphrase")
+        assertEquals(setOf("TokenOne", "TokenTwo"), decrypted.vouchers.map { it.token }.toSet())
+    }
+
+    @Test
+    fun cleanupNeverTouchesUnrelatedDownloadsFile() {
+        grantStorageAccess()
+        // A user file sharing the "cdcvoucher" prefix but OUTSIDE the exact
+        // export family - the old prefix-match cleanup ("cdcvoucher...%")
+        // would have deleted it (refactor H8).
+        val unrelatedBytes = "my private notes, not a backup".toByteArray()
+        writeUnrelatedDownloadsFile(unrelatedBytes)
+
+        val repository = RoomVoucherRepository(database)
+        runBlocking { repository.insert(voucher("TokenOne")) }
+        runBlocking { BackupFlow(repository).export(appContext, "backup-passphrase") }
+
+        assertTrue(
+            "unrelated Downloads file must survive the export's cleanup " +
+                "(read back ${readUnrelatedDownloadsFile()?.size ?: "null"} bytes)",
+            readUnrelatedDownloadsFile()?.contentEquals(unrelatedBytes) == true,
+        )
+        assertEquals(
+            "downloads must hold exactly the export and the unrelated file",
+            2,
+            downloadEntries().size,
+        )
+        assertTrue(
+            "the export's exact file must be present",
+            downloadEntries().contains(BackupFileStore.FILE_NAME),
+        )
+        assertTrue(
+            "the unrelated file must still be present (MediaStore may append a " +
+                "MIME extension to its name)",
+            downloadEntries().any { it.startsWith("cdcvoucher.backup.notes") },
+        )
+    }
+
+    @Test
+    fun failedReExportNeverDestroysPreviousBackup() {
+        grantStorageAccess()
+        val repository = RoomVoucherRepository(database)
+        runBlocking { repository.insert(voucher("TokenOne")) }
+        val flow = BackupFlow(repository)
+        runBlocking { flow.export(appContext, "backup-passphrase") }
+        val before = readCurrentBackupBytes()!!
+
+        // Sabotage the re-export (database closed -> reading rows throws before
+        // any file write). H8: the previous valid backup must survive a
+        // failed re-export byte-for-byte.
+        database.close()
+        var threw = false
+        try {
+            runBlocking { flow.export(appContext, "backup-passphrase") }
+        } catch (e: Exception) {
+            threw = true
+        }
+        assertTrue("sabotaged re-export must fail", threw)
+        assertArrayEquals(
+            "failed re-export must not destroy the previous backup",
+            before,
+            readCurrentBackupBytes(),
+        )
+    }
+
+    @Test
     fun wrongPasswordAndCorruptedFileShowIdenticalMessage() {
         val repository = RoomVoucherRepository(database)
         val validBytes = encryptedPayload("backup-passphrase", voucher("TokenOne"))
@@ -445,6 +673,25 @@ class VoucherBackupFlowInstrumentedTest {
         composeRule.onNodeWithText("Replace existing data").performClick()
         composeRule.onNodeWithText("Import").performClick()
 
+        // Spec 05 §5.3 (refactor M20, shared focus-retry helper): Cancel is the
+        // DEFAULT-FOCUSED button on the replace dialog, built through the same
+        // shared helper as the delete dialog (ConfirmReplaceDialog here and
+        // DeleteVoucherDialog both use AppDialogSurface + DialogButtonRow with
+        // the identical FocusRequester retry block).
+        //
+        // The focused state itself is NOT observable in this instrumented
+        // harness for M3 dialog buttons - verified empirically on API 36: a
+        // Focused-semantics poll started at dialog mount (inside the helper's
+        // 500ms retry window) and one after explicit TAB key injection both
+        // report false, while the same mechanism observes the password FIELD's
+        // focus (waitUntilPasswordFocused). This matches the documented
+        // limitation of the delete-dialog test
+        // (deleteShowsExactDialogAndCancelKeepsRow: "the FocusRequester-based
+        // default focus on Cancel is not observable in this headless test
+        // environment, which never grants window focus"). The executable
+        // assertion is therefore the same proxy that test uses: Cancel sits
+        // leftmost - the default position the keyboard/DPAD lands on.
+
         // Exact copy, own confirmation, before anything is wiped. The dialog
         // is title + body; the count resolves the singular plural form.
         composeRule.onNodeWithText("Replace all data?").assertIsDisplayed()
@@ -453,6 +700,12 @@ class VoucherBackupFlowInstrumentedTest {
                 "with this backup. This can't be undone.",
         ).assertIsDisplayed()
         composeRule.onNodeWithText("Cancel").assertIsDisplayed()
+
+        // Secondary guard (same proxy as the delete-dialog test): Cancel is
+        // leftmost.
+        val cancelLeft = composeRule.onNodeWithText("Cancel").fetchSemanticsNode().boundsInRoot.left
+        val replaceLeft = composeRule.onNodeWithText("Replace").fetchSemanticsNode().boundsInRoot.left
+        assertTrue("Cancel should be the default (leftmost) button", cancelLeft < replaceLeft)
 
         // Cancel: nothing wiped.
         composeRule.onNodeWithText("Cancel").performClick()

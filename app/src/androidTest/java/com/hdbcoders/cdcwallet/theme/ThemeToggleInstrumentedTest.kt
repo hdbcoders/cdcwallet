@@ -72,6 +72,37 @@ class ThemeToggleInstrumentedTest {
     }
 
     @Test
+    fun unknownStoredThemeValuesAreRewrittenToConcreteModeAtInit() {
+        // Refactor M22 (spec 07 §7.2): a stored value that is not a concrete
+        // mode - missing (first launch), the legacy "system", or any
+        // unknown/corrupted value including case variants - must be REWRITTEN
+        // to the resolved concrete mode at store init, so the app never
+        // re-follows the system theme afterwards. ThemeModeStoreTest pins the
+        // pure predicate; this pins the PERSISTENCE half.
+        val systemDark = (appContext.resources.configuration.uiMode and
+            Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        val baked = if (systemDark) ThemeMode.DARK else ThemeMode.LIGHT
+        val rawSeeds = listOf(null, "system", "bogus", "Light", "DARK ")
+
+        rawSeeds.forEach { seed ->
+            themePrefs().edit().clear().commit()
+            seed?.let { themePrefs().edit().putString("theme_mode", it).commit() }
+
+            val store = ThemeModeStore(appContext)
+            // The store resolves the concrete mode...
+            assertEquals("seed '$seed' must resolve to the baked mode", baked, store.mode)
+            // ...and PERSISTS it at init - a fresh store sees the concrete
+            // value, not the corrupt seed (rewrite happened once).
+            assertEquals(
+                "seed '$seed' must be rewritten on disk",
+                baked.name.lowercase(),
+                themePrefs().getString("theme_mode", null),
+            )
+            assertEquals(store.mode, ThemeModeStore(appContext).mode)
+        }
+    }
+
+    @Test
     fun hamburgerToggleSwitchesLightToDarkAndLabelFollows() {
         val store = ThemeModeStore(appContext)
         store.setThemeMode(ThemeMode.LIGHT)

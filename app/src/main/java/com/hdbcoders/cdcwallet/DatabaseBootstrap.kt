@@ -87,9 +87,16 @@ class DatabaseBootstrap internal constructor(
             DatabaseBootstrap {
                 SqlCipherNative.load()
                 val passphrase = passphraseStore.obtainPassphrase()
-                Room.databaseBuilder(appContext, AppDatabase::class.java, DB_NAME)
+                val database = Room.databaseBuilder(appContext, AppDatabase::class.java, DB_NAME)
                     .openHelperFactory(SupportOpenHelperFactory(passphrase.toByteArray(Charsets.UTF_8)))
                     .build()
+                // Force the open INSIDE the bootstrap: Room builds lazily, so a
+                // corrupt/unopenable file would otherwise surface a "Ready"
+                // state and crash the app on the first query instead of
+                // resolving into the Failed -> fatal-error-screen contract
+                // (refactor M2/M14). Runs on Dispatchers.IO via the start() scope.
+                database.openHelper.writableDatabase
+                database
             }
     }
 }

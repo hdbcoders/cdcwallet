@@ -42,10 +42,18 @@ class UpdateChecker(
         }
     }
 
-    /** App-open check: throttled to once per [CHECK_INTERVAL_MS]. Flag-only. */
+    /** App-open check: throttled to once per [CHECK_INTERVAL_MS]. Flag-only.
+     *  A debug [debugSourceOverride] bypasses the throttle - the override is
+     *  only ever set by src/debug DevActions, and the launch-integration test
+     *  needs a deterministic check on every cold start regardless of when the
+     *  previous (real or simulated) check ran. */
     suspend fun silentCheckIfDue() {
         if (updateAvailable) return // Already known - nothing to query.
-        if (!isCheckDue(store.lastCheckMs(), clock(), CHECK_INTERVAL_MS)) return
+        if (debugSourceOverride == null &&
+            !isCheckDue(store.lastCheckMs(), clock(), CHECK_INTERVAL_MS)
+        ) {
+            return
+        }
         runCheck()
     }
 
