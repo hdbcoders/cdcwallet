@@ -8,8 +8,11 @@ import kotlinx.coroutines.flow.map
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * In-memory [VoucherRepository] for ViewModel unit tests (P2). Backed by a
- * [MutableStateFlow]; models the Room contracts faithfully (refactor D4):
+ * In-memory [VoucherRepository] for unit + instrumented tests (P2). Lives in
+ * `src/sharedTest` so there is exactly ONE contract-faithful fake for both the
+ * JVM and androidTest loops - Android cannot see `test` sources from
+ * androidTest, and two copies drifted (refactor D4; test/asset audit B9).
+ * Backed by a [MutableStateFlow]; models the Room contracts faithfully:
  * [insert] refuses a duplicate token, [bulkInsert] is atomic and skips
  * duplicate tokens while returning the REAL inserted count (conflict-IGNORE
  * semantics, refactor M10), [replaceAll]/[replaceByTokens] replace wholesale,

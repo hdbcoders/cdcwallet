@@ -233,6 +233,20 @@ class ExtractionEngineTest {
             ExtractionResult.Failure(ExtractionResult.FailureReason.PARSE_ERROR),
             result,
         )
+        // The fixture-helper variant of the same path (former
+        // unavailableInjectionPathFailsFastWithParseError): no document-start
+        // support AND no rewrite delegate -> InjectionPath.Unavailable (refactor
+        // D12). A bare WebView (no client) + forced fallback with a null
+        // delegate produces exactly that path.
+        val unavailableResult = engine(
+            hiddenFactory = { WebView(it) },
+            forceFallback = true,
+            delegate = null,
+        ).extractForAdd(context, testPageUrl)
+        assertEquals(
+            ExtractionResult.Failure(ExtractionResult.FailureReason.PARSE_ERROR),
+            unavailableResult,
+        )
     }
 
     @Test
@@ -264,25 +278,6 @@ class ExtractionEngineTest {
     @Test
     fun malformedResponseIsParseError() = runTest {
         val result = engine().extractForAdd(context, malformedPageUrl)
-        assertEquals(
-            ExtractionResult.Failure(ExtractionResult.FailureReason.PARSE_ERROR),
-            result,
-        )
-    }
-
-    @Test
-    fun unavailableInjectionPathFailsFastWithParseError() = runTest {
-        // Refactor D12: no document-start support AND no rewrite delegate ->
-        // InjectionPath.Unavailable. The page still loads, but extraction
-        // fails fast instead of burning the timeout (refactor H5). A bare
-        // WebView (no client) + forced fallback with a null delegate produces
-        // exactly that path.
-        val unavailableEngine = engine(
-            hiddenFactory = { WebView(it) },
-            forceFallback = true,
-            delegate = null,
-        )
-        val result = unavailableEngine.extractForAdd(context, testPageUrl)
         assertEquals(
             ExtractionResult.Failure(ExtractionResult.FailureReason.PARSE_ERROR),
             result,
@@ -392,34 +387,26 @@ class ExtractionEngineTest {
     }
 
     @Test
-    fun wrongApiHostIsNeverCaptured() = runTest {
-        val result = engine().extractForAdd(context, "https://appassets.androidplatform.net/WrongHostFetch")
-        assertEquals(
-            ExtractionResult.Failure(ExtractionResult.FailureReason.TIMEOUT),
-            result,
+    fun wrongTargetVectorsAreNeverCaptured() = runTest {
+        // Three wrong-target capture vectors, each a full engine-timeout cycle
+        // inside a single test (spec 02 §2.7 token-anchored match): wrong API
+        // host, wrong token, and a trailing segment after the token. The live
+        // endpoint drifted to a version-prefixed path
+        // '/v1/public/vouchers/groups/{token}', so the match anchors on the
+        // token, not on the path start.
+        val wrongUrls = listOf(
+            "https://appassets.androidplatform.net/WrongHostFetch",
+            "https://appassets.androidplatform.net/WrongTokenFetch",
+            "https://appassets.androidplatform.net/WrongPathFetch",
         )
-    }
-
-    @Test
-    fun wrongTokenIsNeverCaptured() = runTest {
-        val result = engine().extractForAdd(context, "https://appassets.androidplatform.net/WrongTokenFetch")
-        assertEquals(
-            ExtractionResult.Failure(ExtractionResult.FailureReason.TIMEOUT),
-            result,
-        )
-    }
-
-    @Test
-    fun wrongApiPathIsNeverCaptured() = runTest {
-        // The right host and token, but a trailing segment after the token:
-        // the token-anchored match rejects it. (The live endpoint drifted to a
-        // version-prefixed path '/v1/public/vouchers/groups/{token}', so the
-        // match anchors on the token, not on the path start.)
-        val result = engine().extractForAdd(context, "https://appassets.androidplatform.net/WrongPathFetch")
-        assertEquals(
-            ExtractionResult.Failure(ExtractionResult.FailureReason.TIMEOUT),
-            result,
-        )
+        wrongUrls.forEach { url ->
+            val result = engine().extractForAdd(context, url)
+            assertEquals(
+                "expected TIMEOUT for $url",
+                ExtractionResult.Failure(ExtractionResult.FailureReason.TIMEOUT),
+                result,
+            )
+        }
     }
 
     @Test

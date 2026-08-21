@@ -89,7 +89,12 @@ class FontScaleInstrumentedTest {
     }
 
     @Test
-    fun accessibilityTextSizeSelectionUpdatesAndPersists() {
+    fun accessibilitySelectionUpdatesAndPersists() {
+        // Both input methods drive the same slider/radio state (former
+        // accessibilityTextSizeSelectionUpdatesAndPersists +
+        // accessibilityRadioSelectionUpdatesAndPersists): tapping the slider
+        // near its right end selects the last of 4 stops = Huge; the radio on
+        // the Huge stop selects it directly. Both must persist to a fresh store.
         val store = FontScaleStore(appContext)
         store.setFontScale(AppFontScale.DEFAULT)
         composeRule.setContent {
@@ -101,35 +106,20 @@ class FontScaleInstrumentedTest {
                 )
             }
         }
-        // Tap the slider near its right end → the last of 4 stops = Huge.
         composeRule.onNodeWithTag("font-size-slider")
             .performScrollTo()
             .performTouchInput { click(Offset(width * 0.95f, centerY)) }
         composeRule.waitForIdle()
         assertEquals(AppFontScale.HUGE, store.scale)
-        // A fresh store reads the same value - the choice was persisted.
+        // A fresh store reads the same value - the slider choice was persisted.
         assertEquals(AppFontScale.HUGE, FontScaleStore(appContext).scale)
-    }
 
-    @Test
-    fun accessibilityRadioSelectionUpdatesAndPersists() {
-        val store = FontScaleStore(appContext)
+        // Reset so the radio click is a real selection, not a no-op.
         store.setFontScale(AppFontScale.DEFAULT)
-        composeRule.setContent {
-            MaterialTheme {
-                AccessibilityScreen(
-                    dyslexiaFontStore = DyslexiaFontStore(appContext),
-                    fontScaleStore = store,
-                    onBack = {},
-                )
-            }
-        }
-        // The radio on the Huge stop is a big tap target - tapping it must
-        // select Huge directly (not just move the slider).
         composeRule.onNodeWithTag("font-size-radio-huge").performScrollTo().performClick()
         composeRule.waitForIdle()
         assertEquals(AppFontScale.HUGE, store.scale)
-        // A fresh store reads the same value - the choice was persisted.
+        // A fresh store reads the same value - the radio choice was persisted.
         assertEquals(AppFontScale.HUGE, FontScaleStore(appContext).scale)
     }
 

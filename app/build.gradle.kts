@@ -97,6 +97,19 @@ android {
         // Compose test waits are deterministic.
         animationsDisabled = true
     }
+    sourceSets {
+        // Test-fixture consolidation (instrumented-test audit B9): the single
+        // contract-faithful FakeVoucherRepository lives in src/sharedTest and
+        // is compiled into BOTH the JVM unit-test and the androidTest
+        // classpath - Android cannot see `test` sources from androidTest, and
+        // the two historical copies had already drifted apart.
+        getByName("test") {
+            java.srcDir("src/sharedTest/java")
+        }
+        getByName("androidTest") {
+            java.srcDir("src/sharedTest/java")
+        }
+    }
 }
 
 // AGP 9 removed the old `android.experimental.androidTest.uninstallAfterTest`

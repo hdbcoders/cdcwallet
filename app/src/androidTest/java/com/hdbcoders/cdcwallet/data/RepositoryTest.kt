@@ -237,6 +237,11 @@ class RepositoryTest {
 
     @Test
     fun countFlowsTrackArchival() = runTest {
+        // Empty DB first: the flows emit their initial 0/0 values before any
+        // insert (former countFlowsEmitInitialValues folded in here).
+        assertEquals(0, repository.observeActiveCount().first())
+        assertEquals(0, repository.observeArchivedCount().first())
+
         repository.insert(voucher("Active"))
         repository.insert(voucher("Archived", archived = true))
 
@@ -252,12 +257,6 @@ class RepositoryTest {
         archivedCount = repository.observeArchivedCount().first()
         assertEquals(0, activeCount)
         assertEquals(2, archivedCount)
-    }
-
-    @Test
-    fun countFlowsEmitInitialValues() = runTest {
-        assertEquals(0, repository.observeActiveCount().first())
-        assertEquals(0, repository.observeArchivedCount().first())
     }
 
     private fun runTest(block: suspend () -> Unit) {

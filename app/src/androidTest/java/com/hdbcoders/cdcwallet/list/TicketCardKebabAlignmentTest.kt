@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.platform.LocalDensity
@@ -59,25 +62,12 @@ class TicketCardKebabAlignmentTest {
         lastRefreshError = null,
     )
 
+    /**
+     * Measures the already-composed [TicketCard] (see the two scale-loop tests
+     * below): the campaign name's first line center must equal the kebab
+     * icon's center, within 1dp, at the given font scale.
+     */
     private fun assertKebabCenteredOnFirstLine(scale: Float, name: String) {
-        composeRule.setContent {
-            MaterialTheme {
-                CompositionLocalProvider(
-                    LocalDensity provides Density(LocalDensity.current.density, fontScale = scale),
-                ) {
-                    Box(modifier = Modifier.width(220.dp)) {
-                        TicketCard(
-                            voucher = voucher(name),
-                            menuExpanded = false,
-                            onMenuExpandedChange = {},
-                            onClick = {},
-                        ) {}
-                    }
-                }
-            }
-        }
-        composeRule.waitForIdle()
-
         val nameNode = composeRule.onNodeWithText(name, useUnmergedTree = true)
             .fetchSemanticsNode()
         val nameBounds = nameNode.boundsInRoot
@@ -109,27 +99,41 @@ class TicketCardKebabAlignmentTest {
         )
     }
 
-    @Test
-    fun singleLineNameKebabAlignedAtDefaultScale() =
-        assertKebabCenteredOnFirstLine(1.0f, shortName)
+    /**
+     * One composition per name shape, re-measured at every font scale: the
+     * scale is Compose state, so updating it recomposes the card (and its
+     * font-scaled density) without a second setContent.
+     */
+    private fun assertKebabAlignedAtEveryFontScale(name: String) {
+        var scale by mutableStateOf(1.0f)
+        composeRule.setContent {
+            MaterialTheme {
+                CompositionLocalProvider(
+                    LocalDensity provides Density(LocalDensity.current.density, fontScale = scale),
+                ) {
+                    Box(modifier = Modifier.width(220.dp)) {
+                        TicketCard(
+                            voucher = voucher(name),
+                            menuExpanded = false,
+                            onMenuExpandedChange = {},
+                            onClick = {},
+                        ) {}
+                    }
+                }
+            }
+        }
+        listOf(1.0f, 1.75f, 2.0f).forEach { s ->
+            scale = s
+            composeRule.waitForIdle()
+            assertKebabCenteredOnFirstLine(s, name)
+        }
+    }
 
     @Test
-    fun singleLineNameKebabAlignedAtLargeScale() =
-        assertKebabCenteredOnFirstLine(1.75f, shortName)
+    fun singleLineNameKebabAlignedAtEveryFontScale() =
+        assertKebabAlignedAtEveryFontScale(shortName)
 
     @Test
-    fun singleLineNameKebabAlignedAtExtremeScale() =
-        assertKebabCenteredOnFirstLine(2.0f, shortName)
-
-    @Test
-    fun multiLineNameKebabAlignedAtDefaultScale() =
-        assertKebabCenteredOnFirstLine(1.0f, longName)
-
-    @Test
-    fun multiLineNameKebabAlignedAtLargeScale() =
-        assertKebabCenteredOnFirstLine(1.75f, longName)
-
-    @Test
-    fun multiLineNameKebabAlignedAtExtremeScale() =
-        assertKebabCenteredOnFirstLine(2.0f, longName)
+    fun multiLineNameKebabAlignedAtEveryFontScale() =
+        assertKebabAlignedAtEveryFontScale(longName)
 }

@@ -2,6 +2,9 @@ package com.hdbcoders.cdcwallet.theme
 
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontListFontFamily
@@ -64,7 +67,12 @@ class DyslexiaFontTypefaceInstrumentedTest {
     }
 
     @Test
-    fun atkinsonSwapsEveryRoleAndTypeface() {
+    fun dyslexiaFontsSwapEveryRoleAndTypeface() {
+        // One composition per font, re-read after the state change recomposes:
+        // the font choice is Compose state (no second setContent). Every
+        // typography role AND the LocalAppTypefaces roles must swap to the
+        // chosen family (former atkinsonSwaps… / openDyslexicSwaps… merged).
+        var font by mutableStateOf(AppDyslexiaFont.ATKINSON)
         var body: FontFamily? = null
         var label: FontFamily? = null
         var displayRole: FontFamily? = null
@@ -72,7 +80,7 @@ class DyslexiaFontTypefaceInstrumentedTest {
         var typefaceBody: FontFamily? = null
         var typefaceMono: FontFamily? = null
         composeRule.setContent {
-            AppTheme(ThemeMode.LIGHT, dyslexiaFont = AppDyslexiaFont.ATKINSON) {
+            AppTheme(ThemeMode.LIGHT, dyslexiaFont = font) {
                 body = MaterialTheme.typography.bodyMedium.fontFamily
                 label = MaterialTheme.typography.labelSmall.fontFamily
                 displayRole = MaterialTheme.typography.displayLarge.fontFamily
@@ -82,32 +90,18 @@ class DyslexiaFontTypefaceInstrumentedTest {
                 typefaceMono = t.mono
             }
         }
-        composeRule.waitForIdle()
-        val expected = AtkinsonFontFamily
-        assertTrue(sameFamily(body, expected))
-        assertTrue(sameFamily(label, expected))
-        assertTrue(sameFamily(displayRole, expected))
-        assertTrue(sameFamily(typefaceDisplay, expected))
-        assertTrue(sameFamily(typefaceBody, expected))
-        assertTrue(sameFamily(typefaceMono, expected))
-    }
-
-    @Test
-    fun openDyslexicSwapsEveryRoleAndTypeface() {
-        var body: FontFamily? = null
-        var typefaceDisplay: FontFamily? = null
-        var typefaceMono: FontFamily? = null
-        composeRule.setContent {
-            AppTheme(ThemeMode.LIGHT, dyslexiaFont = AppDyslexiaFont.OPEN_DYSLEXIC) {
-                body = MaterialTheme.typography.bodyMedium.fontFamily
-                typefaceDisplay = LocalAppTypefaces.current.display
-                typefaceMono = LocalAppTypefaces.current.mono
-            }
+        AppDyslexiaFont.entries.forEach { chosen ->
+            font = chosen
+            composeRule.waitForIdle()
+            val expected =
+                if (chosen == AppDyslexiaFont.ATKINSON) AtkinsonFontFamily else OpenDyslexicFontFamily
+            assertTrue("body must be $chosen", sameFamily(body, expected))
+            assertTrue("label must be $chosen", sameFamily(label, expected))
+            assertTrue("display role must be $chosen", sameFamily(displayRole, expected))
+            assertTrue("typeface display must be $chosen", sameFamily(typefaceDisplay, expected))
+            assertTrue("typeface body must be $chosen", sameFamily(typefaceBody, expected))
+            assertTrue("typeface mono must be $chosen", sameFamily(typefaceMono, expected))
         }
-        composeRule.waitForIdle()
-        assertTrue(sameFamily(body, OpenDyslexicFontFamily))
-        assertTrue(sameFamily(typefaceDisplay, OpenDyslexicFontFamily))
-        assertTrue(sameFamily(typefaceMono, OpenDyslexicFontFamily))
     }
 
     /** Structural comparison of the fonts list (FontListFontFamily equals compares fonts). */
