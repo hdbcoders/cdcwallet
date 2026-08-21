@@ -39,6 +39,12 @@ import org.junit.runner.RunWith
  *    (regression: without the flag an application-context start is silently
  *    swallowed by the fail-soft catch - the tap appeared to do nothing)
  *
+ * Toast feedback on "Check for update" is intentionally NOT asserted: toasts
+ * live in their own transient window, outside the active-window accessibility
+ * hierarchy UiDevice queries (verified on API 24 + 36). Toast firing is instead
+ * evidenced by WindowManager/NotificationService logs ("Surface(name=Toast)" /
+ * "Toast already killed") and by the on-screen toast on the emulator.
+ *
  * Uses testTags / localized-proof selectors where possible (the app may be in
  * any of the four languages when the suite runs).
  */

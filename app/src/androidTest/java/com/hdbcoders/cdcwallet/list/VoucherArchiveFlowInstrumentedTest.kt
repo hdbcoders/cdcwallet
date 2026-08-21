@@ -50,11 +50,12 @@ import java.time.LocalDate
 
 /**
  * Archive / delete / restore flows (spec 05): the visible ⋮ overflow button as
- * the single entry point to the same menu, single-tap archive with Undo
- * snackbar, confirmation-gated delete with the exact shared dialog (Cancel
- * default-focused), the persistent Archived entry point with its own
- * Restore/Delete menu, archived rows remaining tappable (05 §5.4), and delete
- * racing an in-flight tap-refresh (02 §2.7) - the row must not be resurrected.
+ * the single entry point to the same menu, single-tap archive with no
+ * confirmation and no snackbar (refactor D15; spec 05 §5.2), confirmation-gated
+ * delete with the exact shared dialog (Cancel default-focused), the persistent
+ * Archived entry point with its own Restore/Delete menu, archived rows
+ * remaining tappable (05 §5.4), and delete racing an in-flight tap-refresh
+ * (02 §2.7) - the row must not be resurrected.
  */
 @RunWith(AndroidJUnit4::class)
 class VoucherArchiveFlowInstrumentedTest {

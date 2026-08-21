@@ -1,8 +1,8 @@
 package com.hdbcoders.cdcwallet.settings
 
 import android.content.Context
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -17,7 +17,9 @@ import com.hdbcoders.cdcwallet.extraction.ExtractionCoordinator
 import com.hdbcoders.cdcwallet.extraction.ExtractionEngine
 import com.hdbcoders.cdcwallet.ui.list.VoucherListScreen
 import com.hdbcoders.cdcwallet.ui.theme.AppLanguage
+import com.hdbcoders.cdcwallet.ui.theme.AppTheme
 import com.hdbcoders.cdcwallet.ui.theme.LanguageStore
+import com.hdbcoders.cdcwallet.ui.theme.ThemeMode
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -28,11 +30,14 @@ import org.junit.runner.RunWith
 import java.util.Locale
 
 /**
- * In-app language (i18n, spec 07 §7.5): the LanguageStore default/persistence
- * contract and the standalone picker flow - the Translate button in the main
- * list's app bar opens the picker (outside Settings), selecting a language
- * persists the choice and dismisses. The activity-recreation side
- * (attachBaseContext) is covered by manual QA.
+ * In-app language (i18n, spec 07 §7.1, REQ-11): the LanguageStore
+ * default/persistence contract and the header language dropdown - the main
+ * list's app bar is [hamburger] title [language dropdown] [Archived]; the
+ * dropdown lists the four languages with the active one checked, and selecting
+ * applies immediately, persists, and dismisses (refactor D15: the earlier
+ * standalone Translate button + `AppDialogSurface` picker were replaced by the
+ * dropdown). The activity-recreation side (attachBaseContext) is covered by
+ * manual QA.
  */
 @RunWith(AndroidJUnit4::class)
 class LanguageSettingsInstrumentedTest {
@@ -88,10 +93,12 @@ class LanguageSettingsInstrumentedTest {
     }
 
     @Test
-    fun translateButtonOpensPickerAndSelectionPersistsAndDismisses() {
+    fun headerLanguageDropdown_appliesSelectionAndDismisses() {
         val repository = RoomVoucherRepository(database)
+        // Deterministic active language regardless of the emulator's locale.
+        languageStore.setAppLanguage(AppLanguage.EN)
         composeRule.setContent {
-            MaterialTheme {
+            AppTheme(mode = ThemeMode.LIGHT) {
                 VoucherListScreen(
                     repository = repository,
                     extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
@@ -104,12 +111,18 @@ class LanguageSettingsInstrumentedTest {
                 )
             }
         }
-        // The standalone app-bar button (outside Settings) opens the picker.
+        // Spec 07 §7.1 (refactor D15): the header language dropdown lists the
+        // four languages with the active one checked; selecting applies
+        // immediately and dismisses.
         composeRule.onNodeWithContentDescription("Select language").performClick()
-        composeRule.onNodeWithText("中文").assertIsDisplayed()
+        listOf("English", "中文", "Bahasa Melayu", "தமிழ்").forEach { label ->
+            composeRule.onNodeWithText(label).assertIsDisplayed()
+        }
+        composeRule.onNodeWithText("English").assertIsSelected()
+
         composeRule.onNodeWithText("中文").performClick()
         assertEquals(AppLanguage.ZH, languageStore.language)
-        // Selecting persists and dismisses the picker.
+        // Selecting persists and dismisses the dropdown.
         composeRule.onNodeWithText("中文").assertDoesNotExist()
     }
 
