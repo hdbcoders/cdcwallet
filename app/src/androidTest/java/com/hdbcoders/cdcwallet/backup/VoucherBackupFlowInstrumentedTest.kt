@@ -391,8 +391,10 @@ class VoucherBackupFlowInstrumentedTest {
         composeRule.onNodeWithText("Import").performClick()
     }
 
-    /** The backup password field auto-focuses on dialog mount (retry loop up to ~0.5s). */
-    private fun waitUntilPasswordFocused(timeoutMillis: Long = 2_000) {
+    /** The backup password field auto-focuses on dialog mount (retry loop up
+     *  to ~2s); the bounded wait gives the M3 dialog time to land it under
+     *  emulator load (M20 - the app retries the FocusRequester itself). */
+    private fun waitUntilPasswordFocused(timeoutMillis: Long = 10_000) {
         composeRule.waitUntil(timeoutMillis) {
             composeRule.onNodeWithTag("backup_password")
                 .fetchSemanticsNode().config[SemanticsProperties.Focused]

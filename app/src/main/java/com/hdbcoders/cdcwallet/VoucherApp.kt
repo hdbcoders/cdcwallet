@@ -77,7 +77,20 @@ class AppContainer(context: Context) {
     val heroCollapseStore: HeroCollapseStore by lazy {
         HeroCollapseStore(appContext)
     }
-    val databaseBootstrap: DatabaseBootstrap by lazy {
+    /**
+     * Debug/test seam (spec 04 §4.8, audit C2): the debug variant may surface
+     * a simulated `Failed` bootstrap through [bootstrapOverride] while the
+     * once-per-process real bootstrap underneath stays untouched - clearing
+     * the override falls straight back to it, so the DB connections and the
+     * seeded data survive the simulation. Production never sets the override.
+     */
+    @Volatile
+    internal var bootstrapOverride: DatabaseBootstrap? = null
+
+    val databaseBootstrap: DatabaseBootstrap
+        get() = bootstrapOverride ?: realBootstrap
+
+    private val realBootstrap: DatabaseBootstrap by lazy {
         DatabaseBootstrap.create(appContext, SqlCipherPassphraseStore(appContext)).also { it.start() }
     }
 

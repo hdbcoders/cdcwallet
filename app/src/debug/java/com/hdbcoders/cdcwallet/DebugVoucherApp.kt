@@ -32,6 +32,28 @@ class DebugVoucherApp : VoucherApp() {
     private val seedScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /**
+     * Debug-only bootstrap override (audit C2 / spec 04 §4.8): lets the
+     * instrumented fatal-bootstrap UI test put the running app into the
+     * honest `Failed -> fatal-error-screen` state deterministically, and -
+     * crucially - get a healthy bootstrap back afterwards (clearing the
+     * container's [AppContainer.bootstrapOverride] seam falls back to the
+     * once-per-process real bootstrap). Mirrors the REQ-13 update
+     * simulation: the debug override stands in for the real failure trigger.
+     * Never compiled into release builds.
+     */
+    fun setBootstrapFailureSimulated(simulated: Boolean) {
+        container.bootstrapOverride = if (simulated) {
+            // Same initializer contract as the production bootstrap; the
+            // injected throw resolves into DatabaseBootstrapState.Failed
+            // exactly like a real SQLCipher open failure would.
+            DatabaseBootstrap { throw IllegalStateException("simulated bootstrap failure (debug seam)") }
+                .also { it.start() }
+        } else {
+            null
+        }
+    }
+
+    /**
      * Fixture-seamed add flow for the share-intent instrumented test (see
      * [DevFixtureFlow]): synthetic appassets host, never a real RedeemSG host.
      */

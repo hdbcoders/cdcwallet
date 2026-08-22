@@ -326,11 +326,11 @@ private fun BackupPasswordDialog(
     }
     // M3 Dialog doesn't reliably land initial focus on the password field
     // (mirrors DeleteVoucherDialog - the request can be stolen during dialog
-    // mount). Retry briefly (up to ~0.5s) until it sticks, then surface the
+    // mount). Retry briefly (up to ~2s) until it sticks, then surface the
     // keyboard so the user can type without an extra tap. Applies to both the
     // export (password + confirm) and import (password) dialogs.
     LaunchedEffect(Unit) {
-        repeat(10) {
+        repeat(40) {
             passwordFocus.requestFocus()
             delay(50)
         }

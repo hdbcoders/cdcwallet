@@ -50,10 +50,10 @@ fun DeleteVoucherDialog(
         )
     }
     // M3 Dialog doesn't reliably land initial focus on a button; the request can
-    // be stolen during dialog mount. Retry briefly (up to ~0.5s) until it sticks.
+    // be stolen during dialog mount. Retry briefly (up to ~2s) until it sticks.
     // If a future Compose/M3 update fixes dialog focus, delete this block.
     LaunchedEffect(Unit) {
-        repeat(10) {
+        repeat(40) {
             cancelFocus.requestFocus()
             delay(50)
         }

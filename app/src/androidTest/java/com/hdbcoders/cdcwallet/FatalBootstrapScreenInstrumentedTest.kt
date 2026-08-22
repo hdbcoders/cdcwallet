@@ -1,10 +1,12 @@
 package com.hdbcoders.cdcwallet
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.After
@@ -20,52 +22,57 @@ import org.junit.runner.RunWith
  * `DatabaseBootstrapTest` (JVM) proves the state holder; this proves the
  * activity consumes it.
  *
- * Prerequisite (harness, MUST run in the process BEFORE this class):
- * ```
- * adb shell am force-stop com.hdbcoders.cdcwallet
- * adb shell run-as com.hdbcoders.cdcwallet sh -c \
- *   'head -c 4096 /dev/zero > databases/voucher.db'
- * ```
- * Overwriting the SQLCipher file while NO app process is alive is the only
- * deterministic corruption: the debug app auto-starts the bootstrap at
- * process launch (auto-seed), and a live SQLCipher handle rewrites the file
- * back to a healthy database when its process dies - so in-process corruption
- * never sticks. This class then launches MainActivity in a FRESH process
- * whose bootstrap fails on the garbage file. [After] deletes the corrupt file
- * so later fresh processes start clean.
+ * The failure is injected through the debug-only bootstrap seam
+ * ([DebugVoucherApp.setBootstrapFailureSimulated]) - the same "the debug
+ * override stands in for the real trigger" pattern the REQ-13 update
+ * simulation uses (see also SilentUpdateLaunchInstrumentedTest): while the
+ * flag is set, the container exposes a bootstrap whose initializer throws,
+ * so [MainActivity] observes `DatabaseBootstrapState.Failed` and renders the
+ * fatal screen through the exact production branch (no synthetic UI, no
+ * special-cased layout). The original CorruptDatabaseOnceTest design
+ * (planting a zeroed `voucher.db` from the harness) cannot work inside the
+ * live suite: the bootstrap is once-per-process and the suite's own
+ * auto-seed keeps a live SQLCipher handle that rewrites the file back to
+ * healthy, and the old `@After` deleting the app's real DB poisoned every
+ * later test in the process ("no such table" cascade). The seam is
+ * deterministic, order-independent, and self-cleaning: clearing the flag
+ * falls back to the once-per-process real bootstrap, leaving the app
+ * healthy for every subsequent test.
  */
 @RunWith(AndroidJUnit4::class)
 class FatalBootstrapScreenInstrumentedTest {
 
     @get:Rule
-    val rule = createAndroidComposeRule<MainActivity>()
+    val composeRule = createComposeRule()
 
     private val context: Context get() = ApplicationProvider.getApplicationContext()
 
+    private val debugApp: DebugVoucherApp
+        get() = context.applicationContext as DebugVoucherApp
+
     @Before
-    fun ensureCorruptDatabaseIsPlanted() {
-        val dbFile = context.getDatabasePath(DatabaseBootstrap.DB_NAME)
-        check(dbFile.exists() && dbFile.length() > 0) {
-            "run CorruptDatabaseOnceTest in a previous fresh process first"
-        }
+    fun flagSimulatedBootstrapFailure() {
+        debugApp.setBootstrapFailureSimulated(true)
     }
 
     @After
-    fun deleteCorruptDatabase() {
-        // The corrupt file is gone; the next fresh process creates a new,
-        // healthy database (the passphrase store is Keystore-backed and
-        // unaffected by the file deletion).
-        context.getDatabasePath(DatabaseBootstrap.DB_NAME).delete()
+    fun clearSimulatedBootstrapFailure() {
+        debugApp.setBootstrapFailureSimulated(false)
     }
 
     @Test
     fun bootstrapFailureShowsFatalErrorScreenInsteadOfHanging() {
         // The splash must resolve into the fatal error state - bounded wait,
         // never hang, never a silently-unencrypted list.
-        rule.waitUntil(timeoutMillis = 20_000) {
-            rule.onAllNodesWithText(FATAL_TEXT).fetchSemanticsNodes().isNotEmpty()
+        ActivityScenario.launch<MainActivity>(
+            Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+        ).use {
+            composeRule.waitUntil(timeoutMillis = 20_000) {
+                composeRule.onAllNodesWithText(FATAL_TEXT).fetchSemanticsNodes().isNotEmpty()
+            }
+            composeRule.onNodeWithText(FATAL_TEXT).assertIsDisplayed()
         }
-        rule.onNodeWithText(FATAL_TEXT).assertIsDisplayed()
     }
 
     private companion object {
