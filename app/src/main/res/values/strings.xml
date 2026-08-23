@@ -4,7 +4,7 @@
          locale (brand name, not translated). -->
     <string name="app_name">CDC Wallet</string>
     <string name="menu">Menu</string>
-    <!-- Date pattern for the app's dates ("Expires 12 Mar 2026", backup
+    <!-- Date pattern for the app's dates ("Use by 12 Mar 2026", backup
          summary). Localized per locale - e.g. Chinese uses yyyy年M月d日. -->
     <string name="date_pattern">d MMM yyyy</string>
     <string name="back">Back</string>
@@ -70,7 +70,7 @@
     <string name="add_invalid">This doesn\'t look like a RedeemSG voucher link.</string>
     <string name="add_duplicate">Link not added. Voucher already in your list.</string>
     <string name="add_added">Added: %1$s</string>
-    <string name="add_added_unverified">Added, but couldn\'t verify it yet; tap the entry to check later.</string>
+    <string name="add_added_unverified">Added, but couldn\'t verify yet. Tap it later to check.</string>
     <string name="add_failed_generic">Something went wrong adding this link. Please try again.</string>
 
     <!-- Detail / WebView screen. -->
@@ -82,11 +82,11 @@
     <string name="delete_body">You may not be able to get this link back once it\'s deleted.</string>
 
     <!-- Voucher row (spec 04). -->
-    <string name="expires">Expires %1$s</string>
+    <string name="expires">Use by %1$s</string>
     <string name="more_options">More options for %1$s</string>
     <string name="expired_footer">This voucher link has expired</string>
     <string name="no_balance_banner">This voucher link has no more balance</string>
-    <string name="unverified_footer">No balance information yet — tap this entry to check.</string>
+    <string name="unverified_footer">Tap to check your balance.</string>
     <string name="fatal_startup_error">The app could not start. Please restart the app to try again.</string>
     <string name="stale_refresh_status">Couldn\'t refresh · tap to retry</string>
     <string name="hero_expanded_desc">Expanded</string>
@@ -97,7 +97,7 @@
     <string name="badge_expired">Expired</string>
     <string name="badge_fully_used">Fully used</string>
     <string name="badge_not_started">Not started</string>
-    <string name="badge_unverified">Couldn\'t verify, tap to check</string>
+    <string name="badge_unverified">Tap to check</string>
     <plurals name="badge_days_left">
         <item quantity="one">%1$d day left</item>
         <item quantity="other">%1$d days left</item>

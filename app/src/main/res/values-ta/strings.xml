@@ -63,7 +63,7 @@
     <string name="add_invalid">இது RedeemSG வவுச்சர் இணைப்பாகத் தெரியவில்லை.</string>
     <string name="add_duplicate">இணைப்பு சேர்க்கப்படவில்லை. வவுச்சர் ஏற்கனவே உங்கள் பட்டியலில் உள்ளது.</string>
     <string name="add_added">சேர்க்கப்பட்டது: %1$s</string>
-    <string name="add_added_unverified">சேர்க்கப்பட்டது, ஆனால் இன்னும் சரிபார்க்க முடியவில்லை; பிறகு பார்க்க உள்ளீட்டைத் தட்டவும்.</string>
+    <string name="add_added_unverified">சேர்க்கப்பட்டது, ஆனால் இன்னும் சரிபார்க்க முடியவில்லை. பிறகு சரிபார்க்கத் தட்டவும்.</string>
     <string name="add_failed_generic">இந்த இணைப்பைச் சேர்ப்பதில் ஏதோ தவறு ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.</string>
 
     <string name="detail_parse_error">வலைத்தளத் தரவைப் பாகுபடுத்த முடியவில்லை</string>
@@ -72,11 +72,11 @@
     <string name="delete_title">இந்த வவுச்சர் இணைப்பை நீக்கவா?</string>
     <string name="delete_body">நீக்கிய பிறகு இந்த இணைப்பை மீண்டும் பெற முடியாமல் போகலாம்.</string>
 
-    <string name="expires">காலாவதி: %1$s</string>
+    <string name="expires">%1$s வரை பயன்படுத்தவும்</string>
     <string name="more_options">%1$sக்கான மேலும் விருப்பங்கள்</string>
     <string name="expired_footer">இந்த வவுச்சர் இணைப்பு காலாவதியாகிவிட்டது</string>
     <string name="no_balance_banner">இந்த வவுச்சர் இணைப்பில் மேலும் இருப்பு இல்லை</string>
-    <string name="unverified_footer">இருப்புத் தகவல் இன்னும் இல்லை — சரிபார்க்க இந்த உள்ளீட்டைத் தட்டவும்.</string>
+    <string name="unverified_footer">இருப்பைப் பார்க்கத் தட்டவும்.</string>
     <string name="fatal_startup_error">பயன்பாட்டைத் தொடங்க முடியவில்லை. மீண்டும் முயற்சிக்க பயன்பாட்டை மறுதொடக்கம் செய்யவும்.</string>
     <string name="stale_refresh_status">புதுப்பிக்க முடியவில்லை · மீண்டும் முயற்சிக்கத் தட்டவும்</string>
     <string name="hero_expanded_desc">விரிவாக்கப்பட்டது</string>
@@ -86,7 +86,7 @@
     <string name="badge_expired">காலாவதியானது</string>
     <string name="badge_fully_used">முழுமையாகப் பயன்படுத்தப்பட்டது</string>
     <string name="badge_not_started">தொடங்கப்படவில்லை</string>
-    <string name="badge_unverified">சரிபார்க்க முடியவில்லை, சரிபார்க்கத் தட்டவும்</string>
+    <string name="badge_unverified">சரிபார்க்கத் தட்டவும்</string>
     <plurals name="badge_days_left">
         <item quantity="one">%1$d நாள் உள்ளது</item>
         <item quantity="other">%1$d நாட்கள் உள்ளன</item>

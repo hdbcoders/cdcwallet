@@ -161,14 +161,14 @@ class VoucherListScreenTest {
         // Spec 04 §4.2: badge states render distinctly (Unverified / Expired /
         // Not started are visible up top; Link Ten's days-left is asserted
         // after scrolling to it below).
-        composeRule.onNodeWithText("Couldn't verify, tap to check").assertIsDisplayed()
+        composeRule.onNodeWithText("Tap to check").assertIsDisplayed()
         composeRule.onNodeWithText("Expired").assertIsDisplayed()
         composeRule.onNodeWithText("Not started").assertIsDisplayed()
 
         // Refactor H10 (spec 04 §4.2): the UNVERIFIED row shows the neutral
         // unverified footer in its body - never the "no more balance" banner
         // (empty balances are not proof of being fully used).
-        composeRule.onNodeWithText("No balance information yet", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Tap to check your balance", substring = true).assertIsDisplayed()
         composeRule.onAllNodesWithText("This voucher link has no more balance").assertCountEquals(0)
 
         // Refactor M21: accessibility semantics, not just visible text -
@@ -447,7 +447,7 @@ class VoucherListScreenTest {
 
         // Each label is announced through a merged, clickable card node; rows
         // below the fold are scrolled to first (LazyColumn composes lazily).
-        composeRule.onNode(hasText("Couldn't verify, tap to check") and hasClickAction())
+        composeRule.onNode(hasText("Tap to check") and hasClickAction())
             .assertIsDisplayed()
         composeRule.onNode(hasText("Not started") and hasClickAction()).assertIsDisplayed()
         composeRule.onNode(hasScrollAction())

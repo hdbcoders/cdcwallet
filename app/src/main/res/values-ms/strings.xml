@@ -63,7 +63,7 @@
     <string name="add_invalid">Ini bukan pautan baucar RedeemSG.</string>
     <string name="add_duplicate">Pautan tidak ditambah. Baucar sudah ada dalam senarai anda.</string>
     <string name="add_added">Ditambah: %1$s</string>
-    <string name="add_added_unverified">Ditambah, tetapi belum dapat disahkan; ketik untuk semak kemudian.</string>
+    <string name="add_added_unverified">Ditambah, tetapi belum dapat disahkan. Ketik untuk semak kemudian.</string>
     <string name="add_failed_generic">Sesuatu telah berlaku semasa menambah pautan ini. Sila cuba lagi.</string>
 
     <string name="detail_parse_error">Data laman web gagal diproses</string>
@@ -72,11 +72,11 @@
     <string name="delete_title">Padam pautan baucar ini?</string>
     <string name="delete_body">Anda mungkin tidak dapat mendapatkan semula pautan ini selepas dipadam.</string>
 
-    <string name="expires">Luput %1$s</string>
+    <string name="expires">Guna sebelum %1$s</string>
     <string name="more_options">Lebih banyak pilihan untuk %1$s</string>
     <string name="expired_footer">Pautan baucar ini telah luput</string>
     <string name="no_balance_banner">Pautan baucar ini tiada baki lagi</string>
-    <string name="unverified_footer">Tiada maklumat baki lagi — ketik entri ini untuk menyemak.</string>
+    <string name="unverified_footer">Ketik untuk semak baki.</string>
     <string name="fatal_startup_error">Aplikasi tidak dapat dimulakan. Sila mulakan semula aplikasi untuk mencuba lagi.</string>
     <string name="stale_refresh_status">Tidak dapat dikemas kini · ketik untuk cuba semula</string>
     <string name="hero_expanded_desc">Dikembangkan</string>
@@ -86,7 +86,7 @@
     <string name="badge_expired">Telah luput</string>
     <string name="badge_fully_used">Habis digunakan</string>
     <string name="badge_not_started">Belum bermula</string>
-    <string name="badge_unverified">Tidak dapat disahkan, ketik untuk semak</string>
+    <string name="badge_unverified">Ketik untuk semak</string>
     <plurals name="badge_days_left">
         <item quantity="one">%1$d hari lagi</item>
         <item quantity="other">%1$d hari lagi</item>

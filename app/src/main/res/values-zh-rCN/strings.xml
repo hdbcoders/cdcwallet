@@ -63,7 +63,7 @@
     <string name="add_invalid">这看起来不是 RedeemSG 购物券链接。</string>
     <string name="add_duplicate">链接未添加。该购物券已在您的列表中。</string>
     <string name="add_added">已添加：%1$s</string>
-    <string name="add_added_unverified">已添加，但暂时无法验证；点击条目稍后查看。</string>
+    <string name="add_added_unverified">已添加，但暂时无法验证。稍后点击查看。</string>
     <string name="add_failed_generic">添加此链接时出错。请重试。</string>
 
     <string name="detail_parse_error">网站数据解析失败</string>
@@ -72,21 +72,21 @@
     <string name="delete_title">删除此购物券链接？</string>
     <string name="delete_body">删除后您可能无法找回此链接。</string>
 
-    <string name="expires">有效期至 %1$s</string>
+    <string name="expires">%1$s 前使用</string>
     <string name="more_options">%1$s 的更多选项</string>
     <string name="expired_footer">此购物券链接已过期</string>
     <string name="no_balance_banner">此购物券链接已没有更多余额</string>
-    <string name="unverified_footer">暂无余额信息——点按此条目查看。</string>
+    <string name="unverified_footer">点击查看余额。</string>
     <string name="fatal_startup_error">应用无法启动。请重新启动应用再试。</string>
-    <string name="stale_refresh_status">无法刷新 · 点按重试</string>
+    <string name="stale_refresh_status">无法刷新 · 点击重试</string>
     <string name="hero_expanded_desc">已展开</string>
     <string name="hero_collapsed_desc">已收起</string>
 
-    <string name="badge_no_expiry">无到期日期</string>
+    <string name="badge_no_expiry">无截止日期</string>
     <string name="badge_expired">已过期</string>
     <string name="badge_fully_used">已用完</string>
     <string name="badge_not_started">尚未开始</string>
-    <string name="badge_unverified">无法验证，点击查看</string>
+    <string name="badge_unverified">点击查看</string>
     <plurals name="badge_days_left">
         <item quantity="one">剩 %1$d 天</item>
         <item quantity="other">剩 %1$d 天</item>
