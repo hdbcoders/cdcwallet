@@ -13,6 +13,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
+import com.hdbcoders.cdcwallet.R
 import com.hdbcoders.cdcwallet.data.RoomVoucherRepository
 import com.hdbcoders.cdcwallet.data.backup.BackupFlow
 import com.hdbcoders.cdcwallet.data.backup.BackupService
@@ -101,14 +102,14 @@ class RealP7BackupMergeAcceptanceTest {
         }
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("Import backup").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.import_backup)).performClick()
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule.onAllNodesWithText(
                 "Enter the password this backup was exported with.",
             ).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag("backup_password").performTextInput("acceptance-pass-1")
-        composeRule.onNodeWithText("Import").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.import_confirm)).performClick()
 
         // --- 5. Decrypt -> summary dialog (MERGE default) -> commit ---
         composeRule.waitUntil(timeoutMillis = 30_000) {
@@ -117,7 +118,7 @@ class RealP7BackupMergeAcceptanceTest {
                 substring = true,
             ).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Import").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.import_confirm)).performClick()
 
         // --- 6. Prove the production merge restored the missing row ---
         composeRule.waitUntil(timeoutMillis = 30_000) {

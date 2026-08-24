@@ -13,6 +13,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.hdbcoders.cdcwallet.MainActivity
+import com.hdbcoders.cdcwallet.R
 import com.hdbcoders.cdcwallet.dev.DevActions
 import org.junit.After
 import org.junit.Before
@@ -73,7 +74,7 @@ class SilentUpdateLaunchInstrumentedTest {
             // user-triggered check having run.
             composeRule.onNodeWithTag("header-menu").performClick()
             composeRule.onNodeWithText("Tap to update").assertIsDisplayed()
-            composeRule.onNodeWithText("Check for update").assertDoesNotExist()
+            composeRule.onNodeWithText(context.getString(R.string.check_for_update)).assertDoesNotExist()
         }
     }
 }

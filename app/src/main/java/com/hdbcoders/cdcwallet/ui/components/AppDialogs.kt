@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.hdbcoders.cdcwallet.ui.theme.AppScaledContent
@@ -71,12 +72,16 @@ fun DialogButtonRow(
     cancelModifier: Modifier = Modifier,
 ) {
     FlowRow(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("dialog-button-row"),
         horizontalArrangement = Arrangement.End,
         itemVerticalAlignment = Alignment.CenterVertically,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        TextButton(onClick = onCancel, modifier = cancelModifier) { Text(cancelLabel) }
+        TextButton(onClick = onCancel, modifier = cancelModifier.testTag("dialog-cancel")) {
+            Text(cancelLabel)
+        }
         Spacer(modifier = Modifier.width(8.dp))
         Button(
             onClick = onConfirm,
@@ -89,6 +94,7 @@ fun DialogButtonRow(
             } else {
                 ButtonDefaults.buttonColors()
             },
+            modifier = Modifier.testTag("dialog-confirm"),
         ) { Text(confirmLabel) }
     }
 }

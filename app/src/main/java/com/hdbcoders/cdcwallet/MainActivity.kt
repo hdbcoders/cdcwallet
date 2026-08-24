@@ -188,6 +188,11 @@ class MainActivity : ComponentActivity() {
         }
         val sharedUrl = intent?.getStringExtra(Intent.EXTRA_TEXT)
         setContent {
+            // AppTheme publishes every Modifier.testTag as an accessibility
+            // resource-id for the whole tree (see ThemeMode.kt), so UIAutomator
+            // / uiautomator dump / external agent bridges can address nodes
+            // deterministically (AGENTS.md: navigate via UIAutomator,
+            // screenshots last resort).
             AppTheme(
                 container.themeModeStore.mode,
                 container.fontScaleStore.scale,

@@ -46,8 +46,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -86,6 +91,12 @@ fun TicketCard(
     onMenuExpandedChange: (Boolean) -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * Row-level custom a11y/agent actions (pin/archive/delete), mirroring the
+     * kebab menu's operations so UIAutomator and accessibility services can
+     * trigger them without opening the menu. Null omits the actions entirely.
+     */
+    rowActions: VoucherRowActions? = null,
     menuContent: @Composable ColumnScope.() -> Unit,
 ) {
     val c = LocalRedesignColors.current
@@ -97,6 +108,14 @@ fun TicketCard(
         DateTimeFormatter.ofPattern(datePattern, locale).format(date)
     }
     val expiryText = dateText?.let { stringResource(R.string.expires, it) }
+    // Labels for the row-level custom a11y/agent actions (pin / archive /
+    // delete): the same operations as the kebab menu, exposed so UIAutomator
+    // and accessibility services can trigger them without opening the menu.
+    val pinActionLabel = rowActions?.let {
+        stringResource(if (it.isPinned) R.string.unpin else R.string.pin)
+    }
+    val archiveActionLabel = rowActions?.let { stringResource(it.middleLabelRes) }
+    val deleteActionLabel = rowActions?.let { stringResource(R.string.delete) }
 
     Surface(
         shape = RoundedCornerShape(16.dp),
@@ -107,6 +126,10 @@ fun TicketCard(
         ),
         modifier = modifier
             .fillMaxWidth()
+            // Stable agent/test handle: "voucher-card-<id>" lets UIAutomator
+            // and instrumented tests address a specific row without relying
+            // on localized text.
+            .testTag("voucher-card-${voucher.id}")
             .clickable(onClick = onClick),
     ) {
         // The kebab is its OWN element overlaid on the card, NOT a sibling in
@@ -211,7 +234,24 @@ fun TicketCard(
             Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(end = 10.dp),
+                    .padding(end = 10.dp)
+                    .semantics {
+                        // Custom a11y/agent actions on the row: lets UIAutomator
+                        // and accessibility services drive the overflow menu's
+                        // operations directly without opening it.
+                        val actions = buildList {
+                            pinActionLabel?.let { label ->
+                                add(CustomAccessibilityAction(label) { rowActions?.onPinClick(); true })
+                            }
+                            archiveActionLabel?.let { label ->
+                                add(CustomAccessibilityAction(label) { rowActions?.onMiddleClick(); true })
+                            }
+                            deleteActionLabel?.let { label ->
+                                add(CustomAccessibilityAction(label) { rowActions?.onDelete(); true })
+                            }
+                        }
+                        customActions = actions
+                    },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (voucher.isPinned) {
@@ -231,7 +271,9 @@ fun TicketCard(
                 }
                 IconButton(
                     onClick = { onMenuExpandedChange(true) },
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier
+                        .size(48.dp)
+                        .testTag("voucher-kebab-${voucher.id}"),
                 ) {
                     Icon(
                         Icons.Default.MoreVert,
@@ -444,3 +486,22 @@ private fun CategoryPills(voucher: VoucherGroup, modifier: Modifier = Modifier) 
         }
     }
 }
+
+/**
+ * Row-level custom a11y/agent actions for [TicketCard], mirroring the kebab
+ * menu's operations so UIAutomator and accessibility services can pin,
+ * archive/restore, or delete a voucher row without opening the menu.
+ *
+ * @param isPinned       drives the Pin/Unpin action label
+ * @param middleLabelRes Archive (main list) or Restore (archived screen)
+ * @param onPinClick     invoked by the Pin/Unpin custom action
+ * @param onMiddleClick  invoked by the archive/restore custom action
+ * @param onDelete       invoked by the delete custom action
+ */
+data class VoucherRowActions(
+    val isPinned: Boolean,
+    val middleLabelRes: Int,
+    val onPinClick: () -> Unit,
+    val onMiddleClick: () -> Unit,
+    val onDelete: () -> Unit,
+)

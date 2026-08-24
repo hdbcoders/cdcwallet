@@ -20,6 +20,7 @@ import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.Intents.intending
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.hdbcoders.cdcwallet.MainActivity
+import com.hdbcoders.cdcwallet.R
 import com.hdbcoders.cdcwallet.dev.DevActions
 import org.hamcrest.Matchers.allOf
 import org.junit.After
@@ -91,7 +92,7 @@ class UpdateFeatureInstrumentedTest {
     @Test
     fun noUpdateState_showsCheckForUpdate_andNoBadge() {
         openHamburgerMenu()
-        rule.onNodeWithText("Check for update").assertIsDisplayed()
+        rule.onNodeWithText(context.getString(R.string.check_for_update)).assertIsDisplayed()
         rule.onNodeWithText("Tap to update").assertDoesNotExist()
         rule.onNodeWithContentDescription("Update available").assertDoesNotExist()
     }
@@ -101,7 +102,7 @@ class UpdateFeatureInstrumentedTest {
         broadcast(DevActions.ACTION_SIMULATE_UPDATE)
 
         openHamburgerMenu()
-        rule.onNodeWithText("Check for update").performClick()
+        rule.onNodeWithText(context.getString(R.string.check_for_update)).performClick()
 
         // User check runs async (IO) - wait for the dialog.
         rule.waitUntil(timeoutMillis = 10_000) {
@@ -118,7 +119,7 @@ class UpdateFeatureInstrumentedTest {
         rule.onNodeWithContentDescription("Update available").assertIsDisplayed()
         openHamburgerMenu()
         rule.onNodeWithText("Tap to update").assertIsDisplayed()
-        rule.onNodeWithText("Check for update").assertDoesNotExist()
+        rule.onNodeWithText(context.getString(R.string.check_for_update)).assertDoesNotExist()
         // The menu item carries the "!" dot so the update is visible there too.
         // (Unmerged tree: the DropdownMenuItem merges descendants into one
         // node, hiding the badge's tag; assertExists, not assertIsDisplayed -
@@ -138,7 +139,7 @@ class UpdateFeatureInstrumentedTest {
 
         // Trigger a check so the flag is set (badge + slot swap).
         openHamburgerMenu()
-        rule.onNodeWithText("Check for update").performClick()
+        rule.onNodeWithText(context.getString(R.string.check_for_update)).performClick()
         rule.waitUntil(timeoutMillis = 10_000) {
             rule.onAllNodesWithText("Open Play Store").fetchSemanticsNodes().isNotEmpty()
         }

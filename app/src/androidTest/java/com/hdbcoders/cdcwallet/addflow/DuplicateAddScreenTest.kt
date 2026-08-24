@@ -22,6 +22,7 @@ import com.hdbcoders.cdcwallet.data.db.AppDatabase
 import com.hdbcoders.cdcwallet.data.db.SqlCipherNative
 import com.hdbcoders.cdcwallet.data.model.ValidityStatus
 import com.hdbcoders.cdcwallet.data.model.VoucherGroup
+import com.hdbcoders.cdcwallet.R
 import com.hdbcoders.cdcwallet.extraction.ExtractionEngine
 import com.hdbcoders.cdcwallet.extraction.RequestCountingClient
 import com.hdbcoders.cdcwallet.extraction.WebViewFixtures
@@ -120,8 +121,8 @@ class DuplicateAddScreenTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeRule.onNodeWithText("Paste voucher link").performTextInput(url)
-        composeRule.onNodeWithText("Add").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.paste_link)).performTextInput(url)
+        composeRule.onNodeWithText(appContext.getString(R.string.add)).performClick()
 
         // The flow ends on the add screen with the new terminal message.
         composeRule.waitUntil(5_000) {
@@ -131,8 +132,8 @@ class DuplicateAddScreenTest {
         composeRule.onNodeWithText("Link not added. Voucher already in your list.")
             .assertIsDisplayed()
         // The screen is still the add screen (field + button still present)…
-        composeRule.onNodeWithText("Paste voucher link").assertIsDisplayed()
-        composeRule.onNodeWithText("Add").assertIsDisplayed()
+        composeRule.onNodeWithText(appContext.getString(R.string.paste_link)).assertIsDisplayed()
+        composeRule.onNodeWithText(appContext.getString(R.string.add)).assertIsDisplayed()
         // …no navigation happened…
         assertFalse(backCalled)
         // …and no second row was inserted.
@@ -192,8 +193,8 @@ class DuplicateAddScreenTest {
             composeRule.onAllNodes(isFocused() and hasText("Paste voucher link"))
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Paste voucher link").performTextInput(url)
-        composeRule.onNodeWithText("Add").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.paste_link)).performTextInput(url)
+        composeRule.onNodeWithText(appContext.getString(R.string.add)).performClick()
 
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithText("Link not added. Voucher already in your list.")

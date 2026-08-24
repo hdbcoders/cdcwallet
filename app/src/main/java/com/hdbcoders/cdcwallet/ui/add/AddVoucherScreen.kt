@@ -26,6 +26,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -93,14 +94,19 @@ fun AddVoucherScreen(
             OutlinedTextField(
                 value = vm.url,
                 onValueChange = vm::onUrlChange,
-                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("add-url-input")
+                    .focusRequester(focusRequester),
                 label = { Text(stringResource(R.string.paste_link)) },
                 singleLine = true,
                 enabled = vm.status !is AddUiStatus.Working,
             )
             Button(
                 onClick = vm::submit,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("add-submit-button"),
                 enabled = vm.url.isNotBlank() && vm.status !is AddUiStatus.Working,
             ) {
                 Text(stringResource(R.string.add))

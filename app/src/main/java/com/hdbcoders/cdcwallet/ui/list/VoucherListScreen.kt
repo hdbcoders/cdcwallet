@@ -40,6 +40,7 @@ import com.hdbcoders.cdcwallet.ui.components.RowMenuPinAction
 import com.hdbcoders.cdcwallet.ui.theme.LocalAppLanguage
 import com.hdbcoders.cdcwallet.ui.theme.localizeCampaignName
 import com.hdbcoders.cdcwallet.ui.components.TicketCard
+import com.hdbcoders.cdcwallet.ui.components.VoucherRowActions
 import com.hdbcoders.cdcwallet.ui.components.VoucherRowMenuContent
 import com.hdbcoders.cdcwallet.ui.theme.AppLanguage
 import com.hdbcoders.cdcwallet.ui.theme.LanguageStore
@@ -140,6 +141,23 @@ fun VoucherListScreen(
                             onMenuExpandedChange = { open ->
                                 vm.setMenu(if (open) voucher.id else null)
                             },
+                            // Row-level custom a11y/agent actions mirror this
+                            // row's kebab menu: Pin/Unpin + Archive + Delete.
+                            rowActions = VoucherRowActions(
+                                isPinned = voucher.isPinned,
+                                middleLabelRes = R.string.archive,
+                                onPinClick = {
+                                    if (voucher.isPinned) vm.unpin(voucher.id) else vm.requestPin(voucher)
+                                },
+                                onMiddleClick = {
+                                    vm.setMenu(null)
+                                    vm.archive(voucher)
+                                },
+                                onDelete = {
+                                    vm.setMenu(null)
+                                    vm.requestDelete(voucher)
+                                },
+                            ),
                             modifier = if (reduceMotion) {
                                 // System reduce-motion: disable item animations entirely.
                                 Modifier.animateItem(

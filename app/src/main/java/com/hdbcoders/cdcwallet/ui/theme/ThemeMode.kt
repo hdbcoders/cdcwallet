@@ -4,6 +4,7 @@ package com.hdbcoders.cdcwallet.ui.theme
 
 import android.content.Context
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -15,8 +16,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -149,8 +153,16 @@ fun AppTheme(
         MaterialTheme(
             colorScheme = if (dark) DarkScheme else LightScheme,
             typography = typographyFor(dyslexiaFont),
-            content = content,
-        )
+        ) {
+            // Root semantics node carrying testTagsAsResourceId = true: the
+            // whole app subtree publishes its Modifier.testTag as an
+            // accessibility resource-id so UIAutomator / uiautomator dump /
+            // external agent bridges can address nodes deterministically.
+            // Pure metadata - no effect on layout, rendering, or behavior.
+            Box(modifier = Modifier.semantics { testTagsAsResourceId = true }) {
+                content()
+            }
+        }
     }
 }
 

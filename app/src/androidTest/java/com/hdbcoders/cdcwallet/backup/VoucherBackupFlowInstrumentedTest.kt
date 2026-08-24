@@ -21,6 +21,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.hdbcoders.cdcwallet.R
 import com.hdbcoders.cdcwallet.data.RoomVoucherRepository
 import com.hdbcoders.cdcwallet.data.backup.BackupException
 import com.hdbcoders.cdcwallet.data.backup.BackupFileStore
@@ -129,6 +130,23 @@ class VoucherBackupFlowInstrumentedTest {
                     )
                     runCatching { File(downloadsDir, name).delete() }
                 }
+                // Shell-level sweep for rows INVISIBLE to this app: on API 33+
+                // an app with no media permissions cannot see foreign rows
+                // (owner redacted), yet such a ghost still blocks the canonical
+                // name/path. uiAutomation executes as shell, which sees and can
+                // remove them. The P7 fixture is re-pushed by its own test.
+                if (Build.VERSION.SDK_INT >= 33) {
+                    val parcelFile = InstrumentationRegistry.getInstrumentation().uiAutomation
+                        .executeShellCommand(
+                            "content delete --uri content://media/external/downloads " +
+                                "--where \"_display_name LIKE 'cdcvoucher%'\"",
+                        )
+                    // Consume the stream fully so the command completes, then close.
+                    @Suppress("UsePropertyAccessSyntax")
+                    runCatching { parcelFile.getFileDescriptor().sync() }
+                    runCatching { parcelFile.close() }
+                    File(downloadsDir, BackupFileStore.FILE_NAME).delete()
+                }
             } else {
                 val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 dir.listFiles { it.name.startsWith("cdcvoucher") }?.forEach { it.delete() }
@@ -184,9 +202,58 @@ class VoucherBackupFlowInstrumentedTest {
         }
     }
 
-    /** Bytes of the current `cdcvoucher.backup`, or null when absent. */
-    private fun readCurrentBackupBytes(): ByteArray? = runCatching {
+    /** Plants a Downloads file with an exact display name (used to simulate a
+     *  user's manually renamed backup copy, e.g. "cdcvoucher (1).backup").
+     *  The exact name bypasses MediaStore's MIME-based extension appending. */
+    private fun plantDownloadsFile(name: String, bytes: ByteArray) {
+        deleteAllBackupArtifacts()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = appContext.contentResolver
+            val values = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+                put(MediaStore.MediaColumns.MIME_TYPE, "application/octet-stream")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+            }
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                ?: throw IllegalStateException("MediaStore insert failed for $name")
+            resolver.openOutputStream(uri)?.use { it.write(bytes) }
+        } else {
+            File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                name,
+            ).writeBytes(bytes)
+        }
+    }
+
+    /** Bytes of the Downloads file with the given display name, or null. */
+    private fun readDownloadsFile(name: String): ByteArray? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = appContext.contentResolver
+            var result: ByteArray? = null
+            resolver.query(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.MediaColumns._ID),
+                "${MediaStore.MediaColumns.DISPLAY_NAME} = ?",
+                arrayOf(name),
+                null,
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    resolver.openInputStream(
+                        ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cursor.getLong(0)),
+                    )?.use { result = it.readBytes() }
+                }
+            }
+            return result
+        }
+        val file = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            name,
+        )
+        return if (file.exists()) file.readBytes() else null
+    }
+
+    /** Bytes of the current `cdcvoucher.backup`, or null when absent. */
+    private fun readCurrentBackupBytes(): ByteArray? = runCatching {        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val resolver = appContext.contentResolver
             var result: ByteArray? = null
             resolver.query(
@@ -216,9 +283,13 @@ class VoucherBackupFlowInstrumentedTest {
     }.getOrNull()
 
     /** Put the pre-existing backup back byte-for-byte (the app's export
-     *  deleted it before writing its own). */
+     *  deleted it before writing its own). Skipped entirely on API 33+: the
+     *  setUp shell-level sweep removes foreign/ghost rows, so restoring a
+     *  snapshot of them would re-plant an invisible name-blocking row for the
+     *  next run. The P7 fixture test re-pushes its own artifact. */
     private fun restorePreExistingBackup() {
         val bytes = preExistingBackupBytes ?: return
+        if (Build.VERSION.SDK_INT >= 33) return
         runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val resolver = appContext.contentResolver
@@ -385,10 +456,10 @@ class VoucherBackupFlowInstrumentedTest {
     }
 
     private fun importWithPassword(password: String) {
-        composeRule.onNodeWithText("Import backup").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.import_backup)).performClick()
         waitUntilPasswordFocused()
         composeRule.onNodeWithTag("backup_password").performTextInput(password)
-        composeRule.onNodeWithText("Import").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.import_confirm)).performClick()
     }
 
     /** The backup password field auto-focuses on dialog mount (retry loop up
@@ -487,22 +558,57 @@ class VoucherBackupFlowInstrumentedTest {
         val repository = RoomVoucherRepository(database)
         runBlocking { repository.insert(voucher("TokenOne", "First run")) }
         val flow = BackupFlow(repository)
-        runBlocking { flow.export(appContext, "backup-passphrase") }
-
+        val firstExportUri = runBlocking { flow.export(appContext, "backup-passphrase") }
         // H8 (spec 06 §6.6): re-exporting replaces the previous file, leaving
         // exactly one cdcvoucher.backup in Downloads - never a "(1)" sibling.
         runBlocking { repository.insert(voucher("TokenTwo", "Second run", archived = true)) }
-        runBlocking { flow.export(appContext, "backup-passphrase") }
+        val secondUri = runBlocking { flow.export(appContext, "backup-passphrase") }
 
         assertEquals(
             "repeated export must leave exactly one cdcvoucher.backup, was: ${downloadEntries()}",
             listOf(BackupFileStore.FILE_NAME),
             downloadEntries(),
         )
+        // Overwrite-in-place: the SECOND export must reuse the SAME MediaStore
+        // row (same Uri) as the first - no new row minted.
+        assertEquals(
+            "repeated export must overwrite the same row, not insert a new one",
+            firstExportUri,
+            secondUri,
+        )
         // The surviving file carries the SECOND export's content (latest wins).
         val bytes = readCurrentBackupBytes()!!
         val decrypted = service.decryptPayload(bytes, "backup-passphrase")
         assertEquals(setOf("TokenOne", "TokenTwo"), decrypted.vouchers.map { it.token }.toSet())
+    }
+
+    @Test
+    fun userRenamedBackupCopiesAreNeverDeletedOrModified() {
+        grantStorageAccess()
+        // A user duplicating their backup in the Files app to keep a spare
+        // gets "cdcvoucher (1).backup" - the same name the old bug minted.
+        // The export must never adopt, modify, or delete such a file.
+        val spareBytes = "user's deliberate manual copy".toByteArray()
+        plantDownloadsFile("cdcvoucher (1).backup", spareBytes)
+
+        val repository = RoomVoucherRepository(database)
+        runBlocking { repository.insert(voucher("TokenOne")) }
+        runBlocking { BackupFlow(repository).export(appContext, "backup-passphrase") }
+        runBlocking {
+            repository.insert(voucher("TokenTwo"))
+            BackupFlow(repository).export(appContext, "backup-passphrase")
+        }
+
+        assertEquals(
+            "the canonical backup must exist alongside the user's spare",
+            listOf(BackupFileStore.FILE_NAME, "cdcvoucher (1).backup").sorted(),
+            downloadEntries(),
+        )
+        assertArrayEquals(
+            "user-renamed copies must survive byte-for-byte",
+            spareBytes,
+            readDownloadsFile("cdcvoucher (1).backup"),
+        )
     }
 
     @Test
@@ -610,7 +716,7 @@ class VoucherBackupFlowInstrumentedTest {
         }
 
         // Default mode is merge; committing imports both rows.
-        composeRule.onNodeWithText("Import").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.import_confirm)).performClick()
         composeRule.onNodeWithText("2 vouchers imported").assertIsDisplayed()
         runBlocking {
             assertEquals(2, repository.findAll().size)
@@ -635,7 +741,7 @@ class VoucherBackupFlowInstrumentedTest {
         settingsContent(repository, bytesProvider = { bytes })
         importWithPassword("backup-passphrase")
         waitUntilNodeAppears(summaryText(payload))
-        composeRule.onNodeWithText("Import").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.import_confirm)).performClick()
 
         runBlocking {
             withTimeout(10_000) {
@@ -673,7 +779,7 @@ class VoucherBackupFlowInstrumentedTest {
         importWithPassword("backup-passphrase")
         waitUntilNodeAppears(summaryText(payload))
         composeRule.onNodeWithText("Replace existing data").performClick()
-        composeRule.onNodeWithText("Import").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.import_confirm)).performClick()
 
         // Spec 05 §5.3 (refactor M20, shared focus-retry helper): Cancel is the
         // DEFAULT-FOCUSED button on the replace dialog, built through the same
@@ -716,13 +822,13 @@ class VoucherBackupFlowInstrumentedTest {
         }
 
         // Redo and confirm Replace: data matches the backup exactly.
-        composeRule.onNodeWithText("Import backup").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.import_backup)).performClick()
         waitUntilPasswordFocused()
         composeRule.onNodeWithTag("backup_password").performTextInput("backup-passphrase")
-        composeRule.onNodeWithText("Import").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.import_confirm)).performClick()
         waitUntilNodeAppears(summaryText(payload))
         composeRule.onNodeWithText("Replace existing data").performClick()
-        composeRule.onNodeWithText("Import").performClick()
+        composeRule.onNodeWithText(appContext.getString(R.string.import_confirm)).performClick()
         composeRule.onNodeWithText("Replace").performClick()
 
         composeRule.onNodeWithText("Backup imported").assertIsDisplayed()

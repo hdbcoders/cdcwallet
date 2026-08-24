@@ -29,6 +29,7 @@ import com.hdbcoders.cdcwallet.extraction.ExtractionCoordinator
 import com.hdbcoders.cdcwallet.ui.components.CopyUrlEffect
 import com.hdbcoders.cdcwallet.ui.components.RowMenuMiddleAction
 import com.hdbcoders.cdcwallet.ui.components.TicketCard
+import com.hdbcoders.cdcwallet.ui.components.VoucherRowActions
 import com.hdbcoders.cdcwallet.ui.components.VoucherRowMenuContent
 import com.hdbcoders.cdcwallet.ui.theme.rememberReduceMotion
 
@@ -90,6 +91,16 @@ fun ArchivedVoucherScreen(
                         onMenuExpandedChange = { open ->
                             vm.setMenu(if (open) voucher.id else null)
                         },
+                        // Row-level custom a11y/agent actions mirror this row's
+                        // kebab menu: Restore + Delete (no pin slot on the
+                        // archived screen, matching VoucherRowMenuContent).
+                        rowActions = VoucherRowActions(
+                            isPinned = false,
+                            middleLabelRes = R.string.restore,
+                            onPinClick = {},
+                            onMiddleClick = { vm.restore(voucher.id) },
+                            onDelete = { vm.requestDelete(voucher) },
+                        ),
                         modifier = if (reduceMotion) {
                             // System reduce-motion: disable item animations entirely.
                             Modifier.animateItem(
