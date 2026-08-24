@@ -52,6 +52,14 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Side-by-side installs (user request): the debug build gets its
+            // own package id so it can coexist with the signed release app on
+            // a personal device - separate sandbox, separate DB/prefs, dev
+            // seed can never touch real data. The launcher label gets the
+            // "Debug" suffix via app/src/debug/res/values*/strings.xml.
+            applicationIdSuffix = ".debug"
+        }
         release {
             // Only wire the signing config when the keystore exists; the
             // task-level check below refuses to actually build unsigned.

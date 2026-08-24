@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug-source-set override: launcher label for the side-by-side debug
+     build (applicationIdSuffix ".debug"). Release keeps "CDC Wallet". -->
+<resources>
+    <string name="app_name">CDC Wallet Debug</string>
+</resources>

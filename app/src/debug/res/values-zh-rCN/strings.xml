@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug label override (see values/strings.xml). -->
+<resources>
+    <string name="app_name">CDC Wallet Debug</string>
+</resources>
