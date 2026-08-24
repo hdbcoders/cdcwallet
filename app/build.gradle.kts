@@ -35,8 +35,10 @@ android {
         // v8 = 1.0.6-beta: TicketCard kebab overlay + expiry-row padding.
         // v9 = 1.0.7-beta: red "!" dot on the leading icon while an update is
         //     known (REQ-13) + About page description reword (4 locales).
-        versionCode = 9
-        versionName = "1.0.7-beta"
+        // v10 = 1.0.8-beta: senior-friendly wording (4 locales) + pin voucher
+        //     + debug/release side-by-side installs (.debug suffix).
+        versionCode = 10
+        versionName = "1.0.8-beta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
