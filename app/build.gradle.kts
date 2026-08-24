@@ -134,6 +134,13 @@ android {
 // plain `adb` (single-device only).
 tasks.matching { it.name == "connectedDebugAndroidTest" }.configureEach {
     val thisTask = this
+    // The debug APK carries the ".debug" applicationId suffix (639feb7) - the
+    // reinstall/reseed/relaunch adb commands below must target the suffixed
+    // package, never the base id (which no activity resolves to). The class
+    // is fully qualified: `am start -n pkg/.MainActivity` would resolve the
+    // class against the suffixed package and not find it.
+    val debugAppId = android.defaultConfig.applicationId + ".debug"
+    val debugActivity = "$debugAppId/com.hdbcoders.cdcwallet.MainActivity"
     fun adb(vararg args: String): Int {
         val serial = providers.gradleProperty("androidTestSerial").orNull
             ?: System.getenv("ANDROID_SERIAL")
@@ -161,7 +168,7 @@ tasks.matching { it.name == "connectedDebugAndroidTest" }.configureEach {
             // the broadcast to reach it. Launch, let it register, then
             // broadcast (which also re-enables auto-seed), and relaunch so
             // the foreground app reflects the seeded data.
-            adb("shell", "am", "start", "-n", "com.hdbcoders.cdcwallet/.MainActivity")
+            adb("shell", "am", "start", "-n", debugActivity)
             Thread.sleep(2500)
             val seedExit = adb(
                 "shell", "am", "broadcast", "-a",
@@ -169,8 +176,8 @@ tasks.matching { it.name == "connectedDebugAndroidTest" }.configureEach {
             )
             println("Reseeded dev data after connected tests (adb exit $seedExit)")
             Thread.sleep(2000)
-            adb("shell", "am", "force-stop", "com.hdbcoders.cdcwallet")
-            adb("shell", "am", "start", "-n", "com.hdbcoders.cdcwallet/.MainActivity")
+            adb("shell", "am", "force-stop", debugAppId)
+            adb("shell", "am", "start", "-n", debugActivity)
         }.onFailure { println("WARN: reinstall/reseed-after-tests failed: $it") }
     }
     // afterTask covers both success and failure (doLast would not run on

@@ -148,8 +148,9 @@ class AddVoucherFlowInstrumentedTest {
             putExtra(Intent.EXTRA_TEXT, FIXTURE_SHARE_URL)
             putExtra(MainActivity.EXTRA_DEV_FIXTURE_ADD, true)
             // Explicit component, as resolved when the user picks this app from
-            // the system share sheet.
-            setClassName("com.hdbcoders.cdcwallet", "com.hdbcoders.cdcwallet.MainActivity")
+            // the system share sheet. app.packageName carries the debug
+            // ".debug" applicationId suffix (639feb7) - never the base id.
+            setClassName(app.packageName, "com.hdbcoders.cdcwallet.MainActivity")
         }
         ActivityScenario.launch<MainActivity>(intent).use {
             // The arrived URL auto-submits; wait for the success message.
