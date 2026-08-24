@@ -37,6 +37,11 @@
     <string name="archived">已存档</string>
     <string name="archive">存档</string>
     <string name="restore">恢复</string>
+    <string name="pin">置顶</string>
+    <string name="unpin">取消置顶</string>
+    <string name="pinned_desc">已置顶</string>
+    <string name="pin_swap_title">置顶此购物券？</string>
+    <string name="pin_swap_body">%1$s 当前已置顶，将被取消置顶。</string>
     <string name="empty_list">还没有购物券链接。点 + 按钮添加。</string>
     <string name="no_usable_vouchers">没有可用的购物券</string>
     <string name="balance_eyebrow">余额</string>

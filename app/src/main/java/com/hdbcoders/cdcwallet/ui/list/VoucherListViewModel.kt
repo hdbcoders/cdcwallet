@@ -31,6 +31,14 @@ class VoucherListViewModel(
         private set
 
     /**
+     * Second-pin confirmation gate: set when the user picks Pin while another
+     * voucher is already pinned. The screen renders the dialog from this; the
+     * swap happens only on explicit confirm.
+     */
+    var pendingPin by mutableStateOf<VoucherGroup?>(null)
+        private set
+
+    /**
      * One-shot Copy-URL request (refactor M16): the ACTION lives in the
      * ViewModel; the screen executes clipboard + toast as an effect and
      * consumes the request.
@@ -46,6 +54,43 @@ class VoucherListViewModel(
 
     fun requestDelete(voucher: VoucherGroup) { pendingDelete = voucher }
     fun dismissDelete() { pendingDelete = null }
+
+    /**
+     * Pin request from a row's kebab. If another voucher is already pinned,
+     * stage the swap behind the confirmation gate; otherwise pin immediately.
+     */
+    fun requestPin(voucher: VoucherGroup) {
+        val alreadyPinned = vouchers.value.any { it.isPinned && it.id != voucher.id }
+        // Close the menu in BOTH paths: the dialog must not compete with a
+        // still-open dropdown for focus/matchers.
+        setMenu(null)
+        if (alreadyPinned) {
+            pendingPin = voucher
+        } else {
+            viewModelScope.launch { repository.setPinned(voucher.id, true) }
+        }
+    }
+
+    /** Confirmed swap: unpin the current pin, pin the newly chosen row. */
+    fun confirmPinSwap() {
+        val target = pendingPin ?: return
+        pendingPin = null
+        setMenu(null)
+        viewModelScope.launch {
+            repository.setPinned(target.id, true) // repository unpins the old pin atomically
+        }
+    }
+
+    fun dismissPinSwap() { pendingPin = null }
+
+    fun unpin(id: String) {
+        setMenu(null)
+        viewModelScope.launch { repository.setPinned(id, false) }
+    }
+
+    /** True while any OTHER row is pinned - used by the swap gate copy. */
+    fun currentPinName(excludingId: String): String? =
+        vouchers.value.firstOrNull { it.isPinned && it.id != excludingId }?.campaignName
 
     fun archive(voucher: VoucherGroup) {
         viewModelScope.launch {

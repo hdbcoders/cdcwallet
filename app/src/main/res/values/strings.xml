@@ -41,6 +41,11 @@
     <string name="archived">Archived</string>
     <string name="archive">Archive</string>
     <string name="restore">Restore</string>
+    <string name="pin">Pin</string>
+    <string name="unpin">Unpin</string>
+    <string name="pinned_desc">Pinned</string>
+    <string name="pin_swap_title">Pin this voucher?</string>
+    <string name="pin_swap_body">%1$s is pinned and will be unpinned.</string>
     <string name="empty_list">No voucher links yet. Add one with the + button.</string>
     <string name="no_usable_vouchers">There are no usable vouchers</string>
     <string name="balance_eyebrow">Balance</string>

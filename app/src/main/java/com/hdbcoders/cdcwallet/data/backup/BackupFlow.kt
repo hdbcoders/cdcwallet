@@ -33,7 +33,9 @@ class BackupFlow(
     suspend fun export(context: Context, password: String): Uri = withContext(Dispatchers.IO) {
         val payload = VoucherBackupPayload(
             createdAt = Instant.now(),
-            vouchers = repository.findAll(),
+            // Pin state is device-local (product decision): never written into
+            // the backup, so the payload shape stays identical to v1 backups.
+            vouchers = repository.findAll().map { it.copy(isPinned = false) },
         )
         BackupFileStore.writeToDownloads(context, service.encryptPayload(payload, password))
     }

@@ -30,6 +30,7 @@ class VoucherListLogicTest {
         expiry: LocalDate? = null,
         balances: List<CategoryBalance> = emptyList(),
         name: String = "Name $id",
+        pinned: Boolean = false,
     ) = VoucherGroup(
         id = id,
         token = id,
@@ -41,9 +42,21 @@ class VoucherListLogicTest {
         dateAdded = Instant.EPOCH,
         lastRefreshedAt = null,
         lastRefreshError = null,
+        isPinned = pinned,
     )
 
     // ---- sorting (04 §4.1) ----
+
+    @Test
+    fun pinnedVoucherSortsAbsolutelyFirstEvenAboveUnverified() {
+        val unverified = voucher("u", ValidityStatus.UNVERIFIED)
+        val pinnedExpired = voucher("p", ValidityStatus.EXPIRED, pinned = true)
+        val farExpiry = voucher("far", ValidityStatus.ACTIVE, today.plusDays(90))
+        assertEquals(
+            listOf("p", "u", "far"),
+            sortActive(listOf(farExpiry, unverified, pinnedExpired)).map { it.id },
+        )
+    }
 
     @Test
     fun unverifiedEntriesArePinnedAboveAllOthers() {

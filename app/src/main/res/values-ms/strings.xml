@@ -37,6 +37,11 @@
     <string name="archived">Diarkibkan</string>
     <string name="archive">Arkib</string>
     <string name="restore">Pulihkan</string>
+    <string name="pin">Pin</string>
+    <string name="unpin">Nyahpin</string>
+    <string name="pinned_desc">Disemat</string>
+    <string name="pin_swap_title">Semat baucar ini?</string>
+    <string name="pin_swap_body">%1$s disemat dan akan dinyahsemat.</string>
     <string name="empty_list">Belum ada pautan baucar. Tambah dengan butang +.</string>
     <string name="no_usable_vouchers">Tiada baucar yang boleh digunakan</string>
     <string name="balance_eyebrow">Baki</string>

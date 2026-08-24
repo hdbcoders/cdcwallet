@@ -8,7 +8,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,6 +33,9 @@ import com.hdbcoders.cdcwallet.ui.theme.LocalRedesignColors
  */
 enum class RowMenuMiddleAction { ARCHIVE, RESTORE }
 
+/** Second-item pin action (main list only); archived screen passes null. */
+enum class RowMenuPinAction { PIN, UNPIN }
+
 /**
  * Shared kebab-menu content for voucher rows (refactor L2): Copy URL, the
  * caller's middle action, a divider, and Delete. One implementation so labels,
@@ -42,6 +47,13 @@ fun ColumnScope.VoucherRowMenuContent(
     middleAction: RowMenuMiddleAction,
     onMiddleClick: () -> Unit,
     onDelete: () -> Unit,
+    /**
+     * Pin/Unpin as the SECOND menu item (main list only - the archived screen
+     * omits it). Null hides the slot entirely so the shared component cannot
+     * drift between screens.
+     */
+    pinAction: RowMenuPinAction? = null,
+    onPinClick: () -> Unit = {},
 ) {
     val c = LocalRedesignColors.current
     val middleLabel = stringResource(
@@ -61,6 +73,25 @@ fun ColumnScope.VoucherRowMenuContent(
         },
         onClick = onCopyUrl,
     )
+    if (pinAction != null) {
+        val pinLabel = stringResource(
+            when (pinAction) {
+                RowMenuPinAction.PIN -> R.string.pin
+                RowMenuPinAction.UNPIN -> R.string.unpin
+            },
+        )
+        val pinIcon = when (pinAction) {
+            RowMenuPinAction.PIN -> Icons.Filled.PushPin
+            RowMenuPinAction.UNPIN -> Icons.Outlined.PushPin
+        }
+        DropdownMenuItem(
+            text = { Text(pinLabel) },
+            leadingIcon = {
+                Icon(pinIcon, contentDescription = null, tint = c.textSecondary)
+            },
+            onClick = onPinClick,
+        )
+    }
     DropdownMenuItem(
         text = { Text(middleLabel) },
         leadingIcon = {

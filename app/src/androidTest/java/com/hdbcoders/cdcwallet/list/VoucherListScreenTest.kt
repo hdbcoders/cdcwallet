@@ -480,4 +480,159 @@ class VoucherListScreenTest {
             )
         }
     }
+
+    // ---- pin / unpin (main list only) ----
+
+    private fun listContent(repository: RoomVoucherRepository) {
+        composeRule.setContent {
+            AppTheme(mode = ThemeMode.LIGHT) {
+                VoucherListScreen(
+                    repository = repository,
+                    extractionCoordinator = ExtractionCoordinator(repository, ExtractionEngine()),
+                    onAddClick = {},
+                    onOpenVoucher = {},
+                    onArchivedClick = {}, onSettingsClick = {}, onAboutClick = {},
+                    languageStore = LanguageStore(appContext),
+                    onLanguageSelected = {},
+                )
+            }
+        }
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun kebabShowsPinAsSecondItemAndUnpinForPinnedRow() {
+        val repository = RoomVoucherRepository(database)
+        val today = LocalDate.now()
+        runBlocking {
+            repository.insert(voucher("p1", "Pin One", ValidityStatus.ACTIVE, today.plusDays(10)))
+            repository.insert(voucher("p2", "Pin Two", ValidityStatus.ACTIVE, today.plusDays(20)))
+        }
+        listContent(repository)
+
+        composeRule.onNodeWithContentDescription("More options for Pin Two").performClick()
+        // Second item: sits between Copy URL and Archive.
+        composeRule.onNodeWithText("Copy URL").assertIsDisplayed()
+        composeRule.onNodeWithText("Pin").assertIsDisplayed()
+        composeRule.onNodeWithText("Archive").assertIsDisplayed()
+
+        composeRule.onNodeWithText("Pin").performClick()
+        composeRule.waitForIdle()
+
+        // Pinned row now offers Unpin in the same slot.
+        runBlocking { assertTrue(database.voucherDao().findAll().single { it.id == "p2" }.isPinned) }
+        composeRule.onNodeWithContentDescription("More options for Pin Two").performClick()
+        composeRule.onNodeWithText("Unpin").assertIsDisplayed()
+    }
+
+    @Test
+    fun pinnedRowRendersAboveEverythingElse() {
+        val repository = RoomVoucherRepository(database)
+        val today = LocalDate.now()
+        runBlocking {
+            repository.insert(voucher("u1", "u.html", ValidityStatus.UNVERIFIED, null))
+            repository.insert(voucher("top", "Pin Target", ValidityStatus.ACTIVE, today.plusDays(30)))
+        }
+        listContent(repository)
+
+        composeRule.onNodeWithContentDescription("More options for Pin Target").performClick()
+        composeRule.onNodeWithText("Pin").performClick()
+        composeRule.waitForIdle()
+
+        assertTopToBottomOrder("Pin Target", "u.html")
+    }
+
+    @Test
+    fun pinSecondVoucherRaisesGateAndConfirmSwaps() {
+        val repository = RoomVoucherRepository(database)
+        val today = LocalDate.now()
+        runBlocking {
+            repository.insert(voucher("one", "Pin One", ValidityStatus.ACTIVE, today.plusDays(10)))
+            repository.insert(voucher("two", "Pin Two", ValidityStatus.ACTIVE, today.plusDays(20)))
+        }
+        listContent(repository)
+
+        // Pin the first voucher.
+        composeRule.onNodeWithContentDescription("More options for Pin One").performClick()
+        composeRule.onNodeWithText("Pin").performClick()
+        composeRule.waitForIdle()
+
+        // Pin a second: gate appears naming the current pin; Cancel keeps it.
+        composeRule.onNodeWithContentDescription("More options for Pin Two").performClick()
+        composeRule.onNodeWithText("Pin").performClick()
+        composeRule.onNodeWithText("Pin this voucher?").assertIsDisplayed()
+        composeRule.onNodeWithText("Pin One is pinned and will be unpinned.").assertIsDisplayed()
+        composeRule.onNodeWithText("Cancel").performClick()
+        composeRule.waitForIdle()
+
+        runBlocking {
+            val rows = database.voucherDao().findAll().associateBy { it.id }
+            assertTrue(rows.getValue("one").isPinned)
+            assertTrue(!rows.getValue("two").isPinned)
+        }
+
+        // Re-open, this time confirm: the swap unpins one and pins two.
+        composeRule.onNodeWithContentDescription("More options for Pin Two").performClick()
+        composeRule.onNodeWithText("Pin").performClick()
+        composeRule.onNodeWithText("Pin this voucher?").assertIsDisplayed()
+        // The menu closed when the gate staged, so exactly one "Pin" node
+        // (the dialog's confirm) remains.
+        composeRule.onNodeWithText("Pin").performClick()
+        awaitDbTrue {
+            val rows = database.voucherDao().findAll().associateBy { it.id }
+            rows.getValue("two").isPinned && !rows.getValue("one").isPinned
+        }
+        awaitDbTrue {
+            val rows = database.voucherDao().findAll().associateBy { it.id }
+            rows.getValue("two").isPinned
+        }
+        awaitDbTrue {
+            val rows = database.voucherDao().findAll().associateBy { it.id }
+            !rows.getValue("one").isPinned
+        }
+    }
+
+    /** Bounded DB poll: waits until [condition] holds, failing after ~5s.
+     * Runs on the instrumentation thread (not the app main thread), so the
+     * short runBlocking per poll cannot deadlock recomposition. */
+    private fun awaitDbTrue(condition: suspend () -> Boolean) {
+        val deadline = android.os.SystemClock.uptimeMillis() + 5_000
+        while (android.os.SystemClock.uptimeMillis() < deadline) {
+            if (runBlocking { condition() }) return
+            android.os.SystemClock.sleep(50)
+        }
+        assertTrue("condition not met within 5s", runBlocking { condition() })
+    }
+
+    @Test
+    fun unpinReturnsListToNormalSortOrder() {
+        val repository = RoomVoucherRepository(database)
+        val today = LocalDate.now()
+        runBlocking {
+            repository.insert(
+                voucher("soon", "Link Soon", ValidityStatus.ACTIVE, today.plusDays(5)),
+            )
+            repository.insert(
+                voucher("late", "Link Late", ValidityStatus.ACTIVE, today.plusDays(60)),
+            )
+        }
+        listContent(repository)
+
+        // Pin the later-expiry row: it jumps above Link Soon.
+        composeRule.onNodeWithContentDescription("More options for Link Late").performClick()
+        composeRule.onNodeWithText("Pin").performClick()
+        composeRule.waitForIdle()
+        assertTopToBottomOrder("Link Late", "Link Soon")
+
+        // Unpin: normal soonest-expiry sort resumes. Room invalidation +
+        // recomposition lag behind the click, so poll the DB deterministically
+        // before asserting visual order.
+        composeRule.onNodeWithContentDescription("More options for Link Late").performClick()
+        composeRule.onNodeWithText("Unpin").performClick()
+        awaitDbTrue {
+            !database.voucherDao().findAll().single { it.id == "late" }.isPinned
+        }
+        composeRule.waitForIdle()
+        assertTopToBottomOrder("Link Soon", "Link Late")
+    }
 }

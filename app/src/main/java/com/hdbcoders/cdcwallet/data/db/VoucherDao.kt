@@ -47,6 +47,13 @@ interface VoucherDao {
     @Query("UPDATE voucher_groups SET isArchived = :isArchived WHERE id = :id")
     suspend fun setArchived(id: String, isArchived: Boolean): Int
 
+    /** Clears every pin; used inside [VoucherRepository.setPinned]'s transaction. */
+    @Query("UPDATE voucher_groups SET isPinned = 0 WHERE isPinned = 1")
+    suspend fun clearAllPins(): Int
+
+    @Query("UPDATE voucher_groups SET isPinned = :pinned WHERE id = :id")
+    suspend fun setPinned(id: String, pinned: Boolean): Int
+
     @Query("DELETE FROM voucher_groups WHERE id = :id")
     suspend fun deleteById(id: String): Int
 

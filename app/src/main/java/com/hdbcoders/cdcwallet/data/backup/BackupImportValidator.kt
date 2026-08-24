@@ -34,6 +34,7 @@ class BackupImportValidator(
     fun validate(payload: VoucherBackupPayload): List<VoucherGroup> {
         val ids = HashSet<String>()
         val tokens = HashSet<String>()
+        val sanitized = ArrayList<VoucherGroup>(payload.vouchers.size)
         for (row in payload.vouchers) {
             // ID: the detail screen interpolates it into the navigation route
             // ("detail/{id}"), so it must be a short, route-safe token.
@@ -82,8 +83,9 @@ class BackupImportValidator(
             // JSON decoding (kotlinx.serialization rejects unknown enum values
             // and unparseable dates before this point), so a payload that
             // reaches here already carries only real statuses and dates.
+            sanitized += row.copy(isPinned = false)
         }
-        return payload.vouchers
+        return sanitized
     }
 
     private companion object {

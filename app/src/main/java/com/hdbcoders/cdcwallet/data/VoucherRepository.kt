@@ -46,6 +46,15 @@ interface VoucherRepository {
     suspend fun archive(id: String)
     suspend fun restore(id: String)
     suspend fun delete(id: String)
+
+    /**
+     * Pin/unpin a voucher (device-local convenience). Single-source enforcement
+     * of the one-pinned-row invariant: pinning runs unpin-all + pin in ONE
+     * database transaction, so no interleaving call can ever leave two rows
+     * pinned. Unpinning touches only the target row. Safe no-op if the row is
+     * gone.
+     */
+    suspend fun setPinned(id: String, pinned: Boolean)
     suspend fun findByToken(token: String): VoucherGroup?
     suspend fun findAll(): List<VoucherGroup>
     suspend fun replaceAll(vouchers: List<VoucherGroup>)
@@ -97,15 +106,32 @@ class RoomVoucherRepository(
     }
 
     override suspend fun archive(id: String) {
-        dao.setArchived(id, true)
+        // Auto-unpin (product decision): archiving the pinned row clears the
+        // pin in the same transaction, so a pinned row can never be archived.
+        database.withTransaction {
+            dao.clearAllPins()
+            dao.setArchived(id, true)
+        }
     }
 
     override suspend fun restore(id: String) {
+        // Restore never re-pins: the row comes back at its normal sort position.
         dao.setArchived(id, false)
     }
 
     override suspend fun delete(id: String) {
         dao.deleteById(id)
+    }
+
+    override suspend fun setPinned(id: String, pinned: Boolean) {
+        database.withTransaction {
+            if (pinned) {
+                // Unpin everything first - guarantees at most one pinned row
+                // even if a previous state was somehow inconsistent.
+                dao.clearAllPins()
+            }
+            dao.setPinned(id, pinned)
+        }
     }
 
     override suspend fun findByToken(token: String): VoucherGroup? =

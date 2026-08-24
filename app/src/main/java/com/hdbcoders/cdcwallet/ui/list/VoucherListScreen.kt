@@ -36,6 +36,9 @@ import com.hdbcoders.cdcwallet.ui.components.BalanceHero
 import com.hdbcoders.cdcwallet.ui.components.CopyUrlEffect
 import com.hdbcoders.cdcwallet.ui.components.DashedAddRow
 import com.hdbcoders.cdcwallet.ui.components.RowMenuMiddleAction
+import com.hdbcoders.cdcwallet.ui.components.RowMenuPinAction
+import com.hdbcoders.cdcwallet.ui.theme.LocalAppLanguage
+import com.hdbcoders.cdcwallet.ui.theme.localizeCampaignName
 import com.hdbcoders.cdcwallet.ui.components.TicketCard
 import com.hdbcoders.cdcwallet.ui.components.VoucherRowMenuContent
 import com.hdbcoders.cdcwallet.ui.theme.AppLanguage
@@ -153,6 +156,21 @@ fun VoucherListScreen(
                                     vm.setMenu(null)
                                     vm.requestCopy(voucher.url)
                                 },
+                                pinAction = if (voucher.isPinned) {
+                                    RowMenuPinAction.UNPIN
+                                } else {
+                                    RowMenuPinAction.PIN
+                                },
+                                onPinClick = {
+                                    // Branch on state: Unpin must NOT route
+                                    // through requestPin, which would simply
+                                    // re-pin this same row.
+                                    if (voucher.isPinned) {
+                                        vm.unpin(voucher.id)
+                                    } else {
+                                        vm.requestPin(voucher)
+                                    }
+                                },
                                 middleAction = RowMenuMiddleAction.ARCHIVE,
                                 onMiddleClick = {
                                     vm.setMenu(null)
@@ -192,6 +210,20 @@ fun VoucherListScreen(
                 vm.delete(voucher.id)
             },
             onDismiss = { vm.dismissDelete() },
+        )
+    }
+
+    // Second-pin confirmation gate: names the CURRENT pin, warns it will be
+    // unpinned; confirming performs the atomic swap.
+    vm.pendingPin?.let { target ->
+        val currentPinName = vm.vouchers.value
+            .firstOrNull { it.isPinned && it.id != target.id }
+            ?.let { localizeCampaignName(it.campaignName, LocalAppLanguage.current) }
+            ?: ""
+        PinSwapDialog(
+            pinnedName = currentPinName,
+            onConfirm = { vm.confirmPinSwap() },
+            onDismiss = { vm.dismissPinSwap() },
         )
     }
 }

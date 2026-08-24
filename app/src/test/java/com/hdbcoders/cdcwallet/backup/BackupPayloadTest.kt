@@ -103,6 +103,10 @@ class BackupPayloadTest {
             "lastRefreshedAt",
             "lastRefreshError",
             "isArchived",
+            // Device-local convenience flag: present on the entity (Room needs
+            // the column) but always false inside a backup payload - the flow
+            // strips it on export and import (product decision).
+            "isPinned",
         )
         voucherFields.forEach { keys ->
             assertEquals(expected, keys)

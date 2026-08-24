@@ -79,8 +79,14 @@ class FakeVoucherRepository : VoucherRepository {
     }
 
     override suspend fun archive(id: String) {
+        // Contract-faithful with RoomVoucherRepository: archiving the pinned
+        // row auto-unpins it (product decision) in the same update.
         _vouchers.value = _vouchers.value.map { row ->
-            if (row.id == id) row.copy(isArchived = true) else row
+            when {
+                row.id == id -> row.copy(isArchived = true, isPinned = false)
+                row.isPinned -> row.copy(isPinned = false)
+                else -> row
+            }
         }
     }
 
@@ -92,6 +98,24 @@ class FakeVoucherRepository : VoucherRepository {
 
     override suspend fun delete(id: String) {
         _vouchers.value = _vouchers.value.filterNot { it.id == id }
+    }
+
+    override suspend fun setPinned(id: String, pinned: Boolean) {
+        // Mirrors the real repository's transactional single-pin invariant:
+        // unpin everything, then pin the target.
+        _vouchers.value = _vouchers.value.map { row ->
+            when {
+                row.id == id && pinned -> row.copy(isPinned = true)
+                pinned -> row.copy(isPinned = false)
+                else -> row
+            }
+        }.let { list ->
+            if (!pinned && list.any { it.id == id }) {
+                list.map { if (it.id == id) it.copy(isPinned = false) else it }
+            } else {
+                list
+            }
+        }
     }
 
     override suspend fun findByToken(token: String): VoucherGroup? {

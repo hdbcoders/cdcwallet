@@ -38,6 +38,13 @@ data class VoucherGroup(
     val lastRefreshedAt: Instant?,
     val lastRefreshError: String?,
     val isArchived: Boolean = false,
+    /**
+     * Device-local convenience flag (exactly ONE row may be true; enforced
+     * centrally by [VoucherRepository.setPinned]). Never exported: the backup
+     * flow strips it on export and forces it false on import, so pinning does
+     * not travel between devices.
+     */
+    val isPinned: Boolean = false,
 )
 
 @Serializable

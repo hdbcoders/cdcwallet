@@ -66,6 +66,101 @@ class VoucherListViewModelTest {
     }
 
     @Test
+    fun pinWithoutExistingPinPinsImmediately() = runTest(dispatcher) {
+        val repo = FakeVoucherRepository()
+        repo.bulkInsert(listOf(voucher("a"), voucher("b")))
+        val vm = VoucherListViewModel(repo, coordinator(repo))
+
+        vm.requestPin(voucher("a"))
+        runCurrent()
+
+        assertNull(vm.pendingPin)
+        assertTrue(repo.snapshot().single { it.id == "a" }.isPinned)
+    }
+
+    @Test
+    fun pinSecondVoucherStagesSwapGateAndConfirmSwapsAtomically() = runTest(dispatcher) {
+        val repo = FakeVoucherRepository()
+        repo.bulkInsert(listOf(voucher("a"), voucher("b")))
+        val vm = VoucherListViewModel(repo, coordinator(repo))
+        // requestPin reads vm.vouchers.value, which only fills while subscribed.
+        backgroundScope.launch { vm.vouchers.collect {} }
+        runCurrent()
+        vm.requestPin(voucher("a"))
+        runCurrent()
+
+        vm.requestPin(voucher("b"))
+        assertEquals("b", vm.pendingPin?.id)
+
+        vm.confirmPinSwap()
+        runCurrent()
+
+        assertNull(vm.pendingPin)
+        val rows = repo.snapshot().associateBy { it.id }
+        assertTrue(rows.getValue("b").isPinned)
+        assertTrue(!rows.getValue("a").isPinned)
+    }
+
+    @Test
+    fun dismissPinSwapLeavesStateUntouched() = runTest(dispatcher) {
+        val repo = FakeVoucherRepository()
+        repo.bulkInsert(listOf(voucher("a"), voucher("b")))
+        val vm = VoucherListViewModel(repo, coordinator(repo))
+        vm.requestPin(voucher("a"))
+        runCurrent()
+
+        vm.requestPin(voucher("b"))
+        vm.dismissPinSwap()
+
+        assertNull(vm.pendingPin)
+        val rows = repo.snapshot().associateBy { it.id }
+        assertTrue(rows.getValue("a").isPinned)
+        assertTrue(!rows.getValue("b").isPinned)
+    }
+
+    @Test
+    fun unpinIsImmediateWithNoGate() = runTest(dispatcher) {
+        val repo = FakeVoucherRepository()
+        repo.bulkInsert(listOf(voucher("a")))
+        val vm = VoucherListViewModel(repo, coordinator(repo))
+        vm.requestPin(voucher("a"))
+        runCurrent()
+
+        vm.unpin("a")
+        runCurrent()
+
+        assertTrue(!repo.snapshot().single { it.id == "a" }.isPinned)
+    }
+
+    @Test
+    fun archivingThePinnedRowAutoUnpinsIt() = runTest(dispatcher) {
+        val repo = FakeVoucherRepository()
+        repo.bulkInsert(listOf(voucher("a"), voucher("b")))
+        val vm = VoucherListViewModel(repo, coordinator(repo))
+        vm.requestPin(voucher("a"))
+        runCurrent()
+
+        vm.archive(voucher("a"))
+        runCurrent()
+
+        val rows = repo.snapshot().associateBy { it.id }
+        assertTrue(rows.getValue("a").isArchived)
+        assertTrue(!rows.getValue("a").isPinned)
+    }
+
+    @Test
+    fun repositorySetPinnedNeverLeavesTwoRowsPinned() = runTest(dispatcher) {
+        val repo = FakeVoucherRepository()
+        repo.bulkInsert(listOf(voucher("a"), voucher("b"), voucher("c")))
+
+        repo.setPinned("a", true)
+        repo.setPinned("c", true)
+
+        assertEquals(1, repo.snapshot().count { it.isPinned })
+        assertEquals("c", repo.snapshot().single { it.isPinned }.id)
+    }
+
+    @Test
     fun deleteAndRestoreCallThrough() = runTest(dispatcher) {
         val repo = FakeVoucherRepository()
         repo.bulkInsert(listOf(voucher("a"), voucher("b")))

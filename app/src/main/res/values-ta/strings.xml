@@ -37,6 +37,11 @@
     <string name="archived">காப்பகம்</string>
     <string name="archive">காப்பகப்படுத்து</string>
     <string name="restore">மீட்டெடு</string>
+    <string name="pin">பொருத்து</string>
+    <string name="unpin">அகற்று</string>
+    <string name="pinned_desc">பொருத்தப்பட்டது</string>
+    <string name="pin_swap_title">இந்த வவுச்சரைப் பொருத்தவா?</string>
+    <string name="pin_swap_body">%1$s பொருத்தப்பட்டுள்ளது; அகற்றப்படும்.</string>
     <string name="empty_list">இன்னும் வவுச்சர் இணைப்புகள் இல்லை. + பொத்தானைப் பயன்படுத்திச் சேர்க்கவும்.</string>
     <string name="no_usable_vouchers">பயன்படுத்தக்கூடிய வவுச்சர்கள் எதுவும் இல்லை</string>
     <string name="balance_eyebrow">இருப்பு</string>

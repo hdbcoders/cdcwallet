@@ -89,6 +89,7 @@ class DatabaseBootstrap internal constructor(
                 val passphrase = passphraseStore.obtainPassphrase()
                 val database = Room.databaseBuilder(appContext, AppDatabase::class.java, DB_NAME)
                     .openHelperFactory(SupportOpenHelperFactory(passphrase.toByteArray(Charsets.UTF_8)))
+                    .addMigrations(AppDatabase.MIGRATION_1_2)
                     .build()
                 // Force the open INSIDE the bootstrap: Room builds lazily, so a
                 // corrupt/unopenable file would otherwise surface a "Ready"

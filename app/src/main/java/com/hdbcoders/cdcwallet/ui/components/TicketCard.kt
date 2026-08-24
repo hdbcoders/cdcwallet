@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.Modifier
@@ -63,6 +65,8 @@ import com.hdbcoders.cdcwallet.ui.theme.LocalRedesignColors
 import com.hdbcoders.cdcwallet.ui.theme.AppScaledContent
 import com.hdbcoders.cdcwallet.ui.theme.categoryVisuals
 import com.hdbcoders.cdcwallet.ui.theme.LocalAppLanguage
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.foundation.layout.size
 import com.hdbcoders.cdcwallet.ui.theme.localizeCampaignName
 import com.hdbcoders.cdcwallet.ui.theme.localizeCategory
 import java.time.format.DateTimeFormatter
@@ -154,7 +158,6 @@ fun TicketCard(
                         .fillMaxWidth()
                         .padding(start = 18.dp, end = 70.dp, top = titleBandPad),
                 )
-
                 // Expiry row: green ✓ + days-left for fine; warning for soon/urgent;
                 // red warning + status label for expired / fully used. A failed
                 // refresh (refactor M5) swaps the line for the neutral stale
@@ -197,11 +200,35 @@ fun TicketCard(
             // is centered, so the 18dp icon's center is at 24dp - exactly the
             // first name line's pinned center (see titleBandPad above). The two
             // stay aligned as the font size grows.
-            Box(
+            //
+            // Pin marker (B1, device-local): a non-interactive gold pushpin to
+            // the LEFT of the kebab in a Row, so the kebab's right edge stays
+            // flush with the card corner and the pin grows LEFTWARD (never
+            // into the kebab's 48dp target). Sized sp->dp with an 18dp cap so
+            // even max text scale cannot push the stack past the name's 70dp
+            // wrap inset by more than ~2dp. contentDescription = null keeps
+            // TalkBack merged on the card's single announcement.
+            Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(end = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (voucher.isPinned) {
+                    val pinSize = with(density) { 16.sp.toDp() }.coerceAtMost(20.dp)
+                    Icon(
+                        Icons.Filled.PushPin,
+                        contentDescription = null,
+                        tint = c.gold,
+                        modifier = Modifier
+                            .padding(end = 6.dp)
+                            // Visual-only nudge toward the kebab glyph; capped
+                            // so even at max font scale the pin's right edge
+                            // stays clear of the kebab button's left edge.
+                            .offset(x = 10.dp)
+                            .size(pinSize),
+                    )
+                }
                 IconButton(
                     onClick = { onMenuExpandedChange(true) },
                     modifier = Modifier.size(48.dp),
