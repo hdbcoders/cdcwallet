@@ -1,5 +1,6 @@
 package com.hdbcoders.cdcwallet.ui.theme
 
+import androidx.compose.ui.graphics.Color
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -37,6 +38,31 @@ class ThemeModeStoreTest {
     fun legacySystemValueResolvesFromDevice() {
         assertEquals(ThemeMode.DARK, resolveInitialMode(isSystemDark = true, stored = "system"))
         assertEquals(ThemeMode.LIGHT, resolveInitialMode(isSystemDark = false, stored = "system"))
+    }
+
+    @Test
+    fun paletteParsingDefaultsToCreamOnNullOrUnknown() {
+        assertEquals(LightPalette.CREAM, parseStoredPalette(null))
+        assertEquals(LightPalette.CREAM, parseStoredPalette("garbage"))
+        assertEquals(LightPalette.CREAM, parseStoredPalette("PARCHMENT"))
+    }
+
+    @Test
+    fun paletteParsingAcceptsEveryEntryCaseInsensitively() {
+        for (palette in LightPalette.entries) {
+            assertEquals(palette, parseStoredPalette(palette.name))
+            assertEquals(palette, parseStoredPalette(palette.name.lowercase()))
+        }
+    }
+
+    @Test
+    fun creamRegistryEntryMatchesShippedTokens() {
+        // Guard against accidental edits to the shipped default palette.
+        val cream = LightThemes.getValue(LightPalette.CREAM).colors
+        assertEquals(Color(0xFFF5F1E7), cream.background)
+        assertEquals(Color(0xFFB07F27), cream.gold)
+        assertEquals(Color(0xFF8F6716), cream.accentText)
+        assertEquals(Color(0xFF211C13), cream.textPrimary)
     }
 
     @Test

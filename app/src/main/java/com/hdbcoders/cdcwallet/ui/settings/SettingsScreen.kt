@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -58,6 +59,8 @@ import com.hdbcoders.cdcwallet.data.backup.BackupFlow
 import com.hdbcoders.cdcwallet.data.model.VoucherBackupPayload
 import com.hdbcoders.cdcwallet.ui.components.AppDialogSurface
 import com.hdbcoders.cdcwallet.ui.components.DialogButtonRow
+import com.hdbcoders.cdcwallet.ui.theme.LightPalette
+import com.hdbcoders.cdcwallet.ui.theme.ThemeModeStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import java.time.ZoneId
@@ -76,6 +79,7 @@ import java.time.format.DateTimeFormatter
 fun SettingsScreen(
     backupFlow: BackupFlow,
     repository: VoucherRepository,
+    themeModeStore: ThemeModeStore,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     // TEST-ONLY SEAM (refactor M17): injects bytes instead of the system file
@@ -151,6 +155,10 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            AppearanceSection(
+                selected = themeModeStore.palette,
+                onSelect = { themeModeStore.setLightPalette(it) },
+            )
             Text(
                 text = stringResource(R.string.backup),
                 style = MaterialTheme.typography.titleMedium,
@@ -259,6 +267,48 @@ private fun BusyProgressDialog(message: String) {
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
+}
+
+@Composable
+/**
+ * Appearance section (theme picker, spec 07 §7.2): one radio row per
+ * [LightPalette] entry. Selecting a row calls [onSelect], which persists and
+ * applies the palette instantly via ThemeModeStore snapshot state - no
+ * restart needed. Dark/light mode itself is NOT controlled here; the drawer
+ * toggle stays the only dark-mode switch.
+ */
+private fun AppearanceSection(
+    selected: LightPalette,
+    onSelect: (LightPalette) -> Unit,
+) {
+    Text(
+        text = stringResource(R.string.settings_appearance),
+        style = MaterialTheme.typography.titleMedium,
+    )
+    LightPalette.entries.forEach { palette ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .selectable(
+                    selected = palette == selected,
+                    onClick = { if (palette != selected) onSelect(palette) },
+                )
+                // TalkBack announces "selected"/"not selected" per row.
+                .semantics { this.selected = palette == selected }
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(
+                selected = palette == selected,
+                onClick = null,
+            )
+            Text(
+                text = stringResource(palette.labelRes),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(start = 8.dp),
             )
         }
     }

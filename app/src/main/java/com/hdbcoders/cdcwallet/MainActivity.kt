@@ -195,7 +195,8 @@ class MainActivity : ComponentActivity() {
             // screenshots last resort).
             AppTheme(
                 container.themeModeStore.mode,
-                container.fontScaleStore.scale,
+                palette = container.themeModeStore.palette,
+                fontScale = container.fontScaleStore.scale,
                 dyslexiaFont = container.dyslexiaFontStore.let { if (it.enabled) it.font else null },
             ) {
                 CompositionLocalProvider(
@@ -428,6 +429,7 @@ private fun AppNavHost(
             SettingsScreen(
                 backupFlow = container.backupFlow,
                 repository = container.repository,
+                themeModeStore = container.themeModeStore,
                 onBack = { navController.popBackStack() },
             )
         }

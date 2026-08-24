@@ -124,6 +124,10 @@
     <string name="dyslexia_font_opendyslexic">OpenDyslexic</string>
 
     <string name="backup">Sandaran</string>
+    <string name="settings_appearance">Penampilan</string>
+    <string name="palette_cream">Krim (lalai)</string>
+    <string name="palette_jade">Jade</string>
+    <string name="palette_ocean">Lautan</string>
     <string name="export_backup">Eksport sandaran</string>
     <string name="exporting_backup">Menyulit dan Mengeksport sandaran</string>
     <string name="export_desc">Menyimpan salinan disulitkan semua pautan baucar anda ke folder Muat Turun. Tetapkan kata laluan dan ingatlah, anda tidak boleh mengimport sandaran ini tanpa kata laluan tersebut.</string>

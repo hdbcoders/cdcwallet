@@ -124,6 +124,10 @@
     <string name="dyslexia_font_opendyslexic">OpenDyslexic</string>
 
     <string name="backup">காப்புப்பிரதி</string>
+    <string name="settings_appearance">தோற்றம்</string>
+    <string name="palette_cream">கிரீம் (இயல்புநிலை)</string>
+    <string name="palette_jade">ஜேட்</string>
+    <string name="palette_ocean">கடல்</string>
     <string name="export_backup">காப்புப்பிரதியை ஏற்றுமதி செய்</string>
     <string name="exporting_backup">காப்புப்பிரதியை குறியாக்கி ஏற்றுமதி செய்கிறது</string>
     <string name="export_desc">உங்கள் அனைத்து வவுச்சர் இணைப்புகளின் மறைகுறியாக்கப்பட்ட நகலை பதிவிறக்கங்கள் கோப்புறையில் சேமிக்கிறது. கடவுச்சொல்லை அமைத்து நினைவில் வைத்திருங்கள், கடவுச்சொல் இல்லாமல் இந்த காப்புப்பிரதியை இறக்குமதி செய்ய முடியாது.</string>

@@ -80,6 +80,13 @@ class ThemeModeStore(context: Context) {
     var mode by mutableStateOf(ThemeMode.LIGHT)
         private set
 
+    /**
+     * Light-mode palette choice (theme picker). Only meaningful when [mode]
+     * is LIGHT; dark mode keeps its single navy+gold look for every palette.
+     */
+    var palette by mutableStateOf(defaultLightPalette())
+        private set
+
     init {
         // First launch (or a legacy "Follow system" install, or any unknown
         // stored value - refactor M22): snapshot the system dark/light default
@@ -90,6 +97,7 @@ class ThemeModeStore(context: Context) {
         if (storedModeNeedsRewrite(stored)) {
             prefs.edit().putString(KEY_MODE, mode.name.lowercase()).apply()
         }
+        palette = parseStoredPalette(prefs.getString(KEY_PALETTE, null))
     }
 
     /** Flips LIGHT ↔ DARK. */
@@ -100,6 +108,12 @@ class ThemeModeStore(context: Context) {
         prefs.edit().putString(KEY_MODE, newMode.name.lowercase()).apply()
     }
 
+    /** Persists and applies a light palette (Settings Appearance picker). */
+    fun setLightPalette(newPalette: LightPalette) {
+        palette = newPalette
+        prefs.edit().putString(KEY_PALETTE, newPalette.name.lowercase()).apply()
+    }
+
     private fun isSystemDark(context: Context): Boolean {
         val uiMode = context.resources.configuration.uiMode
         return (uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -108,6 +122,7 @@ class ThemeModeStore(context: Context) {
     private companion object {
         const val PREFS_NAME = "voucher_theme_prefs"
         const val KEY_MODE = "theme_mode"
+        const val KEY_PALETTE = "light_palette"
     }
 }
 
@@ -115,12 +130,14 @@ class ThemeModeStore(context: Context) {
 @Composable
 fun AppTheme(
     mode: ThemeMode,
+    palette: LightPalette = defaultLightPalette(),
     fontScale: AppFontScale = AppFontScale.DEFAULT,
     dyslexiaFont: AppDyslexiaFont? = null,
     content: @Composable () -> Unit,
 ) {
     val dark = mode == ThemeMode.DARK
-    val redesign = if (dark) DarkRedesignColors else LightRedesignColors
+    val lightTheme = LightThemes.getValue(palette)
+    val redesign = if (dark) DarkRedesignColors else lightTheme.colors
     // App-level text size: every `sp` in the app (typography roles and the
     // hardcoded sizes in components) is scaled by the chosen multiplier on
     // top of the system font scale, capped at MAX_TOTAL_FONT_SCALE so
@@ -151,7 +168,7 @@ fun AppTheme(
         LocalContentColor provides redesign.textPrimary,
     ) {
         MaterialTheme(
-            colorScheme = if (dark) DarkScheme else LightScheme,
+            colorScheme = if (dark) DarkScheme else lightTheme.m3,
             typography = typographyFor(dyslexiaFont),
         ) {
             // Root semantics node carrying testTagsAsResourceId = true: the
@@ -372,42 +389,8 @@ private fun typographyFor(font: AppDyslexiaFont?): Typography {
 /* ------------------------------------------------------------------ */
 /* Color schemes - M3 roles mapped from the redesign tokens            */
 /* ------------------------------------------------------------------ */
-
-/** Light M3 scheme. Primary = gold (the redesign's accent for actions and
- *  highlights); background/surfaces follow the cream canvas; error/danger
- *  comes straight from the mockup. */
-private val LightScheme = lightColorScheme(
-    primary = LightRedesignColors.gold,
-    onPrimary = Color(0xFF17130A),
-    primaryContainer = LightRedesignColors.goldSoft,
-    onPrimaryContainer = Color(0xFF4C3309),
-    secondary = Color(0xFF756E5C),
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFEFE9DB),
-    onSecondaryContainer = Color(0xFF211C13),
-    tertiary = Color(0xFF5A6B7A),
-    onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFDEE8F0),
-    onTertiaryContainer = Color(0xFF17242E),
-    background = LightRedesignColors.background,
-    onBackground = LightRedesignColors.textPrimary,
-    surface = LightRedesignColors.surface,
-    onSurface = LightRedesignColors.textPrimary,
-    surfaceVariant = Color(0xFFF3EFE4),
-    onSurfaceVariant = LightRedesignColors.textSecondary,
-    surfaceTint = LightRedesignColors.gold,
-    surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFFAF7EF),
-    surfaceContainer = Color(0xFFF4EFE3),
-    surfaceContainerHigh = Color(0xFFEFE9DB),
-    surfaceContainerHighest = Color(0xFFE9E2D3),
-    outline = Color(0xFFA79F8A),
-    outlineVariant = LightRedesignColors.hairline,
-    error = LightRedesignColors.danger,
-    onError = Color.White,
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF5F0A10),
-)
+/* The light M3 scheme moved into LightThemes.kt (one derivation per    */
+/* palette); only DarkScheme remains here.                             */
 
 /** Dark M3 scheme - the second mockup: deep navy canvas, raised navy
  *  surfaces, gold accents, and the same danger/category hues. */

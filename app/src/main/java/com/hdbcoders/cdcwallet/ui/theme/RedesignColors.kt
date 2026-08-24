@@ -48,40 +48,27 @@ data class RedesignColors(
     val summaryHairline: Color,
     val danger: Color,
     val dangerSoft: Color,
+    /**
+     * Accent color when used AS TEXT (menu selection, pins, add-row label).
+     * Equals [gold] for palettes whose accent passes AA as body text (jade,
+     * navy); darker variant for palettes where it does not (gold, bronze).
+     * Light-mode slot; dark mode always uses its own accent directly.
+     */
+    val accentText: Color = Color.Unspecified,
+    /**
+     * Text color for the hero card (eyebrow + $ glyph). Defaults to
+     * [textPrimary]; only palettes with a pale hero gradient override it.
+     */
+    val heroText: Color = Color.Unspecified,
+    /**
+     * On-accent content color (text/icons rendered on saturated accent fills,
+     * e.g. the archived-count chip). Defaults to near-black ink.
+     */
+    val onAccent: Color = Color(0xFF17130A),
 )
 
 /** Effective redesign tokens for the current theme, provided by [AppTheme]. */
 val LocalRedesignColors = staticCompositionLocalOf { LightRedesignColors }
-
-/** Light mode - cream canvas, white surfaces, gold accents. */
-val LightRedesignColors = RedesignColors(
-    background = Color(0xFFF5F1E7),
-    surface = Color(0xFFFFFFFF),
-    surfaceRaised = Color(0xFFFFFFFF),
-    hairline = Color(0xFFE6E0D2),
-    hairlineSoft = Color(0xFFEEE9DC),
-    textPrimary = Color(0xFF211C13),
-    textSecondary = Color(0xFF756E5C),
-    textTertiary = Color(0xFFA79F8A),
-    gold = Color(0xFFB07F27),
-    goldSoft = Color(0x1FB07F27), // rgba(176,127,39,0.12)
-    climate = Color(0xFF3568C4),
-    climateSoft = Color(0x1F3568C4), // rgba(53,104,196,0.12)
-    market = Color(0xFF7B54D6),
-    marketSoft = Color(0x1F7B54D6), // rgba(123,84,214,0.12)
-    heart = Color(0xFF1E7F4C),
-    heartSoft = Color(0x1F1E7F4C), // rgba(30,127,76,0.12)
-    ok = Color(0xFF2E9358),
-    warning = Color(0xFFC58A1F),
-    categoryFallback = Color(0xFF8A8578),
-    categoryFallbackSoft = Color(0x338A8578),
-    summaryStart = Color(0xFFF3E3C4),
-    summaryEnd = Color(0xFFECD7A9),
-    summaryBorder = Color(0x59B07F27), // rgba(176,127,39,0.35)
-    summaryHairline = Color(0x33B07F27), // rgba(176,127,39,0.20)
-    danger = Color(0xFFC7373F),
-    dangerSoft = Color(0x1AC7373F), // rgba(199,55,63,0.10)
-)
 
 /** Dark mode - deep navy canvas, raised navy surfaces, gold accents. */
 val DarkRedesignColors = RedesignColors(
