@@ -68,7 +68,7 @@ class FontScaleInstrumentedTest {
     fun largerScaleRendersProportionallyLargerText() {
         var level by mutableStateOf(AppFontScale.DEFAULT)
         composeRule.setContent {
-            AppTheme(ThemeMode.LIGHT, level) {
+            AppTheme(ThemeMode.LIGHT, fontScale = level) {
                 Text("Scale probe", fontSize = 10.sp)
             }
         }
@@ -161,7 +161,7 @@ class FontScaleInstrumentedTest {
         // wrapper, menu text would ignore the text-size setting.
         var level by mutableStateOf(AppFontScale.DEFAULT)
         composeRule.setContent {
-            AppTheme(ThemeMode.LIGHT, level) {
+            AppTheme(ThemeMode.LIGHT, fontScale = level) {
                 Box {
                     DropdownMenu(expanded = true, onDismissRequest = {}) {
                         AppScaledContent {

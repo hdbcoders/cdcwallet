@@ -2,7 +2,7 @@
 <resources>
     <!-- API 31+ splash, dark mode. -->
     <style name="Theme.CDCWallet.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#101018</item>
+        <item name="windowSplashScreenBackground">#0F141C</item> <!-- = DarkRedesignColors.background: no hue jump at first paint -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo_circle</item>
         <item name="postSplashScreenTheme">@style/Theme.CDCWallet</item>
     </style>

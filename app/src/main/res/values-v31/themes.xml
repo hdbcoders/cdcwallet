@@ -4,7 +4,7 @@
          and holds it until setKeepOnScreenCondition releases it (the list's
          first DB read). postSplashScreenTheme hands off to the real theme. -->
     <style name="Theme.CDCWallet.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#F6F9FB</item>
+        <item name="windowSplashScreenBackground">#F5F1E7</item> <!-- = CREAM background: no hue jump at first paint -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo_circle</item>
         <item name="postSplashScreenTheme">@style/Theme.CDCWallet</item>
     </style>

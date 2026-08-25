@@ -34,6 +34,7 @@ import com.hdbcoders.cdcwallet.data.model.ValidityStatus
 import com.hdbcoders.cdcwallet.data.model.VoucherBackupPayload
 import com.hdbcoders.cdcwallet.data.model.VoucherGroup
 import com.hdbcoders.cdcwallet.ui.settings.SettingsScreen
+import com.hdbcoders.cdcwallet.ui.theme.ThemeModeStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -447,6 +448,7 @@ class VoucherBackupFlowInstrumentedTest {
                 SettingsScreen(
                     backupFlow = flow,
                     repository = repository,
+                    themeModeStore = ThemeModeStore(appContext),
                     onBack = {},
                     backupBytesProvider = bytesProvider,
                 )
