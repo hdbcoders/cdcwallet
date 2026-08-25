@@ -17,3 +17,7 @@ tmp/
 .env
 reasonix.toml
 keystore/
+
+# Agent tooling session dirs
+.impeccable/
+.opencode/
