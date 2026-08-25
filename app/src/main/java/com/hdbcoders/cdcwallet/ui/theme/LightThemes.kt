@@ -17,11 +17,23 @@ import com.hdbcoders.cdcwallet.R
  * The Settings picker reads [LightPalette.entries], so it picks the new row
  * up automatically.
  *
- * Contrast contract per palette (WCAG AA on that palette's own surfaces):
+ * Contrast contract per palette (WCAG AA on that palette's own surfaces,
+ * machine-verified 2026-08-26 with the WCAG 2.x relative-luminance formula):
  *   - accentText >= 4.5:1 on surface and background;
- *   - heroText    >= 4.5:1 on both summaryStart and summaryEnd;
- *   - onAccent    >= 4.5:1 on gold;
+ *   - warningText >= 4.5:1 on every light surface/background AND on the
+ *     amber soft washes (raw [RedesignColors.warning] amber is fills/icons
+ *     only - it fails 2.4-3.0:1 as text);
+ *   - heroAccentText (the hero eyebrow and `$` glyph) >= 4.5:1 on BOTH
+ *     summaryStart and summaryEnd;
+ *   - onAccent    >= 4.5:1 on accent;
  *   - ok / danger >= 4.5:1 on surface when used as status text.
+ *
+ * DARK mode resolves through the same [RedesignColors.resolved] and is held
+ * to the same bar (measured 2026-08-26): heroAccentText/accentText = gold
+ * #C9A24B (6.7/7.6 on the near-black gradient stops; 6.0-7.7 on surfaces),
+ * warningText = amber #C58A1F (5.5 surface / 6.2 canvas), dangerText =
+ * #EC7178 (>=4.5 on surface AND surfaceRaised), onFill = ink #0F141B
+ * (>3:0 on every lifted status/category fill).
  */
 enum class LightPalette(val labelRes: Int) {
     CREAM(R.string.palette_cream),
@@ -41,12 +53,8 @@ data class LightTheme(
     val m3: ColorScheme,
 )
 
-private fun RedesignColors.resolved(): RedesignColors = copy(
-    // Unspecified slots resolve to the shared defaults so each palette only
-    // states what differs from the norm.
-    accentText = if (accentText == Color.Unspecified) gold else accentText,
-    heroText = if (heroText == Color.Unspecified) textPrimary else heroText,
-)
+// Unspecified text-context slots resolve via RedesignColors.resolved()
+// (internal, shared with dark mode) applied at each palette's construction.
 
 /** Cream - the shipped default (identical to pre-registry LightRedesignColors). */
 private val creamColors = RedesignColors(
@@ -56,18 +64,19 @@ private val creamColors = RedesignColors(
     hairline = Color(0xFFE6E0D2),
     hairlineSoft = Color(0xFFEEE9DC),
     textPrimary = Color(0xFF211C13),
-    textSecondary = Color(0xFF756E5C),
+    textSecondary = Color(0xFF706957), // was #756E5C (4.4958:1 on bg - missed AA by 0.004); now 4.84:1
     textTertiary = Color(0xFFA79F8A),
-    gold = Color(0xFFB07F27),
-    goldSoft = Color(0x1FB07F27), // rgba(176,127,39,0.12)
+    accent = Color(0xFFB07F27),
+    accentSoft = Color(0x1FB07F27), // rgba(176,127,39,0.12)
     climate = Color(0xFF3568C4),
     climateSoft = Color(0x1F3568C4), // rgba(53,104,196,0.12)
     market = Color(0xFF7B54D6),
     marketSoft = Color(0x1F7B54D6), // rgba(123,84,214,0.12)
     heart = Color(0xFF1E7F4C),
     heartSoft = Color(0x1F1E7F4C), // rgba(30,127,76,0.12)
-    ok = Color(0xFF2E9358),
+    ok = Color(0xFF207947), // was #2E9358 (3.87:1 on white - violated the contrast contract); 5.40 white / 4.79 bg
     warning = Color(0xFFC58A1F),
+    warningText = Color(0xFF75500A), // dark amber: >=4.95:1 on every cream surface/wash; raw amber is fills/icons only
     categoryFallback = Color(0xFF8A8578),
     categoryFallbackSoft = Color(0x338A8578),
     summaryStart = Color(0xFFF3E3C4),
@@ -76,30 +85,33 @@ private val creamColors = RedesignColors(
     summaryHairline = Color(0x33B07F27), // rgba(176,127,39,0.20)
     danger = Color(0xFFC7373F),
     dangerSoft = Color(0x1AC7373F), // rgba(199,55,63,0.10)
-    // accentText #8F6716: AA-safe gold for text (~4.8:1); fills keep #B07F27.
+    // accentText #8F6716: AA-safe gold for text (4.52 bg / 5.10 surface); fills keep #B07F27.
     accentText = Color(0xFF8F6716),
+    heroAccentText = Color(0xFF70521C), // hero eyebrow + dollar glyph: 5.70 / 5.10 on the gradient stops (#8A6220 failed at 4.31/3.86, raw accent 2.81/2.51)
 ).resolved()
 
 private fun creamM3(colors: RedesignColors): ColorScheme = lightColorScheme(
-    primary = colors.gold,
+    primary = colors.accent,
     onPrimary = colors.onAccent,
-    primaryContainer = colors.goldSoft,
+    primaryContainer = colors.accentSoft,
     onPrimaryContainer = Color(0xFF4C3309),
     secondary = colors.textSecondary,
     onSecondary = Color.White,
     secondaryContainer = colors.hairlineSoft,
     onSecondaryContainer = colors.textPrimary,
-    tertiary = Color(0xFF5A6B7A),
+    // Derived from the palette's own textSecondary instead of an orphan slate
+    // literal; white-on-tertiary passes AA in every palette.
+    tertiary = colors.textSecondary,
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFDEE8F0),
-    onTertiaryContainer = Color(0xFF17242E),
+    tertiaryContainer = colors.hairlineSoft,
+    onTertiaryContainer = colors.textPrimary,
     background = colors.background,
     onBackground = colors.textPrimary,
     surface = colors.surface,
     onSurface = colors.textPrimary,
     surfaceVariant = colors.hairlineSoft,
     onSurfaceVariant = colors.textSecondary,
-    surfaceTint = colors.gold,
+    surfaceTint = colors.accent,
     surfaceContainerLowest = colors.surface,
     surfaceContainerLow = Color(0xFFFAF7EF),
     surfaceContainer = Color(0xFFF4EFE3),
@@ -109,8 +121,11 @@ private fun creamM3(colors: RedesignColors): ColorScheme = lightColorScheme(
     outlineVariant = colors.hairline,
     error = colors.danger,
     onError = Color.White,
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF5F0A10),
+    // Derived from the palette's own danger (danger @12% over white;
+    // onErrorContainer = danger x 0.28) instead of copy-pasted Material
+    // defaults - text on container measures 14:1.
+    errorContainer = Color(0xFFF8E7E8),
+    onErrorContainer = Color(0xFF380F12),
 )
 
 /** Jade - tonal mint with no white anywhere (designer mockup + review fixes:
@@ -125,16 +140,17 @@ private val jadeColors = RedesignColors(
     textPrimary = Color(0xFF0F231A),
     textSecondary = Color(0xFF256B45),
     textTertiary = Color(0xFF5FA37D),
-    gold = Color(0xFF0A6E52), // jade: fills, icons, borders AND text (4.5:1 canvas, 5.1:1 surface)
-    goldSoft = Color(0x290A6E52), // rgba(10,110,82,0.16)
+    accent = Color(0xFF0A6E52), // jade: fills, icons, borders AND text (4.5:1 canvas, 5.1:1 surface)
+    accentSoft = Color(0x290A6E52), // rgba(10,110,82,0.16)
     climate = Color(0xFF3568C4),
     climateSoft = Color(0x293568C4), // rgba(53,104,196,0.16)
     market = Color(0xFF7B54D6),
     marketSoft = Color(0x297B54D6), // rgba(123,84,214,0.16)
-    heart = Color(0xFF4C7A2E),
-    heartSoft = Color(0x294C7A2E), // rgba(76,122,46,0.16)
+    heart = Color(0xFF55701F), // olive shift: separates heartland from the accent/ok blue-greens
+    heartSoft = Color(0x2955701F), // rgba(85,112,31,0.16)
     ok = Color(0xFF0C7749),
     warning = Color(0xFFC58A1F),
+    warningText = Color(0xFF75500A), // >=5.19:1 on mint surfaces/washes; raw amber is fills/icons only
     categoryFallback = Color(0xFF6F8F7C),
     categoryFallbackSoft = Color(0x336F8F7C),
     summaryStart = Color(0xFF9FE0B8),
@@ -144,10 +160,11 @@ private val jadeColors = RedesignColors(
     danger = Color(0xFFB32E36),
     dangerSoft = Color(0x24B32E36), // rgba(179,46,54,0.14)
     onAccent = Color(0xFFE4FBF0), // pale mint instead of ink/white on jade fills
+    heroAccentText = Color(0xFF074D39), // hero eyebrow + dollar glyph: 6.49 / 5.45 on the gradient stops (accent alone fails at 4.11/3.45)
 ).resolved()
 
 private fun jadeM3(colors: RedesignColors): ColorScheme = lightColorScheme(
-    primary = colors.gold,
+    primary = colors.accent,
     onPrimary = colors.onAccent,
     primaryContainer = Color(0xFFC9EBD8),
     onPrimaryContainer = Color(0xFF074D39),
@@ -155,17 +172,17 @@ private fun jadeM3(colors: RedesignColors): ColorScheme = lightColorScheme(
     onSecondary = colors.onAccent,
     secondaryContainer = colors.hairlineSoft,
     onSecondaryContainer = colors.textPrimary,
-    tertiary = Color(0xFF50606E),
+    tertiary = colors.textSecondary, // derived, same rule as creamM3
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFDCE5EC),
-    onTertiaryContainer = Color(0xFF14222B),
+    tertiaryContainer = colors.hairlineSoft,
+    onTertiaryContainer = colors.textPrimary,
     background = colors.background,
     onBackground = colors.textPrimary,
     surface = colors.surface,
     onSurface = colors.textPrimary,
     surfaceVariant = colors.hairlineSoft,
     onSurfaceVariant = colors.textSecondary,
-    surfaceTint = colors.gold,
+    surfaceTint = colors.accent,
     surfaceContainerLowest = Color(0xFFE6F7ED),
     surfaceContainerLow = Color(0xFFD8F1E2),
     surfaceContainer = colors.surface,
@@ -175,15 +192,17 @@ private fun jadeM3(colors: RedesignColors): ColorScheme = lightColorScheme(
     outlineVariant = colors.hairline,
     error = colors.danger,
     onError = Color.White,
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF5F0A10),
+    // Derived from the palette's danger (same rule as creamM3) - 14.5:1 text.
+    errorContainer = Color(0xFFF6E6E7),
+    onErrorContainer = Color(0xFF320D0F),
 )
 
 /**
- * Ocean - tonal blue with no white anywhere. Hero gradient is saturated
- * enough that even navy fails AA on its dark end, so heroText stays
- * textPrimary; pill labels are neutral while icons carry the category hue
- * (pillLabel slot) - that split frees climate to be a genuine blue.
+ * Ocean - tonal blue with no white anywhere. Hero gradient end is deepened
+ * (#65A4E6, was #82B7E9) so the balance card anchors against the previously
+ * near-identical surface tone, and the eyebrow/glyph get their own deep-navy
+ * slot ([heroAccentText]) because even the navy accent fails AA on the pale
+ * gradient start.
  */
 private val oceanColors = RedesignColors(
     background = Color(0xFFBFD9F0),
@@ -194,8 +213,8 @@ private val oceanColors = RedesignColors(
     textPrimary = Color(0xFF0C1B2A),
     textSecondary = Color(0xFF1F4E73),
     textTertiary = Color(0xFF6A93B8),
-    gold = Color(0xFF14528F), // deep navy: fills, icons, borders AND text
-    goldSoft = Color(0x2914528F), // rgba(20,82,143,0.16)
+    accent = Color(0xFF14528F), // deep navy: fills, icons, borders AND text
+    accentSoft = Color(0x2914528F), // rgba(20,82,143,0.16)
     climate = Color(0xFF2A6FDB),
     climateSoft = Color(0x292A6FDB), // rgba(42,111,219,0.16)
     market = Color(0xFF7B54D6),
@@ -204,19 +223,21 @@ private val oceanColors = RedesignColors(
     heartSoft = Color(0x292E7D52), // rgba(46,125,82,0.16)
     ok = Color(0xFF0C7749),
     warning = Color(0xFFC58A1F),
+    warningText = Color(0xFF75500A), // >=5.15:1 on sky surfaces/washes; raw amber is fills/icons only
     categoryFallback = Color(0xFF5C7893),
     categoryFallbackSoft = Color(0x335C7893),
     summaryStart = Color(0xFFA7CFF2),
-    summaryEnd = Color(0xFF82B7E9),
+    summaryEnd = Color(0xFF65A4E6),
     summaryBorder = Color(0x6B14528F), // rgba(20,82,143,0.42)
     summaryHairline = Color(0x3D14528F), // rgba(20,82,143,0.24)
     danger = Color(0xFFB32E36),
     dangerSoft = Color(0x24B32E36), // rgba(179,46,54,0.14)
     onAccent = Color(0xFFE3F1FC), // pale sky instead of ink on navy fills
+    heroAccentText = Color(0xFF0A3560), // hero eyebrow + dollar glyph: 7.60 / 4.73 on the gradient stops (accent alone fails at 3.04 on end)
 ).resolved()
 
 private fun oceanM3(colors: RedesignColors): ColorScheme = lightColorScheme(
-    primary = colors.gold,
+    primary = colors.accent,
     onPrimary = colors.onAccent,
     primaryContainer = Color(0xFFC7DFF5),
     onPrimaryContainer = Color(0xFF0D3D6B),
@@ -224,17 +245,17 @@ private fun oceanM3(colors: RedesignColors): ColorScheme = lightColorScheme(
     onSecondary = colors.onAccent,
     secondaryContainer = colors.hairlineSoft,
     onSecondaryContainer = colors.textPrimary,
-    tertiary = Color(0xFF4C5F70),
+    tertiary = colors.textSecondary, // derived, same rule as creamM3
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFD6E2EC),
-    onTertiaryContainer = Color(0xFF121F2A),
+    tertiaryContainer = colors.hairlineSoft,
+    onTertiaryContainer = colors.textPrimary,
     background = colors.background,
     onBackground = colors.textPrimary,
     surface = colors.surface,
     onSurface = colors.textPrimary,
     surfaceVariant = colors.hairlineSoft,
     onSurfaceVariant = colors.textSecondary,
-    surfaceTint = colors.gold,
+    surfaceTint = colors.accent,
     surfaceContainerLowest = Color(0xFFF2F8FE),
     surfaceContainerLow = Color(0xFFE9F3FC),
     surfaceContainer = colors.surface,
@@ -244,11 +265,18 @@ private fun oceanM3(colors: RedesignColors): ColorScheme = lightColorScheme(
     outlineVariant = colors.hairline,
     error = colors.danger,
     onError = Color.White,
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF5F0A10),
+    // Derived from the palette's danger (same rule as creamM3) - 14.5:1 text.
+    errorContainer = Color(0xFFF6E6E7),
+    onErrorContainer = Color(0xFF320D0F),
 )
 
-/** Registry - the single place a palette maps to concrete colors. */
+/**
+ * Registry - the single place a palette maps to concrete colors.
+ *
+ * surfaceContainerLowest rule: equals [RedesignColors.surface] when the
+ * surface is already near-white (CREAM), else a dedicated lighter tint
+ * (JADE/OCEAN) so dialogs/sheets always read above the canvas.
+ */
 val LightThemes: Map<LightPalette, LightTheme> = mapOf(
     LightPalette.CREAM to LightTheme(LightPalette.CREAM, creamColors, creamM3(creamColors)),
     LightPalette.JADE to LightTheme(LightPalette.JADE, jadeColors, jadeM3(jadeColors)),

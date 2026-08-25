@@ -3,6 +3,7 @@ package com.hdbcoders.cdcwallet.ui.settings
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,8 +13,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -38,8 +42,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -60,6 +66,9 @@ import com.hdbcoders.cdcwallet.data.model.VoucherBackupPayload
 import com.hdbcoders.cdcwallet.ui.components.AppDialogSurface
 import com.hdbcoders.cdcwallet.ui.components.DialogButtonRow
 import com.hdbcoders.cdcwallet.ui.theme.LightPalette
+import com.hdbcoders.cdcwallet.ui.theme.LightThemes
+import com.hdbcoders.cdcwallet.ui.theme.RedesignColors
+import com.hdbcoders.cdcwallet.ui.theme.ThemeMode
 import com.hdbcoders.cdcwallet.ui.theme.ThemeModeStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
@@ -158,6 +167,7 @@ fun SettingsScreen(
             AppearanceSection(
                 selected = themeModeStore.palette,
                 onSelect = { themeModeStore.setLightPalette(it) },
+                darkModeActive = themeModeStore.mode == ThemeMode.DARK,
             )
             Text(
                 text = stringResource(R.string.backup),
@@ -275,20 +285,24 @@ private fun BusyProgressDialog(message: String) {
 @Composable
 /**
  * Appearance section (theme picker, spec 07 §7.2): one radio row per
- * [LightPalette] entry. Selecting a row calls [onSelect], which persists and
- * applies the palette instantly via ThemeModeStore snapshot state - no
- * restart needed. Dark/light mode itself is NOT controlled here; the drawer
- * toggle stays the only dark-mode switch.
+ * [LightPalette] entry, each with a mini swatch (hero gradient + accent dot)
+ * so the choice is previewable before applying. Selecting a row calls
+ * [onSelect], which persists and applies the palette instantly via
+ * ThemeModeStore snapshot state - no restart needed. Dark/light mode itself
+ * is NOT controlled here; the drawer toggle stays the only dark-mode switch,
+ * and [darkModeActive] shows a hint that palettes affect light mode only.
  */
 private fun AppearanceSection(
     selected: LightPalette,
     onSelect: (LightPalette) -> Unit,
+    darkModeActive: Boolean = false,
 ) {
     Text(
         text = stringResource(R.string.settings_appearance),
         style = MaterialTheme.typography.titleMedium,
     )
     LightPalette.entries.forEach { palette ->
+        val colors = LightThemes.getValue(palette).colors
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -305,12 +319,46 @@ private fun AppearanceSection(
                 selected = palette == selected,
                 onClick = null,
             )
+            PaletteSwatch(colors, Modifier.padding(start = 8.dp, end = 12.dp))
             Text(
                 text = stringResource(palette.labelRes),
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(start = 8.dp),
             )
         }
+    }
+    if (darkModeActive) {
+        Text(
+            text = stringResource(R.string.settings_palette_light_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 2.dp),
+        )
+    }
+}
+
+/** Mini preview of a light palette: the hero gradient chip with the accent
+ *  dot on top - the two surfaces that define each palette's personality. */
+@Composable
+private fun PaletteSwatch(
+    colors: RedesignColors,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(width = 46.dp, height = 30.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                Brush.linearGradient(listOf(colors.summaryStart, colors.summaryEnd)),
+            ),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(start = 6.dp)
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(colors.accent),
+        )
     }
 }
 

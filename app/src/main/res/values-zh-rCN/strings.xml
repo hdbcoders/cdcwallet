@@ -125,6 +125,7 @@
 
     <string name="backup">备份</string>
     <string name="settings_appearance">浅色主题</string>
+    <string name="settings_palette_light_hint">主题仅应用于浅色模式。深色模式保持原有外观。</string>
     <string name="palette_cream">香槟金</string>
     <string name="palette_jade">翡翠绿</string>
     <string name="palette_ocean">天蓝色</string>

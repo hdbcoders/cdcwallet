@@ -325,7 +325,7 @@ fun AppHeader(
                                         Text(
                                             text = languageLabel(lang),
                                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (selected) c.gold else c.textPrimary,
+                                            color = if (selected) c.accentText else c.textPrimary,
                                         )
                                     },
                                     trailingIcon = if (selected) {
@@ -333,7 +333,7 @@ fun AppHeader(
                                             Icon(
                                                 Icons.Filled.Check,
                                                 contentDescription = null,
-                                                tint = c.gold,
+                                                tint = c.accent,
                                                 modifier = Modifier.size(15.dp),
                                             )
                                         }
@@ -386,7 +386,7 @@ fun AppHeader(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(c.gold)
+                            .background(c.accent)
                             .padding(horizontal = 5.dp, vertical = 2.dp),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -397,7 +397,10 @@ fun AppHeader(
                                 fontFamily = typefaces.mono,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp,
-                                color = Color(0xFF17130A),
+                                // onAccent token: near-black ink in CREAM, pale
+                                // mint/sky in JADE/OCEAN where the accent fill
+                                // is a deep green/navy (ink was invisible).
+                                color = c.onAccent,
                                 lineHeight = 11.sp,
                                 platformStyle = PlatformTextStyle(includeFontPadding = false),
                             ),

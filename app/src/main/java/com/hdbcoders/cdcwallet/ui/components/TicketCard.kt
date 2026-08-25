@@ -64,7 +64,6 @@ import com.hdbcoders.cdcwallet.ui.list.BadgeTone
 import com.hdbcoders.cdcwallet.ui.list.badgePresentation
 import com.hdbcoders.cdcwallet.ui.list.badgeState
 import com.hdbcoders.cdcwallet.ui.list.formatSgd
-import com.hdbcoders.cdcwallet.ui.theme.LocalAppIsDark
 import com.hdbcoders.cdcwallet.ui.theme.LocalAppTypefaces
 import com.hdbcoders.cdcwallet.ui.theme.LocalRedesignColors
 import com.hdbcoders.cdcwallet.ui.theme.AppScaledContent
@@ -259,7 +258,7 @@ fun TicketCard(
                     Icon(
                         Icons.Filled.PushPin,
                         contentDescription = null,
-                        tint = c.gold,
+                        tint = c.accent,
                         modifier = Modifier
                             .padding(end = 6.dp)
                             // Visual-only nudge toward the kebab glyph; capped
@@ -281,7 +280,10 @@ fun TicketCard(
                             R.string.more_options,
                             localizeCampaignName(voucher.campaignName, LocalAppLanguage.current),
                         ),
-                        tint = c.textTertiary,
+                        // textSecondary, not textTertiary: the kebab is the row's
+                        // only menu affordance - tertiary drops to 3.3:1 on dark
+                        // cards (2.9 on menus), below the 3:0 UI-component bar.
+                        tint = c.textSecondary,
                         modifier = Modifier.size(18.dp),
                     )
                 }
@@ -315,9 +317,18 @@ private fun ExpiryRow(
     stale: Boolean = false,
 ) {
     val c = LocalRedesignColors.current
+    // Fills/icons use the raw status hues; TEXT uses the AA-safe text slots
+    // (warningText exists because raw amber fails 2.4-3.0:1 as text on light
+    // surfaces - see RedesignColors).
     val statusColor = when (presentation.tone) {
         BadgeTone.DANGER -> c.danger
         BadgeTone.WARNING -> c.warning
+        BadgeTone.OK -> c.ok
+        BadgeTone.NEUTRAL -> c.textSecondary
+    }
+    val statusTextColor = when (presentation.tone) {
+        BadgeTone.DANGER -> c.danger
+        BadgeTone.WARNING -> c.warningText
         BadgeTone.OK -> c.ok
         BadgeTone.NEUTRAL -> c.textSecondary
     }
@@ -349,7 +360,7 @@ private fun ExpiryRow(
                         Icon(
                             Icons.Filled.Check,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = c.onFill,
                             modifier = Modifier.size(11.dp),
                         )
                     }
@@ -374,7 +385,7 @@ private fun ExpiryRow(
             Text(
                 text = statusText,
                 fontWeight = FontWeight.SemiBold,
-                color = statusColor,
+                color = statusTextColor,
                 style = rowTextStyle,
             )
         }
@@ -439,7 +450,6 @@ private fun StatusBanner(text: String, neutral: Boolean = false) {
  *  break, matching the no-truncation rule in spec 04. */
 @Composable
 private fun CategoryPills(voucher: VoucherGroup, modifier: Modifier = Modifier) {
-    val dark = LocalAppIsDark.current
     val c = LocalRedesignColors.current
     val typefaces = LocalAppTypefaces.current
     FlowRow(
@@ -448,7 +458,7 @@ private fun CategoryPills(voucher: VoucherGroup, modifier: Modifier = Modifier) 
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         voucher.categoryBalances.forEach { balance ->
-            val visuals = categoryVisuals(balance.category, dark)
+            val visuals = categoryVisuals(balance.category)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),

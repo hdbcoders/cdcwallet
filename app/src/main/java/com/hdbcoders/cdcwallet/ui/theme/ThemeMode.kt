@@ -393,36 +393,53 @@ private fun typographyFor(font: AppDyslexiaFont?): Typography {
 /* palette); only DarkScheme remains here.                             */
 
 /** Dark M3 scheme - the second mockup: deep navy canvas, raised navy
- *  surfaces, gold accents, and the same danger/category hues. */
+ *  surfaces, gold accents, and the same danger/category hues. Derived from
+ *  DarkRedesignColors with the same commented-rule discipline as the light
+ *  palettes (no orphan literals): every role either maps a token or states
+ *  its derivation rule. */
 private val DarkScheme = darkColorScheme(
-    primary = DarkRedesignColors.gold,
-    onPrimary = Color(0xFF17130A),
-    primaryContainer = DarkRedesignColors.goldSoft,
-    onPrimaryContainer = Color(0xFFE9D9A8),
-    secondary = Color(0xFF94A3B4),
-    onSecondary = Color(0xFF0F141C),
-    secondaryContainer = Color(0xFF253242),
+    primary = DarkRedesignColors.accent,
+    onPrimary = DarkRedesignColors.onAccent,
+    primaryContainer = DarkRedesignColors.accentSoft,
+    onPrimaryContainer = Color(0xFFE9D9A8), // pale gold: 9.3:1 on accentSoft-over-surface
+    // Derived from textSecondary/background - same rule as the light schemes;
+    // replaces the orphan slate family that answered to no token.
+    secondary = DarkRedesignColors.textSecondary,
+    onSecondary = DarkRedesignColors.background,
+    secondaryContainer = DarkRedesignColors.hairlineSoft,
     onSecondaryContainer = Color(0xFFD7E0EA),
-    tertiary = Color(0xFFA5C1E8),
-    onTertiary = Color(0xFF12344C),
-    tertiaryContainer = Color(0xFF1B2A4A),
-    onTertiaryContainer = Color(0xFFD3E5FA),
+    tertiary = DarkRedesignColors.textSecondary,
+    onTertiary = DarkRedesignColors.background,
+    tertiaryContainer = DarkRedesignColors.hairlineSoft,
+    onTertiaryContainer = DarkRedesignColors.textPrimary,
     background = DarkRedesignColors.background,
     onBackground = DarkRedesignColors.textPrimary,
     surface = DarkRedesignColors.surface,
     onSurface = DarkRedesignColors.textPrimary,
-    surfaceVariant = Color(0xFF202A3A),
+    surfaceVariant = DarkRedesignColors.surfaceRaised,
     onSurfaceVariant = DarkRedesignColors.textSecondary,
-    surfaceTint = DarkRedesignColors.gold,
+    surfaceTint = DarkRedesignColors.accent,
     surfaceContainerLowest = Color(0xFF0B1017),
     surfaceContainerLow = Color(0xFF141B25),
     surfaceContainer = Color(0xFF171F2B),
     surfaceContainerHigh = Color(0xFF202A3A),
     surfaceContainerHighest = Color(0xFF263244),
-    outline = Color(0xFF64717F),
+    outline = DarkRedesignColors.textTertiary,
     outlineVariant = DarkRedesignColors.hairline,
     error = DarkRedesignColors.danger,
     onError = Color(0xFF2A0A0C),
+    // Derived from danger like the light schemes: container = danger washed
+    // over the elevated surface, on-container = danger lightened toward
+    // white until >=4.5 (measures 9.4).
     errorContainer = Color(0xFF3B171B),
     onErrorContainer = Color(0xFFF5B8BC),
+    // M3 completeness - without these, baseline greys/purple leak through
+    // (e.g. Snackbars). inverseSurface is intentionally LIGHT in dark mode:
+    // it flips transient surfaces (Snackbar) to the classic light card.
+    inverseSurface = DarkRedesignColors.textPrimary,
+    inverseOnSurface = DarkRedesignColors.background,
+    inversePrimary = Color(0xFFB07F27), // the CREAM accent: gold button on the light inverse card, ink content
+    surfaceDim = DarkRedesignColors.background,
+    surfaceBright = DarkRedesignColors.surfaceRaised,
+    scrim = Color.Black,
 )

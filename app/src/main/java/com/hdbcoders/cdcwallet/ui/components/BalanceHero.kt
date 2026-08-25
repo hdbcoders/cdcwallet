@@ -101,7 +101,9 @@ fun BalanceHero(
     val c = LocalRedesignColors.current
     val dark = LocalAppIsDark.current
     val reduceMotion = rememberReduceMotion()
-    val eyebrowColor = if (dark) c.gold else Color(0xFF8A6220)
+    // Per-palette AA-safe accent-on-gradient (eyebrow + dollar glyph; dark
+    // resolves to the accent via RedesignColors.resolved()).
+    val eyebrowColor = c.heroAccentText
     // Refactor M21: expanded/collapsed state is announced to TalkBack.
     val expandStateDescription = stringResource(
         if (collapsed) R.string.hero_collapsed_desc else R.string.hero_expanded_desc,
@@ -151,9 +153,8 @@ fun BalanceHero(
  * share one row while they fit; the amount unit wraps to its own row when
  * they would intersect (large font scales) - no ellipsis, no clipping.
  *
- * The label uses the same [eyebrowColor] as the expanded hero's eyebrow
- * (warm gold #8A6220 in light mode), so the label reads identically in both
- * card states.
+ * The label uses the same [eyebrowColor] as the expanded hero's eyebrow,
+ * so the label reads identically in both card states.
  *
  * Both sizes come from typography roles (label = headlineMedium, amount =
  * headlineLarge), so the amount is the dominant element and the future
@@ -193,7 +194,7 @@ private fun CollapsedBalance(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = typefaces.display,
-                color = c.gold,
+                color = c.heroAccentText,
                 modifier = Modifier
                     .padding(end = 1.dp)
                     .offset(y = (-1.4).dp),
@@ -469,7 +470,7 @@ private fun Amount(summary: ListSummary, c: RedesignColors) {
             fontSize = 21.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = typefaces.display,
-            color = c.gold,
+            color = c.heroAccentText,
             modifier = Modifier
                 .padding(end = 2.dp)
                 .offset(y = (-1.9).dp),
@@ -536,7 +537,9 @@ private fun MoreCategoriesLine(
             fontSize = 10.sp,
             lineHeight = 12.sp,
             fontWeight = FontWeight.Medium,
-            color = c.textTertiary,
+            // textSecondary, not textTertiary: at 10sp tertiary sits at
+            // 3.3:1 in dark (2.9 on raised), below AA-small.
+            color = c.textSecondary,
             textAlign = textAlign,
             modifier = modifier.fillMaxWidth(),
         )
@@ -561,7 +564,7 @@ private fun CategoryMiniRow(
 ) {
     val c = LocalRedesignColors.current
     val typefaces = LocalAppTypefaces.current
-    val visuals = categoryVisuals(balance.category, dark)
+    val visuals = categoryVisuals(balance.category)
     val name = localizeCategory(balance.category, LocalAppLanguage.current)
     val amount = formatSgd(balance.remainingValue)
     if (!stacked) {
@@ -710,9 +713,12 @@ private fun CategoryFlowRow(
     }
 }
 
-/** The category's tinted square icon. */
+/** The category's tinted square icon. Glyph uses [RedesignColors.onFill]:
+ *  white in light (fills are deepened for it), ink in dark (lifted fills
+ *  drop white to 2.2-2.8:1). */
 @Composable
 private fun CategoryIcon(visuals: CategoryVisuals) {
+    val c = LocalRedesignColors.current
     Box(
         modifier = Modifier
             .size(21.6.dp)
@@ -722,7 +728,7 @@ private fun CategoryIcon(visuals: CategoryVisuals) {
         Icon(
             visuals.icon,
             contentDescription = null,
-            tint = Color.White,
+            tint = c.onFill,
             modifier = Modifier.size(12.dp),
         )
     }

@@ -27,8 +27,10 @@ import com.hdbcoders.cdcwallet.R
 import com.hdbcoders.cdcwallet.ui.theme.LocalRedesignColors
 
 /**
- * The redesign's "Add Voucher" row (mockup): a gold dashed-border rounded
+ * The redesign's "Add Voucher" row (mockup): an accent dashed-border rounded
  * strip at the bottom of the list. Replaces the old floating action button.
+ * Label text uses [RedesignColors.accentText] (the AA-safe accent-as-text
+ * slot); the dashed border and icon keep the raw saturated accent.
  */
 @Composable
 fun DashedAddRow(
@@ -44,7 +46,7 @@ fun DashedAddRow(
             .testTag("add-voucher-row")
             .drawBehind {
                 drawRoundRect(
-                    color = c.gold,
+                    color = c.accent,
                     style = Stroke(
                         width = 1.5.dp.toPx(),
                         pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)),
@@ -64,14 +66,14 @@ fun DashedAddRow(
             Icon(
                 Icons.Filled.Add,
                 contentDescription = null,
-                tint = c.gold,
+                tint = c.accent,
                 modifier = Modifier.size(17.dp),
             )
             Text(
                 text = stringResource(R.string.add_voucher),
                 fontSize = 14.5.sp,
                 fontWeight = FontWeight.Bold,
-                color = c.gold,
+                color = c.accentText,
                 modifier = Modifier.padding(start = 8.dp),
             )
         }

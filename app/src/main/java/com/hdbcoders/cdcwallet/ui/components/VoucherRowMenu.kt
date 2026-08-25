@@ -105,10 +105,12 @@ fun ColumnScope.VoucherRowMenuContent(
     )
     DropdownMenuItem(
         text = {
-            Text(stringResource(R.string.delete), color = c.danger)
+            // dangerText: raw danger dips below AA on surfaceRaised menus in
+            // dark mode (4.35:1); the text-context slot is brightened there.
+            Text(stringResource(R.string.delete), color = c.dangerText)
         },
         leadingIcon = {
-            Icon(Icons.Filled.Delete, contentDescription = null, tint = c.danger)
+            Icon(Icons.Filled.Delete, contentDescription = null, tint = c.dangerText)
         },
         onClick = onDelete,
     )

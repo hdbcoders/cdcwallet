@@ -125,6 +125,7 @@
 
     <string name="backup">Sandaran</string>
     <string name="settings_appearance">Tema Mod Cerah</string>
+    <string name="settings_palette_light_hint">Tema hanya terpakai pada mod cerah. Mod gelap mengekalkan penampilannya sendiri.</string>
     <string name="palette_cream">Emas Champagne</string>
     <string name="palette_jade">Hijau Jed</string>
     <string name="palette_ocean">Biru Langit</string>

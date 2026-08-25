@@ -60,9 +60,29 @@ class ThemeModeStoreTest {
         // Guard against accidental edits to the shipped default palette.
         val cream = LightThemes.getValue(LightPalette.CREAM).colors
         assertEquals(Color(0xFFF5F1E7), cream.background)
-        assertEquals(Color(0xFFB07F27), cream.gold)
+        assertEquals(Color(0xFFB07F27), cream.accent)
         assertEquals(Color(0xFF8F6716), cream.accentText)
         assertEquals(Color(0xFF211C13), cream.textPrimary)
+        // Contract-critical values (WCAG audit 2026-08-26): ok green and
+        // warningText amber must stay AA on cream surfaces.
+        assertEquals(Color(0xFF207947), cream.ok)
+        assertEquals(Color(0xFF75500A), cream.warningText)
+        assertEquals(Color(0xFF70521C), cream.heroAccentText)
+    }
+
+    @Test
+    fun darkRegistryResolvesTextSlots() {
+        // Regression guard (Aug 2026): DarkRedesignColors must pass through
+        // resolved() like every light palette. Before this fix the three
+        // slots were Unspecified in dark, rendering near-white instead of
+        // gold/amber (hero eyebrow/$, menu selection, urgent status text).
+        assertEquals(Color(0xFFC9A24B), DarkRedesignColors.accentText)
+        assertEquals(Color(0xFFC9A24B), DarkRedesignColors.heroAccentText)
+        assertEquals(Color(0xFFC58A1F), DarkRedesignColors.warningText)
+        // Dark-specific overrides: brightened delete-item text on raised
+        // menus; ink glyphs on lifted status/category fills.
+        assertEquals(Color(0xFFEC7178), DarkRedesignColors.dangerText)
+        assertEquals(Color(0xFF0F141B), DarkRedesignColors.onFill)
     }
 
     @Test
