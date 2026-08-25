@@ -139,10 +139,10 @@
     <!-- Settings: backup (spec 06). -->
     <string name="backup">Backup</string>
     <!-- Settings: Appearance (light palette picker). -->
-    <string name="settings_appearance">Appearance</string>
-    <string name="palette_cream">Cream (default)</string>
-    <string name="palette_jade">Jade</string>
-    <string name="palette_ocean">Ocean</string>
+    <string name="settings_appearance">Light Mode Themes</string>
+    <string name="palette_cream">Champagne Gold</string>
+    <string name="palette_jade">Jade Green</string>
+    <string name="palette_ocean">Sky Blue</string>
     <string name="export_backup">Export backup</string>
     <string name="exporting_backup">Encrypting and Exporting backup</string>
     <string name="export_desc">Saves an encrypted copy of all your voucher links to Downloads folder. Set a password and remember it, you cannot import this backup without the password.</string>

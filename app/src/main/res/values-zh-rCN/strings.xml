@@ -124,10 +124,10 @@
     <string name="dyslexia_font_opendyslexic">OpenDyslexic</string>
 
     <string name="backup">备份</string>
-    <string name="settings_appearance">外观</string>
-    <string name="palette_cream">奶油（默认）</string>
-    <string name="palette_jade">翠玉</string>
-    <string name="palette_ocean">海洋</string>
+    <string name="settings_appearance">浅色主题</string>
+    <string name="palette_cream">香槟金</string>
+    <string name="palette_jade">翡翠绿</string>
+    <string name="palette_ocean">天蓝色</string>
     <string name="export_backup">导出备份</string>
     <string name="exporting_backup">正在加密并导出备份</string>
     <string name="export_desc">将所有购物券链接的加密副本保存到“下载”文件夹。设置一个密码并记住它，没有密码就无法导入此备份。</string>
