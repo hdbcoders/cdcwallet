@@ -20,8 +20,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -87,6 +89,24 @@ fun VoucherListScreen(
     CopyUrlEffect(copyRequest = vm.copyRequest, onConsumed = { vm.consumeCopyRequest() })
     // The LazyColumn scrolls via this state (overflow-menu / row animations).
     val listState = rememberLazyListState()
+    // Pin-scroll effect: after a pin or confirmed swap the ViewModel raises a
+    // one-shot request; bring the freshly pinned row (position 0 after
+    // sortActive) into view. Animated unless Reduce Motion is on (instant
+    // jump). Unpin never triggers this.
+    LaunchedEffect(vm.scrollToPinned, reduceMotion) {
+        if (vm.scrollToPinned && sorted.isNotEmpty()) {
+            // Wait one frame for the re-sorted list to land so index 0 is the
+            // new pin, not still the pre-sort order.
+            withFrameNanos { }
+            if (reduceMotion) {
+                // Reduce Motion: jump instantly.
+                listState.scrollToItem(index = 0)
+            } else {
+                listState.animateScrollToItem(index = 0)
+            }
+            vm.consumeScrollToPinned()
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {

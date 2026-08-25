@@ -46,11 +46,23 @@ class VoucherListViewModel(
     var copyRequest by mutableStateOf<String?>(null)
         private set
 
+    /**
+     * One-shot scroll request (theme-era UX addition): set after a successful
+     * pin or confirmed pin swap so the screen can bring the freshly pinned
+     * row (position 0 after sortActive) back into view. Unpin does NOT set
+     * this - the user stays where they are. The screen consumes it after
+     * scrolling.
+     */
+    var scrollToPinned by mutableStateOf(false)
+        private set
+
     fun setMenu(id: String?) { menuForId = id }
 
     fun requestCopy(url: String) { copyRequest = url }
 
     fun consumeCopyRequest() { copyRequest = null }
+
+    fun consumeScrollToPinned() { scrollToPinned = false }
 
     fun requestDelete(voucher: VoucherGroup) { pendingDelete = voucher }
     fun dismissDelete() { pendingDelete = null }
@@ -67,6 +79,7 @@ class VoucherListViewModel(
         if (alreadyPinned) {
             pendingPin = voucher
         } else {
+            scrollToPinned = true
             viewModelScope.launch { repository.setPinned(voucher.id, true) }
         }
     }
@@ -76,6 +89,7 @@ class VoucherListViewModel(
         val target = pendingPin ?: return
         pendingPin = null
         setMenu(null)
+        scrollToPinned = true
         viewModelScope.launch {
             repository.setPinned(target.id, true) // repository unpins the old pin atomically
         }
