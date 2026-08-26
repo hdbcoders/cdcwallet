@@ -132,6 +132,7 @@
     <string name="settings_dark_appearance">இருள் தீம்கள்</string>
     <string name="settings_palette_dark_hint">தீம்கள் இருள் முறையில் மட்டுமே பயன்படும். ஒளி முறை அதன் சொந்த தோற்றத்தைத் தக்கவைக்கும்.</string>
     <string name="dark_palette_obsidian_gold">அப்சிடியன் தங்கம்</string>
+    <string name="dark_palette_ember_copper">எம்பர் செம்பு</string>
     <string name="export_backup">காப்புப்பிரதியை ஏற்றுமதி செய்</string>
     <string name="exporting_backup">காப்புப்பிரதியை குறியாக்கி ஏற்றுமதி செய்கிறது</string>
     <string name="export_desc">உங்கள் அனைத்து வவுச்சர் இணைப்புகளின் மறைகுறியாக்கப்பட்ட நகலை பதிவிறக்கங்கள் கோப்புறையில் சேமிக்கிறது. கடவுச்சொல்லை அமைத்து நினைவில் வைத்திருங்கள், கடவுச்சொல் இல்லாமல் இந்த காப்புப்பிரதியை இறக்குமதி செய்ய முடியாது.</string>

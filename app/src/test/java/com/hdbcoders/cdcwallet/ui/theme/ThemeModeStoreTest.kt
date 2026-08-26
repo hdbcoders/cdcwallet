@@ -86,6 +86,24 @@ class ThemeModeStoreTest {
     }
 
     @Test
+    fun emberCopperRegistryEntryMatchesShippedTokens() {
+        // Guard against accidental edits to dark sibling #2 (visual gate
+        // locked 2026-08-27: wood-tuned surfaces + clay-copper accent).
+        val ember = DarkThemes.getValue(DarkPalette.EMBER_COPPER).colors
+        assertEquals(Color(0xFF1A120B), ember.background)
+        assertEquals(Color(0xFFCF8A62), ember.accent)
+        assertEquals(Color(0xFFCF8A62), ember.accentText) // resolves to accent
+        assertEquals(Color(0xFFCF8A62), ember.heroAccentText)
+        assertEquals(Color(0xFFE3A63C), ember.warningText) // resolves to warning amber
+        // Warm ink on fills - white glyphs fail on this palette's lifted hues.
+        assertEquals(Color(0xFF1F1610), ember.onFill)
+        assertEquals(Color(0xFF1B120B), ember.onAccent)
+        // dangerText RESOLVES to raw danger: this palette's raised surface is
+        // warm/lifted enough that the raw red stays >=4.5 (no override).
+        assertEquals(ember.danger, ember.dangerText)
+    }
+
+    @Test
     fun unknownStoredValueResolvesFromDevice() {
         assertEquals(ThemeMode.LIGHT, resolveInitialMode(isSystemDark = false, stored = "bogus"))
         assertEquals(ThemeMode.DARK, resolveInitialMode(isSystemDark = true, stored = "bogus"))
