@@ -87,7 +87,7 @@ class ThemeModeStore(context: Context) {
     /**
      * Dark-theme palette choice (theme picker, Settings → Dark Themes). Only
      * meaningful when [mode] is DARK; light mode resolves through [palette]
-     * instead. Unknown/corrupt stored values fall back to Obsidian Gold, the
+     * instead. Unknown/corrupt stored values fall back to Midnight Gold, the
      * shipped default (same rule as [palette] → Cream).
      */
     var darkTheme by mutableStateOf(defaultDarkPalette())
@@ -407,5 +407,5 @@ private fun typographyFor(font: AppDyslexiaFont?): Typography {
 /* ------------------------------------------------------------------ */
 /* The light M3 schemes live in LightThemes.kt (one derivation per       */
 /* palette); the dark M3 scheme moved into DarkThemes.kt as the          */
-/* Obsidian Gold entry (registry). AppTheme resolves both via the        */
+ /* Midnight Gold entry (registry). AppTheme resolves both via the         */
 /* registries.                                                          */

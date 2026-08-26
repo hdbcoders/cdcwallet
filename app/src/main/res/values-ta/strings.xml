@@ -131,7 +131,7 @@
     <string name="palette_ocean">வான் நீலம்</string>
     <string name="settings_dark_appearance">இருள் தீம்கள்</string>
     <string name="settings_palette_dark_hint">தீம்கள் இருள் முறையில் மட்டுமே பயன்படும். ஒளி முறை அதன் சொந்த தோற்றத்தைத் தக்கவைக்கும்.</string>
-    <string name="dark_palette_obsidian_gold">அப்சிடியன் தங்கம்</string>
+    <string name="dark_palette_midnight_gold">மிட்நைட் தங்கம்</string>
     <string name="dark_palette_ember_copper">எம்பர் செம்பு</string>
     <string name="export_backup">காப்புப்பிரதியை ஏற்றுமதி செய்</string>
     <string name="exporting_backup">காப்புப்பிரதியை குறியாக்கி ஏற்றுமதி செய்கிறது</string>

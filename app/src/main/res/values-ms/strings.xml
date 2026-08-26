@@ -131,7 +131,7 @@
     <string name="palette_ocean">Biru Langit</string>
     <string name="settings_dark_appearance">Tema Gelap</string>
     <string name="settings_palette_dark_hint">Tema hanya terpakai pada mod gelap. Mod cerah mengekalkan penampilannya sendiri.</string>
-    <string name="dark_palette_obsidian_gold">Emas Obsidian</string>
+    <string name="dark_palette_midnight_gold">Emas Tengah Malam</string>
     <string name="dark_palette_ember_copper">Tembaga Bara</string>
     <string name="export_backup">Eksport sandaran</string>
     <string name="exporting_backup">Menyulit dan Mengeksport sandaran</string>

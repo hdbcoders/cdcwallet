@@ -14,7 +14,7 @@ import com.hdbcoders.cdcwallet.R
  * HOW TO ADD A NEW DARK THEME (three touches, nothing else):
  *   1. add an enum entry to [DarkPalette];
  *   2. write its token table + `darkColorScheme` in this file, following the
- *      OBSIDIAN_GOLD entry as the template;
+ *      MIDNIGHT_GOLD entry as the template;
  *   3. add the display-name string in all four locales
  *      (values, values-zh-rCN, values-ms, values-ta).
  * The Settings picker reads [DarkPalette.entries], so it picks the new row
@@ -28,7 +28,7 @@ import com.hdbcoders.cdcwallet.R
  * ink #0F141B (>3:0 on every lifted status/category fill).
  */
 enum class DarkPalette(val labelRes: Int) {
-    OBSIDIAN_GOLD(R.string.dark_palette_obsidian_gold),
+    MIDNIGHT_GOLD(R.string.dark_palette_midnight_gold),
     EMBER_COPPER(R.string.dark_palette_ember_copper),
 }
 
@@ -44,13 +44,15 @@ data class DarkTheme(
 )
 
 /**
- * Obsidian Gold - the app's shipped dark theme (the classic navy + gold
- * look). Tokens live in [DarkRedesignColors] (RedesignColors.kt); this M3
+ * Midnight Gold - the app's shipped dark theme (the classic deep-navy + gold
+ * look; renamed from "Obsidian Gold" because the canvas is unmistakably
+ * navy, not jet-black - Midnight names the scene honestly). Tokens live in
+ * [DarkRedesignColors] (RedesignColors.kt); this M3
  * scheme maps them with the same commented-rule discipline as the light
  * palettes (no orphan literals): every role either maps a token or states
  * its derivation rule.
  */
-private fun obsidianGoldM3(colors: RedesignColors): ColorScheme = darkColorScheme(
+private fun midnightGoldM3(colors: RedesignColors): ColorScheme = darkColorScheme(
     primary = colors.accent,
     onPrimary = colors.onAccent,
     primaryContainer = colors.accentSoft,
@@ -153,10 +155,10 @@ private val emberColors = RedesignColors(
 
 /** Registry - the single place a dark palette maps to concrete colors. */
 val DarkThemes: Map<DarkPalette, DarkTheme> = mapOf(
-    DarkPalette.OBSIDIAN_GOLD to DarkTheme(
-        DarkPalette.OBSIDIAN_GOLD,
+    DarkPalette.MIDNIGHT_GOLD to DarkTheme(
+        DarkPalette.MIDNIGHT_GOLD,
         DarkRedesignColors,
-        obsidianGoldM3(DarkRedesignColors),
+        midnightGoldM3(DarkRedesignColors),
     ),
     DarkPalette.EMBER_COPPER to DarkTheme(
         DarkPalette.EMBER_COPPER,
@@ -170,7 +172,7 @@ private fun emberM3(colors: RedesignColors): ColorScheme = darkColorScheme(
     onPrimary = colors.onAccent,
     primaryContainer = colors.accentSoft,
     onPrimaryContainer = Color(0xFFF4DCC5), // pale clay: 9.7:1 on accentSoft-over-surface
-    // Derived from textSecondary/background - same rule as Obsidian Gold and
+    // Derived from textSecondary/background - same rule as Midnight Gold and
     // the light schemes; no orphan literals.
     secondary = colors.textSecondary,
     onSecondary = colors.background,
@@ -204,7 +206,7 @@ private fun emberM3(colors: RedesignColors): ColorScheme = darkColorScheme(
     // M3 completeness - inverseSurface is intentionally LIGHT in dark mode:
     // transient surfaces (Snackbar) flip to the classic light card. The
     // inverse button uses the flagship light accent (CREAM gold), same rule
-    // as Obsidian Gold.
+    // as Midnight Gold.
     inverseSurface = colors.textPrimary,
     inverseOnSurface = colors.background,
     inversePrimary = Color(0xFFB07F27),
@@ -214,9 +216,22 @@ private fun emberM3(colors: RedesignColors): ColorScheme = darkColorScheme(
 )
 
 /** Default when nothing (or something invalid) is persisted. */
-fun defaultDarkPalette(): DarkPalette = DarkPalette.OBSIDIAN_GOLD
+fun defaultDarkPalette(): DarkPalette = DarkPalette.MIDNIGHT_GOLD
 
-/** Parse a stored string, falling back to Obsidian Gold on null/unknown. */
-fun parseStoredDarkPalette(stored: String?): DarkPalette =
-    DarkPalette.entries.firstOrNull { it.name.equals(stored, ignoreCase = true) }
-        ?: DarkPalette.OBSIDIAN_GOLD
+/**
+ * Parse a stored string, falling back to Midnight Gold on null/unknown.
+ *
+ * Legacy-key migration: releases before the rename persisted the shipped
+ * dark palette as "obsidian_gold". That key must keep resolving to this
+ * palette (its enum name changed, its identity did not) or every existing
+ * user silently drops back to the default - indistinguishable from their
+ * choice being lost. Never remove this alias while any install may still
+ * carry the old pref.
+ */
+fun parseStoredDarkPalette(stored: String?): DarkPalette {
+    if (!stored.isNullOrBlank() && stored.equals("obsidian_gold", ignoreCase = true)) {
+        return DarkPalette.MIDNIGHT_GOLD
+    }
+    return DarkPalette.entries.firstOrNull { it.name.equals(stored, ignoreCase = true) }
+        ?: DarkPalette.MIDNIGHT_GOLD
+}

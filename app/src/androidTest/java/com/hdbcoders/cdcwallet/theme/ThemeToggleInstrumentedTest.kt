@@ -143,17 +143,20 @@ class ThemeToggleInstrumentedTest {
     fun darkPaletteChoicePersistsAcrossStoreRecreation() {
         // Mirror of the light-palette contract: the dark palette choice is
         // persisted under dark_palette and survives store re-creation; a
-        // corrupt stored value falls back to the shipped Obsidian Gold.
-        ThemeModeStore(appContext).setDarkPalette(DarkPalette.OBSIDIAN_GOLD)
-        assertEquals(DarkPalette.OBSIDIAN_GOLD, ThemeModeStore(appContext).darkTheme)
+        // corrupt stored value falls back to the shipped Midnight Gold.
+        ThemeModeStore(appContext).setDarkPalette(DarkPalette.MIDNIGHT_GOLD)
+        assertEquals(DarkPalette.MIDNIGHT_GOLD, ThemeModeStore(appContext).darkTheme)
         themePrefs().edit().putString("dark_palette", "nocturne").commit()
-        assertEquals(DarkPalette.OBSIDIAN_GOLD, ThemeModeStore(appContext).darkTheme)
+        assertEquals(DarkPalette.MIDNIGHT_GOLD, ThemeModeStore(appContext).darkTheme)
+        // Legacy key from before the rename must migrate to the same palette.
+        themePrefs().edit().putString("dark_palette", "obsidian_gold").commit()
+        assertEquals(DarkPalette.MIDNIGHT_GOLD, ThemeModeStore(appContext).darkTheme)
     }
 
     @Test
-    fun settingsDarkThemeSection_listsObsidianGoldAndIsSelectable() {
+    fun settingsDarkThemeSection_listsMidnightGoldAndIsSelectable() {
         // Spec 07 §7.2: Settings has a Dark Themes section - one radio row per
-        // registered dark palette (Obsidian Gold today, pre-selected); while
+        // registered dark palette (Midnight Gold today, pre-selected); while
         // light mode is active the section shows the dark-mode-only hint.
         val store = ThemeModeStore(appContext)
         store.setThemeMode(ThemeMode.LIGHT)
@@ -170,7 +173,7 @@ class ThemeToggleInstrumentedTest {
         }
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Dark Themes").assertIsDisplayed()
-        composeRule.onNodeWithText("Obsidian Gold").assertIsDisplayed().assertIsSelected()
+        composeRule.onNodeWithText("Midnight Gold").assertIsDisplayed().assertIsSelected()
         composeRule.onNodeWithText("Themes apply to dark mode. Light mode keeps its own look.")
             .assertIsDisplayed()
     }

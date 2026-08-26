@@ -123,7 +123,7 @@ internal fun RedesignColors.resolved(): RedesignColors = copy(
 
 /**
  * Dark mode - deep navy canvas, raised navy surfaces, gold accents. This is
- * the Obsidian Gold dark palette's token table (the DarkThemes.kt registry),
+ * the Midnight Gold dark palette's token table (the DarkThemes.kt registry),
  * the shipped dark theme used for every light palette (product decision).
  * Text-slot
  * fallbacks resolve here too: hero eyebrow/`$` and menu selection render

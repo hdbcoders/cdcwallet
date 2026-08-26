@@ -147,7 +147,7 @@
     <!-- Settings: Dark Themes (dark-palette picker). -->
     <string name="settings_dark_appearance">Dark Themes</string>
     <string name="settings_palette_dark_hint">Themes apply to dark mode. Light mode keeps its own look.</string>
-    <string name="dark_palette_obsidian_gold">Obsidian Gold</string>
+    <string name="dark_palette_midnight_gold">Midnight Gold</string>
     <string name="dark_palette_ember_copper">Ember Copper</string>
     <string name="export_backup">Export backup</string>
     <string name="exporting_backup">Encrypting and Exporting backup</string>

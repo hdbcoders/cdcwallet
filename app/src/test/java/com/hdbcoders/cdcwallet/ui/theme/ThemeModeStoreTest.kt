@@ -129,10 +129,15 @@ class ThemeModeStoreTest {
     }
 
     @Test
-    fun darkPaletteParsingDefaultsToObsidianGoldOnNullOrUnknown() {
-        assertEquals(DarkPalette.OBSIDIAN_GOLD, parseStoredDarkPalette(null))
-        assertEquals(DarkPalette.OBSIDIAN_GOLD, parseStoredDarkPalette("garbage"))
-        assertEquals(DarkPalette.OBSIDIAN_GOLD, parseStoredDarkPalette("NOCTURNE"))
+    fun darkPaletteParsingDefaultsToMidnightGoldOnNullOrUnknown() {
+        assertEquals(DarkPalette.MIDNIGHT_GOLD, parseStoredDarkPalette(null))
+        assertEquals(DarkPalette.MIDNIGHT_GOLD, parseStoredDarkPalette("garbage"))
+        assertEquals(DarkPalette.MIDNIGHT_GOLD, parseStoredDarkPalette("NOCTURNE"))
+        // Legacy-key migration: pre-rename installs persisted "obsidian_gold".
+        // That key must keep resolving to this palette or existing users lose
+        // their selection to the default.
+        assertEquals(DarkPalette.MIDNIGHT_GOLD, parseStoredDarkPalette("obsidian_gold"))
+        assertEquals(DarkPalette.MIDNIGHT_GOLD, parseStoredDarkPalette("OBSIDIAN_GOLD"))
     }
 
     @Test
@@ -144,14 +149,14 @@ class ThemeModeStoreTest {
     }
 
     @Test
-    fun obsidianGoldRegistryEntryMatchesShippedTokens() {
+    fun midnightGoldRegistryEntryMatchesShippedTokens() {
         // Guard against accidental edits to the shipped default dark palette:
         // the registry entry must resolve to the exact shipped token table.
-        val obsidian = DarkThemes.getValue(DarkPalette.OBSIDIAN_GOLD)
-        assertEquals(DarkRedesignColors, obsidian.colors)
+        val midnight = DarkThemes.getValue(DarkPalette.MIDNIGHT_GOLD)
+        assertEquals(DarkRedesignColors, midnight.colors)
         // Contract-critical values (WCAG audit 2026-08-26): gold accentText
         // and amber warningText must stay AA on the dark surfaces.
-        assertEquals(Color(0xFFC9A24B), obsidian.colors.accentText)
-        assertEquals(Color(0xFFC58A1F), obsidian.colors.warningText)
+        assertEquals(Color(0xFFC9A24B), midnight.colors.accentText)
+        assertEquals(Color(0xFFC58A1F), midnight.colors.warningText)
     }
 }

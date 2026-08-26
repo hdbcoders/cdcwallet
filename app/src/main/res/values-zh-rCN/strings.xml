@@ -131,7 +131,7 @@
     <string name="palette_ocean">天蓝色</string>
     <string name="settings_dark_appearance">深色主题</string>
     <string name="settings_palette_dark_hint">主题仅应用于深色模式。浅色模式保持原有外观。</string>
-    <string name="dark_palette_obsidian_gold">黑曜金</string>
+    <string name="dark_palette_midnight_gold">午夜金</string>
     <string name="dark_palette_ember_copper">炭火铜</string>
     <string name="export_backup">导出备份</string>
     <string name="exporting_backup">正在加密并导出备份</string>
