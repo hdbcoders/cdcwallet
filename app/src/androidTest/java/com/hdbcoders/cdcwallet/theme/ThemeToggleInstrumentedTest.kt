@@ -3,6 +3,7 @@ package com.hdbcoders.cdcwallet.theme
 import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -10,13 +11,16 @@ import androidx.compose.ui.test.performClick
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.hdbcoders.cdcwallet.data.backup.BackupFlow
 import com.hdbcoders.cdcwallet.data.RoomVoucherRepository
 import com.hdbcoders.cdcwallet.data.db.AppDatabase
 import com.hdbcoders.cdcwallet.data.db.SqlCipherNative
 import com.hdbcoders.cdcwallet.extraction.ExtractionCoordinator
 import com.hdbcoders.cdcwallet.extraction.ExtractionEngine
 import com.hdbcoders.cdcwallet.ui.list.VoucherListScreen
+import com.hdbcoders.cdcwallet.ui.settings.SettingsScreen
 import com.hdbcoders.cdcwallet.ui.theme.AppTheme
+import com.hdbcoders.cdcwallet.ui.theme.DarkPalette
 import com.hdbcoders.cdcwallet.ui.theme.LanguageStore
 import com.hdbcoders.cdcwallet.ui.theme.ThemeMode
 import com.hdbcoders.cdcwallet.ui.theme.ThemeModeStore
@@ -133,6 +137,42 @@ class ThemeToggleInstrumentedTest {
         composeRule.onNodeWithText("Light Mode").assertIsDisplayed()
         // The choice persists.
         assertEquals(ThemeMode.DARK, ThemeModeStore(appContext).mode)
+    }
+
+    @Test
+    fun darkPaletteChoicePersistsAcrossStoreRecreation() {
+        // Mirror of the light-palette contract: the dark palette choice is
+        // persisted under dark_palette and survives store re-creation; a
+        // corrupt stored value falls back to the shipped Obsidian Gold.
+        ThemeModeStore(appContext).setDarkPalette(DarkPalette.OBSIDIAN_GOLD)
+        assertEquals(DarkPalette.OBSIDIAN_GOLD, ThemeModeStore(appContext).darkTheme)
+        themePrefs().edit().putString("dark_palette", "nocturne").commit()
+        assertEquals(DarkPalette.OBSIDIAN_GOLD, ThemeModeStore(appContext).darkTheme)
+    }
+
+    @Test
+    fun settingsDarkThemeSection_listsObsidianGoldAndIsSelectable() {
+        // Spec 07 §7.2: Settings has a Dark Themes section - one radio row per
+        // registered dark palette (Obsidian Gold today, pre-selected); while
+        // light mode is active the section shows the dark-mode-only hint.
+        val store = ThemeModeStore(appContext)
+        store.setThemeMode(ThemeMode.LIGHT)
+        val repository = RoomVoucherRepository(database)
+        composeRule.setContent {
+            AppTheme(store.mode, store.palette, store.darkTheme) {
+                SettingsScreen(
+                    backupFlow = BackupFlow(repository),
+                    repository = repository,
+                    themeModeStore = store,
+                    onBack = {},
+                )
+            }
+        }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Dark Themes").assertIsDisplayed()
+        composeRule.onNodeWithText("Obsidian Gold").assertIsDisplayed().assertIsSelected()
+        composeRule.onNodeWithText("Themes apply to dark mode. Light mode keeps its own look.")
+            .assertIsDisplayed()
     }
 
     private fun themePrefs() =

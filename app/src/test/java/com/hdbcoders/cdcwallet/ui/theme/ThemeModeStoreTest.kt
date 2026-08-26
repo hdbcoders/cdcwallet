@@ -109,4 +109,31 @@ class ThemeModeStoreTest {
         assertFalse(storedModeNeedsRewrite("light"))
         assertFalse(storedModeNeedsRewrite("dark"))
     }
+
+    @Test
+    fun darkPaletteParsingDefaultsToObsidianGoldOnNullOrUnknown() {
+        assertEquals(DarkPalette.OBSIDIAN_GOLD, parseStoredDarkPalette(null))
+        assertEquals(DarkPalette.OBSIDIAN_GOLD, parseStoredDarkPalette("garbage"))
+        assertEquals(DarkPalette.OBSIDIAN_GOLD, parseStoredDarkPalette("NOCTURNE"))
+    }
+
+    @Test
+    fun darkPaletteParsingAcceptsEveryEntryCaseInsensitively() {
+        for (palette in DarkPalette.entries) {
+            assertEquals(palette, parseStoredDarkPalette(palette.name))
+            assertEquals(palette, parseStoredDarkPalette(palette.name.lowercase()))
+        }
+    }
+
+    @Test
+    fun obsidianGoldRegistryEntryMatchesShippedTokens() {
+        // Guard against accidental edits to the shipped default dark palette:
+        // the registry entry must resolve to the exact shipped token table.
+        val obsidian = DarkThemes.getValue(DarkPalette.OBSIDIAN_GOLD)
+        assertEquals(DarkRedesignColors, obsidian.colors)
+        // Contract-critical values (WCAG audit 2026-08-26): gold accentText
+        // and amber warningText must stay AA on the dark surfaces.
+        assertEquals(Color(0xFFC9A24B), obsidian.colors.accentText)
+        assertEquals(Color(0xFFC58A1F), obsidian.colors.warningText)
+    }
 }

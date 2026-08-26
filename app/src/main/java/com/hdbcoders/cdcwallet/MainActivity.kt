@@ -196,6 +196,7 @@ class MainActivity : ComponentActivity() {
             AppTheme(
                 container.themeModeStore.mode,
                 palette = container.themeModeStore.palette,
+                darkPalette = container.themeModeStore.darkTheme,
                 fontScale = container.fontScaleStore.scale,
                 dyslexiaFont = container.dyslexiaFontStore.let { if (it.enabled) it.font else null },
             ) {

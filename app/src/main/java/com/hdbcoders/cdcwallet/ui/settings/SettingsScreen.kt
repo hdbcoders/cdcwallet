@@ -65,6 +65,8 @@ import com.hdbcoders.cdcwallet.data.backup.BackupFlow
 import com.hdbcoders.cdcwallet.data.model.VoucherBackupPayload
 import com.hdbcoders.cdcwallet.ui.components.AppDialogSurface
 import com.hdbcoders.cdcwallet.ui.components.DialogButtonRow
+import com.hdbcoders.cdcwallet.ui.theme.DarkPalette
+import com.hdbcoders.cdcwallet.ui.theme.DarkThemes
 import com.hdbcoders.cdcwallet.ui.theme.LightPalette
 import com.hdbcoders.cdcwallet.ui.theme.LightThemes
 import com.hdbcoders.cdcwallet.ui.theme.RedesignColors
@@ -167,6 +169,11 @@ fun SettingsScreen(
             AppearanceSection(
                 selected = themeModeStore.palette,
                 onSelect = { themeModeStore.setLightPalette(it) },
+                darkModeActive = themeModeStore.mode == ThemeMode.DARK,
+            )
+            DarkAppearanceSection(
+                selected = themeModeStore.darkTheme,
+                onSelect = { themeModeStore.setDarkPalette(it) },
                 darkModeActive = themeModeStore.mode == ThemeMode.DARK,
             )
             Text(
@@ -298,7 +305,7 @@ private fun AppearanceSection(
     darkModeActive: Boolean = false,
 ) {
     Text(
-        text = stringResource(R.string.settings_appearance),
+        text = stringResource(R.string.settings_light_appearance),
         style = MaterialTheme.typography.titleMedium,
     )
     LightPalette.entries.forEach { palette ->
@@ -349,6 +356,89 @@ private fun PaletteSwatch(
             .clip(RoundedCornerShape(8.dp))
             .background(
                 Brush.linearGradient(listOf(colors.summaryStart, colors.summaryEnd)),
+            ),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(start = 6.dp)
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(colors.accent),
+        )
+    }
+}
+
+/**
+ * Dark Themes section (dark-palette picker, spec 07 §7.2): one radio row per
+ * [DarkPalette] entry, each with a mini swatch (navy canvas + gold accent
+ * dot) so the choice is previewable before applying. Selecting a row calls
+ * [onSelect], which persists and applies the palette instantly via
+ * ThemeModeStore snapshot state - no restart needed. This is the mirror of
+ * [AppearanceSection]: dark/light mode itself is NOT controlled here (the
+ * drawer toggle stays the mode switch), and while light mode is active
+ * ([darkModeActive] == false) a hint explains the palettes affect dark mode
+ * only.
+ */
+@Composable
+private fun DarkAppearanceSection(
+    selected: DarkPalette,
+    onSelect: (DarkPalette) -> Unit,
+    darkModeActive: Boolean = true,
+) {
+    Text(
+        text = stringResource(R.string.settings_dark_appearance),
+        style = MaterialTheme.typography.titleMedium,
+    )
+    DarkPalette.entries.forEach { palette ->
+        val colors = DarkThemes.getValue(palette).colors
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .selectable(
+                    selected = palette == selected,
+                    onClick = { if (palette != selected) onSelect(palette) },
+                )
+                // TalkBack announces "selected"/"not selected" per row.
+                .semantics { this.selected = palette == selected }
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(
+                selected = palette == selected,
+                onClick = null,
+            )
+            DarkPaletteSwatch(colors, Modifier.padding(start = 8.dp, end = 12.dp))
+            Text(
+                text = stringResource(palette.labelRes),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
+    }
+    if (!darkModeActive) {
+        Text(
+            text = stringResource(R.string.settings_palette_dark_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 2.dp),
+        )
+    }
+}
+
+/** Mini preview of a dark palette: the canvas-to-raised-surface chip with
+ *  the accent dot on top - the two surfaces that define each palette's
+ *  personality (the dark mirror of [PaletteSwatch]). */
+@Composable
+private fun DarkPaletteSwatch(
+    colors: RedesignColors,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(width = 46.dp, height = 30.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                Brush.linearGradient(listOf(colors.background, colors.surfaceRaised)),
             ),
         contentAlignment = Alignment.CenterStart,
     ) {

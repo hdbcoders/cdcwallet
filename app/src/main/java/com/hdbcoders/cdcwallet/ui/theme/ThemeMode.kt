@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -17,7 +15,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
@@ -82,9 +79,18 @@ class ThemeModeStore(context: Context) {
 
     /**
      * Light-mode palette choice (theme picker). Only meaningful when [mode]
-     * is LIGHT; dark mode keeps its single navy+gold look for every palette.
+     * is LIGHT; dark mode resolves through [darkPalette] instead.
      */
     var palette by mutableStateOf(defaultLightPalette())
+        private set
+
+    /**
+     * Dark-theme palette choice (theme picker, Settings → Dark Themes). Only
+     * meaningful when [mode] is DARK; light mode resolves through [palette]
+     * instead. Unknown/corrupt stored values fall back to Obsidian Gold, the
+     * shipped default (same rule as [palette] → Cream).
+     */
+    var darkTheme by mutableStateOf(defaultDarkPalette())
         private set
 
     init {
@@ -98,6 +104,7 @@ class ThemeModeStore(context: Context) {
             prefs.edit().putString(KEY_MODE, mode.name.lowercase()).apply()
         }
         palette = parseStoredPalette(prefs.getString(KEY_PALETTE, null))
+        darkTheme = parseStoredDarkPalette(prefs.getString(KEY_DARK_PALETTE, null))
     }
 
     /** Flips LIGHT ↔ DARK. */
@@ -114,6 +121,12 @@ class ThemeModeStore(context: Context) {
         prefs.edit().putString(KEY_PALETTE, newPalette.name.lowercase()).apply()
     }
 
+    /** Persists and applies a dark palette (Settings Dark Themes picker). */
+    fun setDarkPalette(newPalette: DarkPalette) {
+        darkTheme = newPalette
+        prefs.edit().putString(KEY_DARK_PALETTE, newPalette.name.lowercase()).apply()
+    }
+
     private fun isSystemDark(context: Context): Boolean {
         val uiMode = context.resources.configuration.uiMode
         return (uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -123,6 +136,7 @@ class ThemeModeStore(context: Context) {
         const val PREFS_NAME = "voucher_theme_prefs"
         const val KEY_MODE = "theme_mode"
         const val KEY_PALETTE = "light_palette"
+        const val KEY_DARK_PALETTE = "dark_palette"
     }
 }
 
@@ -131,13 +145,15 @@ class ThemeModeStore(context: Context) {
 fun AppTheme(
     mode: ThemeMode,
     palette: LightPalette = defaultLightPalette(),
+    darkPalette: DarkPalette = defaultDarkPalette(),
     fontScale: AppFontScale = AppFontScale.DEFAULT,
     dyslexiaFont: AppDyslexiaFont? = null,
     content: @Composable () -> Unit,
 ) {
     val dark = mode == ThemeMode.DARK
     val lightTheme = LightThemes.getValue(palette)
-    val redesign = if (dark) DarkRedesignColors else lightTheme.colors
+    val darkTheme = DarkThemes.getValue(darkPalette)
+    val redesign = if (dark) darkTheme.colors else lightTheme.colors
     // App-level text size: every `sp` in the app (typography roles and the
     // hardcoded sizes in components) is scaled by the chosen multiplier on
     // top of the system font scale, capped at MAX_TOTAL_FONT_SCALE so
@@ -168,7 +184,7 @@ fun AppTheme(
         LocalContentColor provides redesign.textPrimary,
     ) {
         MaterialTheme(
-            colorScheme = if (dark) DarkScheme else lightTheme.m3,
+            colorScheme = if (dark) darkTheme.m3 else lightTheme.m3,
             typography = typographyFor(dyslexiaFont),
         ) {
             // Root semantics node carrying testTagsAsResourceId = true: the
@@ -387,59 +403,9 @@ private fun typographyFor(font: AppDyslexiaFont?): Typography {
 }
 
 /* ------------------------------------------------------------------ */
-/* Color schemes - M3 roles mapped from the redesign tokens            */
+/* Color schemes                                                       */
 /* ------------------------------------------------------------------ */
-/* The light M3 scheme moved into LightThemes.kt (one derivation per    */
-/* palette); only DarkScheme remains here.                             */
-
-/** Dark M3 scheme - the second mockup: deep navy canvas, raised navy
- *  surfaces, gold accents, and the same danger/category hues. Derived from
- *  DarkRedesignColors with the same commented-rule discipline as the light
- *  palettes (no orphan literals): every role either maps a token or states
- *  its derivation rule. */
-private val DarkScheme = darkColorScheme(
-    primary = DarkRedesignColors.accent,
-    onPrimary = DarkRedesignColors.onAccent,
-    primaryContainer = DarkRedesignColors.accentSoft,
-    onPrimaryContainer = Color(0xFFE9D9A8), // pale gold: 9.3:1 on accentSoft-over-surface
-    // Derived from textSecondary/background - same rule as the light schemes;
-    // replaces the orphan slate family that answered to no token.
-    secondary = DarkRedesignColors.textSecondary,
-    onSecondary = DarkRedesignColors.background,
-    secondaryContainer = DarkRedesignColors.hairlineSoft,
-    onSecondaryContainer = Color(0xFFD7E0EA),
-    tertiary = DarkRedesignColors.textSecondary,
-    onTertiary = DarkRedesignColors.background,
-    tertiaryContainer = DarkRedesignColors.hairlineSoft,
-    onTertiaryContainer = DarkRedesignColors.textPrimary,
-    background = DarkRedesignColors.background,
-    onBackground = DarkRedesignColors.textPrimary,
-    surface = DarkRedesignColors.surface,
-    onSurface = DarkRedesignColors.textPrimary,
-    surfaceVariant = DarkRedesignColors.surfaceRaised,
-    onSurfaceVariant = DarkRedesignColors.textSecondary,
-    surfaceTint = DarkRedesignColors.accent,
-    surfaceContainerLowest = Color(0xFF0B1017),
-    surfaceContainerLow = Color(0xFF141B25),
-    surfaceContainer = Color(0xFF171F2B),
-    surfaceContainerHigh = Color(0xFF202A3A),
-    surfaceContainerHighest = Color(0xFF263244),
-    outline = DarkRedesignColors.textTertiary,
-    outlineVariant = DarkRedesignColors.hairline,
-    error = DarkRedesignColors.danger,
-    onError = Color(0xFF2A0A0C),
-    // Derived from danger like the light schemes: container = danger washed
-    // over the elevated surface, on-container = danger lightened toward
-    // white until >=4.5 (measures 9.4).
-    errorContainer = Color(0xFF3B171B),
-    onErrorContainer = Color(0xFFF5B8BC),
-    // M3 completeness - without these, baseline greys/purple leak through
-    // (e.g. Snackbars). inverseSurface is intentionally LIGHT in dark mode:
-    // it flips transient surfaces (Snackbar) to the classic light card.
-    inverseSurface = DarkRedesignColors.textPrimary,
-    inverseOnSurface = DarkRedesignColors.background,
-    inversePrimary = Color(0xFFB07F27), // the CREAM accent: gold button on the light inverse card, ink content
-    surfaceDim = DarkRedesignColors.background,
-    surfaceBright = DarkRedesignColors.surfaceRaised,
-    scrim = Color.Black,
-)
+/* The light M3 schemes live in LightThemes.kt (one derivation per       */
+/* palette); the dark M3 scheme moved into DarkThemes.kt as the          */
+/* Obsidian Gold entry (registry). AppTheme resolves both via the        */
+/* registries.                                                          */
