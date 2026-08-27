@@ -21,3 +21,8 @@ keystore/
 # Agent tooling session dirs
 .impeccable/
 .opencode/
+
+# Local-only tooling (never committed): selector-driven UiAutomator walkthrough
+# driver (tools/uia-driver) - builds an ad-hoc driver APK for the manual
+# §9.2 pass; standalone from the committed androidTest suite by design.
+tools/
