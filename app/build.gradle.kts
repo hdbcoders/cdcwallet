@@ -37,8 +37,11 @@ android {
         //     known (REQ-13) + About page description reword (4 locales).
         // v10 = 1.0.8-beta: senior-friendly wording (4 locales) + pin voucher
         //     + debug/release side-by-side installs (.debug suffix).
-        versionCode = 10
-        versionName = "1.0.8-beta"
+        // v11 = 1.0.9-beta: theme overhaul - dark theme picker (Midnight Gold,
+        //     Ember Copper), WCAG light palettes, palette renames + legacy-key
+        //     migration, JADE tonal mint, pin auto-scroll, splash alignment.
+        versionCode = 11
+        versionName = "1.0.9-beta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
