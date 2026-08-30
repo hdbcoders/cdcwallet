@@ -371,14 +371,14 @@ private fun PaletteSwatch(
 
 /**
  * Dark Themes section (dark-palette picker, spec 07 §7.2): one radio row per
- * [DarkPalette] entry, each with a mini swatch (navy canvas + gold accent
- * dot) so the choice is previewable before applying. Selecting a row calls
- * [onSelect], which persists and applies the palette instantly via
- * ThemeModeStore snapshot state - no restart needed. This is the mirror of
- * [AppearanceSection]: dark/light mode itself is NOT controlled here (the
- * drawer toggle stays the mode switch), and while light mode is active
- * ([darkModeActive] == false) a hint explains the palettes affect dark mode
- * only.
+ * visible [DarkPalette] entry (hiddenInPicker rows are skipped), each with a
+ * mini swatch (navy canvas + gold accent dot) so the choice is previewable
+ * before applying. Selecting a row calls [onSelect], which persists and
+ * applies the palette instantly via ThemeModeStore snapshot state - no
+ * restart needed. This is the mirror of [AppearanceSection]: dark/light mode
+ * itself is NOT controlled here (the drawer toggle stays the mode switch),
+ * and while light mode is active ([darkModeActive] == false) a hint explains
+ * the palettes affect dark mode only.
  */
 @Composable
 private fun DarkAppearanceSection(
@@ -390,7 +390,10 @@ private fun DarkAppearanceSection(
         text = stringResource(R.string.settings_dark_appearance),
         style = MaterialTheme.typography.titleMedium,
     )
-    DarkPalette.entries.forEach { palette ->
+    // hiddenInPicker entries (currently Moss Green) stay registered and
+    // parseable - a user who already had one selected keeps it active - but
+    // never render a row here.
+    DarkPalette.entries.filter { !it.hiddenInPicker }.forEach { palette ->
         val colors = DarkThemes.getValue(palette).colors
         Row(
             modifier = Modifier

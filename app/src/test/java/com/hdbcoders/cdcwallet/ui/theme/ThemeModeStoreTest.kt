@@ -104,6 +104,51 @@ class ThemeModeStoreTest {
     }
 
     @Test
+    fun mossGreenRegistryEntryMatchesShippedTokens() {
+        // Guard against accidental edits to dark sibling #3 (visual gate
+        // locked 2026-08-30 via tmp/dark-gate-3way: spruce canvas + sage-jade
+        // accent; accent owns interactive, leaf heart/ok own status).
+        val moss = DarkThemes.getValue(DarkPalette.MOSS_GREEN).colors
+        assertEquals(Color(0xFF0F1712), moss.background)
+        assertEquals(Color(0xFF7CC49A), moss.accent)
+        assertEquals(Color(0xFF7CC49A), moss.accentText) // resolves to accent
+        assertEquals(Color(0xFF7CC49A), moss.heroAccentText)
+        assertEquals(Color(0xFFE3A63C), moss.warningText) // resolves to warning amber
+        assertEquals(Color(0xFF0E1A13), moss.onFill)
+        assertEquals(Color(0xFF0C1F15), moss.onAccent)
+        // dangerText RESOLVES to raw danger: 4.81 on raised clears AA (no override).
+        assertEquals(moss.danger, moss.dangerText)
+    }
+
+    @Test
+    fun auberginePurpleRegistryEntryMatchesShippedTokens() {
+        // Guard against accidental edits to dark sibling #4 (visual gate
+        // locked 2026-08-30 via tmp/dark-gate-3way: aubergine canvas + orchid
+        // accent ~57 deg from market violet - no role isolation needed).
+        val aub = DarkThemes.getValue(DarkPalette.AUBERGINE_PURPLE).colors
+        assertEquals(Color(0xFF140F1A), aub.background)
+        assertEquals(Color(0xFFC4A0D4), aub.accent)
+        assertEquals(Color(0xFFC4A0D4), aub.accentText) // resolves to accent
+        assertEquals(Color(0xFFC4A0D4), aub.heroAccentText)
+        assertEquals(Color(0xFFE3A63C), aub.warningText) // resolves to warning amber
+        assertEquals(Color(0xFF150D1B), aub.onFill)
+        assertEquals(Color(0xFF1C0F24), aub.onAccent)
+        // dangerText RESOLVES to raw danger: 5.40 on raised clears AA (no override).
+        assertEquals(aub.danger, aub.dangerText)
+    }
+
+    @Test
+    fun darkPalettePickerVisibilityFlags() {
+        // Moss Green is kept out of the picker for now (implemented and
+        // registry-complete, hidden until product says show it); Ember Copper
+        // stays visible alongside Aubergine Purple.
+        assertTrue(DarkPalette.MOSS_GREEN.hiddenInPicker)
+        assertFalse(DarkPalette.MIDNIGHT_GOLD.hiddenInPicker)
+        assertFalse(DarkPalette.EMBER_COPPER.hiddenInPicker)
+        assertFalse(DarkPalette.AUBERGINE_PURPLE.hiddenInPicker)
+    }
+
+    @Test
     fun unknownStoredValueResolvesFromDevice() {
         assertEquals(ThemeMode.LIGHT, resolveInitialMode(isSystemDark = false, stored = "bogus"))
         assertEquals(ThemeMode.DARK, resolveInitialMode(isSystemDark = true, stored = "bogus"))

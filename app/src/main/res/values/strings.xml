@@ -149,6 +149,8 @@
     <string name="settings_palette_dark_hint">Themes apply to dark mode. Light mode keeps its own look.</string>
     <string name="dark_palette_midnight_gold">Midnight Gold</string>
     <string name="dark_palette_ember_copper">Ember Copper</string>
+    <string name="dark_palette_moss_green">Moss Green</string>
+    <string name="dark_palette_aubergine_purple">Aubergine Purple</string>
     <string name="export_backup">Export backup</string>
     <string name="exporting_backup">Encrypting and Exporting backup</string>
     <string name="export_desc">Saves an encrypted copy of all your voucher links to Downloads folder. Set a password and remember it, you cannot import this backup without the password.</string>

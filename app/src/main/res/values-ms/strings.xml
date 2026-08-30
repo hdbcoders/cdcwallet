@@ -133,6 +133,8 @@
     <string name="settings_palette_dark_hint">Tema hanya terpakai pada mod gelap. Mod cerah mengekalkan penampilannya sendiri.</string>
     <string name="dark_palette_midnight_gold">Emas Tengah Malam</string>
     <string name="dark_palette_ember_copper">Tembaga Bara</string>
+    <string name="dark_palette_moss_green">Hijau Lumut</string>
+    <string name="dark_palette_aubergine_purple">Ungu Terung</string>
     <string name="export_backup">Eksport sandaran</string>
     <string name="exporting_backup">Menyulit dan Mengeksport sandaran</string>
     <string name="export_desc">Menyimpan salinan disulitkan semua pautan baucar anda ke folder Muat Turun. Tetapkan kata laluan dan ingatlah, anda tidak boleh mengimport sandaran ini tanpa kata laluan tersebut.</string>

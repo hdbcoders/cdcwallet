@@ -133,6 +133,8 @@
     <string name="settings_palette_dark_hint">主题仅应用于深色模式。浅色模式保持原有外观。</string>
     <string name="dark_palette_midnight_gold">午夜金</string>
     <string name="dark_palette_ember_copper">炭火铜</string>
+    <string name="dark_palette_moss_green">苔藓绿</string>
+    <string name="dark_palette_aubergine_purple">茄紫色</string>
     <string name="export_backup">导出备份</string>
     <string name="exporting_backup">正在加密并导出备份</string>
     <string name="export_desc">将所有购物券链接的加密副本保存到“下载”文件夹。设置一个密码并记住它，没有密码就无法导入此备份。</string>
