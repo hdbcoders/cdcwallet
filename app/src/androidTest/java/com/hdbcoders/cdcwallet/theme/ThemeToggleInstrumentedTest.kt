@@ -155,9 +155,11 @@ class ThemeToggleInstrumentedTest {
 
     @Test
     fun settingsDarkThemeSection_listsMidnightGoldAndIsSelectable() {
-        // Spec 07 §7.2: Settings has a Dark Themes section - one radio row per
-        // registered dark palette (Midnight Gold today, pre-selected); while
-        // light mode is active the section shows the dark-mode-only hint.
+        // Spec 07 §7.2: Settings has a Dark Themes section - one swatch cell
+        // per visible dark palette, three per row, NO visible name (the name
+        // lives in contentDescription; Midnight Gold is the default,
+        // pre-selected); while light mode is active the section shows the
+        // dark-mode-only hint.
         val store = ThemeModeStore(appContext)
         store.setThemeMode(ThemeMode.LIGHT)
         val repository = RoomVoucherRepository(database)
@@ -173,7 +175,8 @@ class ThemeToggleInstrumentedTest {
         }
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Dark Themes").assertIsDisplayed()
-        composeRule.onNodeWithText("Midnight Gold").assertIsDisplayed().assertIsSelected()
+        composeRule.onNodeWithContentDescription("Midnight Gold")
+            .assertIsDisplayed().assertIsSelected()
         composeRule.onNodeWithText("Themes apply to dark mode. Light mode keeps its own look.")
             .assertIsDisplayed()
     }
