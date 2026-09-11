@@ -20,7 +20,6 @@
     <string name="delete">நீக்கு</string>
     <string name="copy_url">URL நகலெடு</string>
     <string name="link_copied">இணைப்பு நகலெடுக்கப்பட்டது</string>
-    <string name="undo">செயல்தவிர்</string>
 
     <!-- Update check (REQ-13). -->
     <string name="check_for_update">புதுப்பிப்பைச் சரிபார்க்கவும்</string>
@@ -39,7 +38,6 @@
     <string name="restore">மீட்டெடு</string>
     <string name="pin">பொருத்து</string>
     <string name="unpin">அகற்று</string>
-    <string name="pinned_desc">பொருத்தப்பட்டது</string>
     <string name="pin_swap_title">இந்த வவுச்சரைப் பொருத்தவா?</string>
     <string name="pin_swap_body">%1$s பொருத்தப்பட்டுள்ளது; அகற்றப்படும்.</string>
     <string name="empty_list">இன்னும் வவுச்சர் இணைப்புகள் இல்லை. + பொத்தானைப் பயன்படுத்திச் சேர்க்கவும்.</string>
@@ -47,18 +45,6 @@
     <string name="balance_eyebrow">இருப்பு</string>
     <string name="balance">இருப்பு</string>
     <string name="more_categories">மேலும் %1$d</string>
-    <plurals name="archived_count">
-        <item quantity="one">காப்பகம் (%1$d)</item>
-        <item quantity="other">காப்பகம் (%1$d)</item>
-    </plurals>
-    <plurals name="summary_links">
-        <item quantity="one">மொத்தம் %1$d வவுச்சர் இணைப்பு</item>
-        <item quantity="other">மொத்தம் %1$d வவுச்சர் இணைப்புகள்</item>
-    </plurals>
-    <plurals name="hero_links">
-        <item quantity="one">%1$d இணைப்பு</item>
-        <item quantity="other">%1$d இணைப்புகள்</item>
-    </plurals>
 
     <string name="no_archived">இன்னும் காப்பகப்படுத்தப்பட்ட வவுச்சர்கள் இல்லை</string>
 
@@ -100,7 +86,6 @@
     <string name="dark_mode">இருண்ட முறை</string>
     <string name="light_mode">ஒளி முறை</string>
 
-    <string name="language">மொழி</string>
     <!-- மொழிப் பெயர்கள் எப்போதும் அவற்றின் சொந்த எழுத்துகளில். -->
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>

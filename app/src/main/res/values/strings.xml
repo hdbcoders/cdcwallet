@@ -23,7 +23,6 @@
     <string name="delete">Delete</string>
     <string name="copy_url">Copy URL</string>
     <string name="link_copied">Link copied</string>
-    <string name="undo">Undo</string>
 
     <!-- Update check (REQ-13). -->
     <string name="check_for_update">Check for update</string>
@@ -43,7 +42,6 @@
     <string name="restore">Restore</string>
     <string name="pin">Pin</string>
     <string name="unpin">Unpin</string>
-    <string name="pinned_desc">Pinned</string>
     <string name="pin_swap_title">Pin this voucher?</string>
     <string name="pin_swap_body">%1$s is pinned and will be unpinned.</string>
     <string name="empty_list">No voucher links yet. Add one with the + button.</string>
@@ -51,19 +49,6 @@
     <string name="balance_eyebrow">Balance</string>
     <string name="balance">Balance</string>
     <string name="more_categories">+%1$d more</string>
-    <plurals name="archived_count">
-        <item quantity="one">Archived (%1$d)</item>
-        <item quantity="other">Archived (%1$d)</item>
-    </plurals>
-    <plurals name="summary_links">
-        <item quantity="one">Across %1$d voucher link</item>
-        <item quantity="other">Across %1$d voucher links</item>
-    </plurals>
-    <!-- Balance hero meta (redesign): plain count, no "Across" prefix. -->
-    <plurals name="hero_links">
-        <item quantity="one">%1$d voucher link</item>
-        <item quantity="other">%1$d voucher links</item>
-    </plurals>
 
     <!-- Archived screen (spec 05). -->
     <string name="no_archived">No archived vouchers yet</string>
@@ -113,7 +98,6 @@
     <string name="light_mode">Light Mode</string>
 
     <!-- Settings: language. -->
-    <string name="language">Language</string>
     <!-- Language names are shown in their own script in every locale. -->
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>

@@ -56,7 +56,18 @@ class DetailViewModel(
     var refreshMessageRes by mutableStateOf<Int?>(null)
         private set
 
-    /** The WebView attached by the current screen, until the row lookup lands. */
+    /**
+     * The WebView attached by the current screen, cleared as soon as the launch
+     * decision has been made.
+     *
+     * @Suppress StaticFieldLeak: the check looks for a field that can retain a
+     * Context, and a ViewModel can outlive its Activity. This WebView is the
+     * engine's app-scoped instance, built with `context.applicationContext`
+     * (ExtractionEngine.acquireVisibleWebView), so retaining it cannot retain an
+     * Activity. It is also dropped below rather than held for the ViewModel's
+     * lifetime.
+     */
+    @Suppress("StaticFieldLeak")
     private var pendingWebView: WebView? = null
 
     init {
@@ -69,6 +80,9 @@ class DetailViewModel(
             val webView = pendingWebView
             if (firstRow != null && webView != null) {
                 launchIfNeeded(firstRow, webView)
+                // The reference existed only to make this decision; the
+                // app-scoped coordinator owns the load from here.
+                pendingWebView = null
             }
         }
     }
@@ -85,8 +99,11 @@ class DetailViewModel(
         val state = uiState.value
         if (state.isLoaded) {
             state.voucher?.let { row -> launchIfNeeded(row, webView) }
+            // Launch decision made - drop the reference (see the field note).
+            pendingWebView = null
         }
-        // Not loaded yet: the init observer launches once the row lands.
+        // Not loaded yet: the init observer launches once the row lands, and
+        // clears the reference there.
     }
 
     private fun launchIfNeeded(row: VoucherGroup, webView: WebView) {

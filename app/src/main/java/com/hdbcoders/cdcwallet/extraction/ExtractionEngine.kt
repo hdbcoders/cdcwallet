@@ -151,7 +151,14 @@ class ExtractionEngine(
             (existing.parent as? ViewGroup)?.removeView(existing)
             return existing
         }
-        return WebView(context).also { view ->
+        // Application context, deliberately: this WebView is cached on the
+        // engine, which lives in the app container for the whole process, so an
+        // Activity context here would pin that Activity for the process' life
+        // (lint StaticFieldLeak, raised against DetailViewModel.pendingWebView).
+        // warmUp() already creates the instance from Application.onCreate, so
+        // this makes the normal path explicit rather than leaving an
+        // Activity-context fallback to first-tap creation.
+        return WebView(context.applicationContext).also { view ->
             visibleWebView = view
             // Explicit MATCH_PARENT is required: without it the page's viewport
             // units (100vh/100%) resolve to 0 and the RedeemSG loading screen

@@ -20,7 +20,6 @@
     <string name="delete">删除</string>
     <string name="copy_url">复制链接</string>
     <string name="link_copied">链接已复制</string>
-    <string name="undo">撤销</string>
 
     <!-- Update check (REQ-13). -->
     <string name="check_for_update">检查更新</string>
@@ -39,7 +38,6 @@
     <string name="restore">恢复</string>
     <string name="pin">置顶</string>
     <string name="unpin">取消置顶</string>
-    <string name="pinned_desc">已置顶</string>
     <string name="pin_swap_title">置顶此购物券？</string>
     <string name="pin_swap_body">%1$s 当前已置顶，将被取消置顶。</string>
     <string name="empty_list">还没有购物券链接。点 + 按钮添加。</string>
@@ -47,18 +45,6 @@
     <string name="balance_eyebrow">余额</string>
     <string name="balance">余额</string>
     <string name="more_categories">另有 %1$d 个</string>
-    <plurals name="archived_count">
-        <item quantity="one">已存档 (%1$d)</item>
-        <item quantity="other">已存档 (%1$d)</item>
-    </plurals>
-    <plurals name="summary_links">
-        <item quantity="one">共 %1$d 个购物券链接</item>
-        <item quantity="other">共 %1$d 个购物券链接</item>
-    </plurals>
-    <plurals name="hero_links">
-        <item quantity="one">%1$d 个购物券链接</item>
-        <item quantity="other">%1$d 个购物券链接</item>
-    </plurals>
 
     <string name="no_archived">暂无已存档购物券</string>
 
@@ -100,7 +86,6 @@
     <string name="dark_mode">深色模式</string>
     <string name="light_mode">浅色模式</string>
 
-    <string name="language">语言</string>
     <!-- 语言名称始终以各自文字显示。 -->
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>

@@ -20,7 +20,6 @@
     <string name="delete">Padam</string>
     <string name="copy_url">Salin URL</string>
     <string name="link_copied">Pautan disalin</string>
-    <string name="undo">Buat asal</string>
 
     <!-- Update check (REQ-13). -->
     <string name="check_for_update">Semak kemas kini</string>
@@ -39,7 +38,6 @@
     <string name="restore">Pulihkan</string>
     <string name="pin">Pin</string>
     <string name="unpin">Nyahpin</string>
-    <string name="pinned_desc">Disemat</string>
     <string name="pin_swap_title">Semat baucar ini?</string>
     <string name="pin_swap_body">%1$s disemat dan akan dinyahsemat.</string>
     <string name="empty_list">Belum ada pautan baucar. Tambah dengan butang +.</string>
@@ -47,18 +45,6 @@
     <string name="balance_eyebrow">Baki</string>
     <string name="balance">Baki</string>
     <string name="more_categories">+%1$d lagi</string>
-    <plurals name="archived_count">
-        <item quantity="one">Diarkibkan (%1$d)</item>
-        <item quantity="other">Diarkibkan (%1$d)</item>
-    </plurals>
-    <plurals name="summary_links">
-        <item quantity="one">Merentas %1$d pautan baucar</item>
-        <item quantity="other">Merentas %1$d pautan baucar</item>
-    </plurals>
-    <plurals name="hero_links">
-        <item quantity="one">%1$d pautan baucar</item>
-        <item quantity="other">%1$d pautan baucar</item>
-    </plurals>
 
     <string name="no_archived">Belum ada baucar diarkibkan</string>
 
@@ -100,7 +86,6 @@
     <string name="dark_mode">Mod Gelap</string>
     <string name="light_mode">Mod Cerah</string>
 
-    <string name="language">Bahasa</string>
     <!-- Nama bahasa sentiasa dalam skrip masing-masing. -->
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
