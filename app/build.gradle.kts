@@ -118,12 +118,19 @@ android {
     // Static analysis. The audit's Tier 3 finding was that this project had no
     // lint configuration at all - which is exactly how a dead 1.79 MB font, a
     // stale pre-rename schema directory and an unused test dependency all sat
-    // unnoticed. Report-only for now: the first run establishes the baseline,
-    // and the gate decision (fix the findings vs record an lint.xml baseline)
-    // follows that triage.
+    // unnoticed.
+    //
+    // Pre-existing findings are grandfathered into lint-baseline.xml so the gate
+    // could be switched on without a mass fix; anything NEW now fails the build.
+    // Regenerate the baseline deliberately with
+    // `./gradlew :app:updateLintBaseline` after fixing entries.
+    //
+    // warningsAsErrors is what makes the gate bite: the project has zero lint
+    // errors, so abortOnError alone would never trip on a new finding.
     lint {
-        abortOnError = false
-        warningsAsErrors = false
+        baseline = file("lint-baseline.xml")
+        abortOnError = true
+        warningsAsErrors = true
         // The androidTest set is where most of the avoidable warnings live.
         checkTestSources = true
     }
