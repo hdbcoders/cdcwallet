@@ -30,9 +30,15 @@ import com.hdbcoders.cdcwallet.BuildConfig
 import com.hdbcoders.cdcwallet.R
 
 /**
- * Hosted privacy-policy URL shown in the About page. TODO(release): replace
- * with the real hosted URL before publishing to Google Play (the Play Console
- * privacy-policy field must point at the same address).
+ * Hosted privacy-policy URL shown in the About page.
+ *
+ * Settled 2026-09-12: this is the permanent hosted address - it stays a GitHub
+ * blob URL rather than moving to a dedicated policy page. The Play Console
+ * privacy-policy field must point at this same address; if this constant ever
+ * changes, update the Console field in the same release.
+ *
+ * Fragility worth knowing: it hard-codes org/repo/branch/path, no test covers
+ * it, and a repo rename or a move of PRIVACY.md breaks the link silently.
  */
 private const val PRIVACY_POLICY_URL = "https://github.com/hdbcoders/cdcwallet/blob/main/PRIVACY.md"
 
