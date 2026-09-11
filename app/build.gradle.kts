@@ -115,6 +115,18 @@ android {
         // Compose test waits are deterministic.
         animationsDisabled = true
     }
+    // Static analysis. The audit's Tier 3 finding was that this project had no
+    // lint configuration at all - which is exactly how a dead 1.79 MB font, a
+    // stale pre-rename schema directory and an unused test dependency all sat
+    // unnoticed. Report-only for now: the first run establishes the baseline,
+    // and the gate decision (fix the findings vs record an lint.xml baseline)
+    // follows that triage.
+    lint {
+        abortOnError = false
+        warningsAsErrors = false
+        // The androidTest set is where most of the avoidable warnings live.
+        checkTestSources = true
+    }
     sourceSets {
         // Test-fixture consolidation (instrumented-test audit B9): the single
         // contract-faithful FakeVoucherRepository lives in src/sharedTest and
