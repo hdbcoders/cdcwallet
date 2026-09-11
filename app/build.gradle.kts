@@ -138,59 +138,130 @@ android {
 // soon as the test task finishes, including on failure. Target device:
 // -PandroidTestSerial=<serial> if set, else the ANDROID_SERIAL env var, else
 // plain `adb` (single-device only).
-tasks.matching { it.name == "connectedDebugAndroidTest" }.configureEach {
-    val thisTask = this
-    // The debug APK carries the ".debug" applicationId suffix (639feb7) - the
-    // reinstall/reseed/relaunch adb commands below must target the suffixed
-    // package, never the base id (which no activity resolves to). The class
-    // is fully qualified: `am start -n pkg/.MainActivity` would resolve the
-    // class against the suffixed package and not find it.
-    val debugAppId = android.defaultConfig.applicationId + ".debug"
-    val debugActivity = "$debugAppId/com.hdbcoders.cdcwallet.MainActivity"
-    fun adb(vararg args: String): Int {
-        val serial = providers.gradleProperty("androidTestSerial").orNull
-            ?: System.getenv("ANDROID_SERIAL")
-        val proc = ProcessBuilder(
-            buildList {
-                add("adb")
-                if (serial != null) {
-                    add("-s")
-                    add(serial)
-                }
-                addAll(args.toList())
-            },
-        ).inheritIO().start()
-        return proc.waitFor()
+// Implemented as a REAL task type wired with finalizedBy - NOT a
+// `gradle.taskGraph.afterTask` listener, and not a closure on a plain task.
+// Build listeners cannot be recorded by the configuration cache
+// ("registration of listener on TaskExecutionGraph.afterTask is unsupported"),
+// and a closure that touches build-script members captures the script instance,
+// which fails with "cannot serialize Gradle script object references". A task
+// type whose inputs are Property / RegularFileProperty objects serializes
+// cleanly, so both the test run and the reseed stay configuration-cache safe.
+abstract class ReseedDebugDataAfterConnectedTests : DefaultTask() {
+
+    /** Debug applicationId (".debug" suffix) - every adb call targets this package. */
+    @get:Input
+    abstract val debugAppId: Property<String>
+
+    /** Fully-qualified debug activity: `pkg/.MainActivity` would resolve against the suffixed package and fail. */
+    @get:Input
+    abstract val debugActivity: Property<String>
+
+    /** -PandroidTestSerial, else ANDROID_SERIAL; absent means plain `adb` (single-device only). */
+    @get:Optional
+    @get:Input
+    abstract val deviceSerial: Property<String>
+
+    /** The debug APK to reinstall. @Internal: it already exists via the test run's own dependency graph. */
+    @get:Internal
+    abstract val debugApk: RegularFileProperty
+
+    private fun adbCommand(vararg args: String): List<String> = buildList {
+        add("adb")
+        if (deviceSerial.isPresent) {
+            add("-s")
+            add(deviceSerial.get())
+        }
+        addAll(args.toList())
     }
-    fun reinstallAndReseedAfterTests() {
-        val apk = layout.buildDirectory.file("outputs/apk/debug/app-debug.apk").get().asFile
+
+    private fun adb(vararg args: String): Int =
+        ProcessBuilder(adbCommand(*args)).inheritIO().start().waitFor()
+
+    /** adb with captured output, for the calls whose reply is the readiness signal. */
+    private fun adbCapture(vararg args: String): Pair<Int, String> {
+        val proc = ProcessBuilder(adbCommand(*args)).redirectErrorStream(true).start()
+        val output = proc.inputStream.bufferedReader().use { it.readText() }
+        return proc.waitFor() to output
+    }
+
+    @TaskAction
+    fun reseed() {
+        // finalizedBy fires even when the test task was SKIPPED (e.g. no attached
+        // device), which the old listener deliberately did not do - so bail out
+        // unless there is a device actually available to talk to.
+        val (devicesExit, devicesOut) = runCatching { adbCapture("devices") }.getOrDefault(-1 to "")
+        val deviceAttached = devicesExit == 0 &&
+            devicesOut.lineSequence().any { it.trim().matches(Regex("""\S+\s+device""")) }
+        if (!deviceAttached) {
+            println("Skipped reseed after connected tests: no attached device.")
+            return
+        }
+        val apk = debugApk.get().asFile
         runCatching {
-            val installExit = adb("install", "-r", apk.absolutePath)
-            println("Reinstalled debug APK after connected tests (adb exit $installExit)")
-            // The uninstall above wiped the app data (including the seeded
-            // DB). SeedDevDataReceiver is registered DYNAMICALLY by
-            // DebugVoucherApp (API 36 silently drops implicit broadcasts to
-            // manifest-declared receivers), so the app must be running for
-            // the broadcast to reach it. Launch, let it register, then
-            // broadcast (which also re-enables auto-seed), and relaunch so
-            // the foreground app reflects the seeded data.
-            adb("shell", "am", "start", "-n", debugActivity)
-            Thread.sleep(2500)
-            val seedExit = adb(
-                "shell", "am", "broadcast", "-a",
-                "com.hdbcoders.cdcwallet.action.SEED_DEV_DATA",
+            report("Reinstalled debug APK after connected tests", adb("install", "-r", apk.absolutePath))
+            // The uninstall above wiped the app data (including the seeded DB).
+            // SeedDevDataReceiver is registered DYNAMICALLY by DebugVoucherApp
+            // (API 36 silently drops implicit broadcasts to manifest-declared
+            // receivers), so the app must be running for the broadcast to reach
+            // it. `am start -W` does not return until the activity is resumed,
+            // which can only happen after Application.onCreate registered the
+            // receiver - a deterministic wait, replacing a fixed 2.5 s sleep.
+            val (startExit, startOut) = adbCapture("shell", "am", "start", "-W", "-n", debugActivity.get())
+            val startSummary = startOut.lineSequence().lastOrNull { it.isNotBlank() }?.trim() ?: "no output"
+            report("Launched debug app after connected tests", startExit, startSummary)
+            // SeedDevDataReceiver does its database work behind goAsync() and
+            // calls pendingResult.finish() only once it is done, so the
+            // broadcast is not completed - and `am broadcast` does not return -
+            // until the seeding has landed. That replaces a fixed 2 s sleep.
+            report(
+                "Reseeded dev data after connected tests",
+                adb(
+                    "shell", "am", "broadcast", "-a",
+                    "com.hdbcoders.cdcwallet.action.SEED_DEV_DATA",
+                ),
             )
-            println("Reseeded dev data after connected tests (adb exit $seedExit)")
-            Thread.sleep(2000)
-            adb("shell", "am", "force-stop", debugAppId)
-            adb("shell", "am", "start", "-n", debugActivity)
+            report("Stopped debug app after connected tests", adb("shell", "am", "force-stop", debugAppId.get()))
+            report("Relaunched debug app after connected tests", adb("shell", "am", "start", "-n", debugActivity.get()))
         }.onFailure { println("WARN: reinstall/reseed-after-tests failed: $it") }
     }
-    // afterTask covers both success and failure (doLast would not run on
-    // failure); never masks the original result, never runs when skipped.
-    gradle.taskGraph.afterTask(closureOf<Task> {
-        if (this == thisTask && !state.skipped) reinstallAndReseedAfterTests()
-    })
+
+    /**
+     * Logs one step and flags a non-zero adb exit as a warning. Fail-soft by
+     * design - the reseed never fails the build, it only reports what happened -
+     * but a mis-targeted device should be visible rather than looking like
+     * success: `adb devices` ignores -s, so the pre-check above cannot catch a
+     * wrong -PandroidTestSerial / ANDROID_SERIAL.
+     */
+    private fun report(step: String, exit: Int, detail: String? = null) {
+        val suffix = if (detail.isNullOrBlank()) "" else ", $detail"
+        if (exit == 0) {
+            println("$step (adb exit 0$suffix)")
+        } else {
+            println("WARN: $step FAILED (adb exit $exit$suffix)")
+        }
+    }
+}
+
+val reseedDebugDataAfterConnectedTests = tasks.register<ReseedDebugDataAfterConnectedTests>(
+    "reseedDebugDataAfterConnectedTests",
+) {
+    group = "verification"
+    description = "Reinstalls the debug APK and reseeds dev fixtures after connectedDebugAndroidTest."
+    val suffixDebugAppId = "${android.defaultConfig.applicationId}.debug"
+    debugAppId.set(suffixDebugAppId)
+    debugActivity.set("$suffixDebugAppId/com.hdbcoders.cdcwallet.MainActivity")
+    debugApk.set(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
+    val serial = providers.gradleProperty("androidTestSerial")
+        .orElse(providers.environmentVariable("ANDROID_SERIAL"))
+    if (serial.isPresent) {
+        deviceSerial.set(serial)
+    }
+}
+
+// finalizedBy, unlike the old listener, also runs when the test task FAILS -
+// which is what we want: the device keeps its seeded state after a failed run.
+tasks.matching { it.name == "connectedDebugAndroidTest" }.configureEach {
+    finalizedBy(reseedDebugDataAfterConnectedTests)
 }
 
 kotlin {
