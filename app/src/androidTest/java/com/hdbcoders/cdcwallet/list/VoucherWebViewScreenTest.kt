@@ -55,23 +55,33 @@ import java.time.LocalDate
  * banner. Synthetic pages served via WebViewAssetLoader - never real RedeemSG
  * hosts.
  *
- * Deliberately still on the v1 `createComposeRule`. The v2 rule swaps
- * UnconfinedTestDispatcher for StandardTestDispatcher, so the screen's
- * LaunchedEffect setup no longer runs eagerly - and [VoucherWebViewScreen]
- * depends on that eagerness for its ordering: the WebView is created,
- * attached, and has its interception client installed by effects, while the
- * page load is driven from the ViewModel. Under v2 the load can race ahead of
- * the interception, the page loads unwatched, no extraction result is ever
- * produced, and `unverifiedRowTransitionsToRealStatusOnTapRefresh` then waits
- * out its entire budget. Measured: passes in isolation (~22s), the class-level
- * run green once (~34s) then failing with the full 90s consumed, and the full
- * suite red (2 failures) against a v1 baseline of 133 green in 4m38s. Raising
- * 45s to 90s and switching to a non-blocking Room-flow await both failed, which
- * is why this is a race rather than a budget problem.
+ * Deliberately still on the v1 `createComposeRule`. Under the v2 rule this file
+ * is flaky rather than broken: it passes run on its own and as a class (5/5 on
+ * API 24 and API 36), but in a full-suite run one to three of its five tests
+ * time out waiting for the extraction - three in the default order, one when
+ * this class is forced to run first. v1 is green across the whole suite (133
+ * tests, 4m38s), and an unreliable release-gate run would be worse than a
+ * deprecation warning, so v1 is where this file stays.
  *
- * Follow-up (a product change, not a test change): make the WebView/client
- * wiring explicit so the load waits for interception instead of relying on
- * eager dispatch - then this file can migrate to v2 alongside the other 21.
+ * What is NOT the cause, so it does not get re-derived:
+ *  - The screen's WebView wiring does not depend on eager dispatch.
+ *    ExtractionEngine.acquireVisibleWebView installs view.webViewClient
+ *    synchronously inside the factory (before any load can start) and
+ *    extractFromVisibleWebView re-wraps the current client at load time - both
+ *    on the main thread, with the load gated on the row and the WebView both
+ *    existing. An earlier version of this note claimed the opposite; it was
+ *    wrong, and "make the wiring explicit" is withdrawn as a follow-up.
+ *  - ExtractionCoordinator is not involved: instrumenting launchVisible across
+ *    a full run showed the failing tests never call it at all.
+ *  - Device/app state is not implicated: a class-only run passes on the same
+ *    emulator straight after full-suite runs.
+ *
+ * Still worth knowing: the wait idiom does matter. The v2 rule runs the
+ * composition's effects only while the test idles it, so awaiting real
+ * (non-Compose) async work - a WebView page load plus the DB write it triggers -
+ * cannot use `waitUntil`, which advances the virtual clock that no real work
+ * follows. A helper that pumps `waitForIdle()` before polling fixes the
+ * isolation and per-class runs, but not the full suite.
  */
 @Suppress("DEPRECATION") // v1 createComposeRule - see the note above.
 @RunWith(AndroidJUnit4::class)
