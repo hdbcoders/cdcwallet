@@ -840,23 +840,23 @@
     <issue
         id="AutoboxingStateCreation"
         message="Prefer `mutableFloatStateOf` instead of `mutableStateOf`"
-        errorLine1="        var firstNameLineHeightPx by remember { mutableStateOf(0f) }"
-        errorLine2="                                                ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/hdbcoders/cdcwallet/ui/components/TicketCard.kt"
-            line="154"
-            column="49"/>
-    </issue>
-
-    <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableFloatStateOf` instead of `mutableStateOf`"
         errorLine1="        var scale by mutableStateOf(1.0f)"
         errorLine2="                     ~~~~~~~~~~~~~~">
         <location
             file="src/androidTest/java/com/hdbcoders/cdcwallet/list/TicketCardKebabAlignmentTest.kt"
             line="108"
             column="22"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableFloatStateOf` instead of `mutableStateOf`"
+        errorLine1="    var firstNameLineHeightPx by remember { mutableStateOf(0f) }"
+        errorLine2="                                            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/hdbcoders/cdcwallet/ui/components/TicketCardSections.kt"
+            line="80"
+            column="45"/>
     </issue>
 
     <issue
