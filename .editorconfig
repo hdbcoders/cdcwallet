@@ -1,0 +1,28 @@
+# Baseline editor style for this repo. Every setting below matches what is
+# already committed: CRLF endings, UTF-8, a final newline, no trailing
+# whitespace, 4-space Kotlin/XML indentation (kotlin.code.style=official in
+# gradle.properties), and the 2-space JSON that Room writes into app/schemas.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_style = space
+indent_size = 4
+
+[*.xml]
+indent_style = space
+indent_size = 4
+
+# Room's exported schema JSON (app/schemas) is generated with 2-space indent.
+[*.json]
+indent_style = space
+indent_size = 2
+
+# Markdown: two trailing spaces mean a line break, so leave them alone.
+[*.md]
+trim_trailing_whitespace = false

@@ -54,7 +54,26 @@ import java.time.LocalDate
  * status; failure keeps cached data, marks it stale, and shows the non-blocking
  * banner. Synthetic pages served via WebViewAssetLoader - never real RedeemSG
  * hosts.
+ *
+ * Deliberately still on the v1 `createComposeRule`. The v2 rule swaps
+ * UnconfinedTestDispatcher for StandardTestDispatcher, so the screen's
+ * LaunchedEffect setup no longer runs eagerly - and [VoucherWebViewScreen]
+ * depends on that eagerness for its ordering: the WebView is created,
+ * attached, and has its interception client installed by effects, while the
+ * page load is driven from the ViewModel. Under v2 the load can race ahead of
+ * the interception, the page loads unwatched, no extraction result is ever
+ * produced, and `unverifiedRowTransitionsToRealStatusOnTapRefresh` then waits
+ * out its entire budget. Measured: passes in isolation (~22s), the class-level
+ * run green once (~34s) then failing with the full 90s consumed, and the full
+ * suite red (2 failures) against a v1 baseline of 133 green in 4m38s. Raising
+ * 45s to 90s and switching to a non-blocking Room-flow await both failed, which
+ * is why this is a race rather than a budget problem.
+ *
+ * Follow-up (a product change, not a test change): make the WebView/client
+ * wiring explicit so the load waits for interception instead of relying on
+ * eager dispatch - then this file can migrate to v2 alongside the other 21.
  */
+@Suppress("DEPRECATION") // v1 createComposeRule - see the note above.
 @RunWith(AndroidJUnit4::class)
 class VoucherWebViewScreenTest {
 
