@@ -240,13 +240,13 @@ fun TicketCard(
                         // operations directly without opening it.
                         val actions = buildList {
                             pinActionLabel?.let { label ->
-                                add(CustomAccessibilityAction(label) { rowActions?.onPinClick(); true })
+                                add(CustomAccessibilityAction(label) { rowActions.onPinClick(); true })
                             }
                             archiveActionLabel?.let { label ->
-                                add(CustomAccessibilityAction(label) { rowActions?.onMiddleClick(); true })
+                                add(CustomAccessibilityAction(label) { rowActions.onMiddleClick(); true })
                             }
                             deleteActionLabel?.let { label ->
-                                add(CustomAccessibilityAction(label) { rowActions?.onDelete(); true })
+                                add(CustomAccessibilityAction(label) { rowActions.onDelete(); true })
                             }
                         }
                         customActions = actions

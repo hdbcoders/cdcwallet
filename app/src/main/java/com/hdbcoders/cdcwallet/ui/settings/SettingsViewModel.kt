@@ -51,7 +51,7 @@ sealed interface SettingsEvent {
      *  [pluralCount] is set) + format args. Resolved by the screen so the
      *  active app locale is used. */
     data class Snackbar(
-        @AnyRes val resId: Int,
+        @param:AnyRes val resId: Int,
         val formatArgs: List<Any> = emptyList(),
         val pluralCount: Int? = null,
     ) : SettingsEvent

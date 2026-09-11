@@ -21,9 +21,9 @@ enum class AppLanguage(val locale: Locale) {
     // resolves `values-zh-rCN`. Any system Chinese region (including zh-TW)
     // maps to ZH - Simplified Chinese is the only Chinese variant the app
     // offers, so a zh-TW device gets the simplified script rather than English.
-    ZH(Locale("zh", "CN")),
-    MS(Locale("ms")),
-    TA(Locale("ta")),
+    ZH(Locale.forLanguageTag("zh-CN")),
+    MS(Locale.forLanguageTag("ms")),
+    TA(Locale.forLanguageTag("ta")),
 }
 
 /**

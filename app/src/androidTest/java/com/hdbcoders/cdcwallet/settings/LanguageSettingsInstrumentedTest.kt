@@ -76,7 +76,7 @@ class LanguageSettingsInstrumentedTest {
     fun storeDefaultsToSystemLanguageWhenSupported() {
         // zh-TW is not one of the app's locales (zh-CN is) - any zh region
         // still maps to Simplified Chinese, the only Chinese variant offered.
-        Locale.setDefault(Locale("zh", "TW"))
+        Locale.setDefault(Locale.forLanguageTag("zh-TW"))
         assertEquals(AppLanguage.ZH, LanguageStore(appContext).language)
     }
 

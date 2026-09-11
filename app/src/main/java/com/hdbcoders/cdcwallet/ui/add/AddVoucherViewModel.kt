@@ -22,7 +22,7 @@ sealed interface AddUiStatus {
      *  [campaignName] is set (the add-success message), the screen localizes
      *  it through the campaign glossary before formatting (refactor L8). */
     data class Message(
-        @StringRes val resId: Int,
+        @param:StringRes val resId: Int,
         val isError: Boolean,
         val formatArgs: List<Any> = emptyList(),
         val campaignName: String? = null,
