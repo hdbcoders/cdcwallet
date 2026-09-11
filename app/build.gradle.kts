@@ -3,7 +3,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
@@ -140,11 +139,15 @@ android {
         // is compiled into BOTH the JVM unit-test and the androidTest
         // classpath - Android cannot see `test` sources from androidTest, and
         // the two historical copies had already drifted apart.
+        // Built-in Kotlin (AGP 9): Kotlin source dirs must be declared on
+        // AndroidSourceSet.kotlin - adding them to .java is unsupported once
+        // AGP compiles Kotlin itself, and the sharedTest fixtures would
+        // silently vanish from both test variants.
         getByName("test") {
-            java.srcDir("src/sharedTest/java")
+            kotlin.directories += "src/sharedTest/java"
         }
         getByName("androidTest") {
-            java.srcDir("src/sharedTest/java")
+            kotlin.directories += "src/sharedTest/java"
         }
     }
 }
@@ -292,12 +295,19 @@ kotlin {
 // Fail-fast: never produce an unsigned release artifact. The check runs only
 // when a release bundle/APK is actually requested, so debug builds and tests
 // stay unaffected when keystore/ is absent (e.g. a fresh clone).
+//
+// The boolean is read at configuration time into a local, so the task action
+// captures a plain Boolean. Reading `keystoreProperties` directly inside the
+// action captured this build script's own state, which the configuration cache
+// cannot serialize: it failed :app:assembleRelease / :packageRelease (and
+// bundleRelease) with "cannot serialize Gradle script object references".
 tasks.matching {
     it.name.contains("Release") &&
         (it.name.startsWith("bundle") || it.name.startsWith("assemble") || it.name.startsWith("package"))
 }.configureEach {
+    val keystorePresent = keystoreProperties.isNotEmpty()
     doFirst {
-        check(keystoreProperties.isNotEmpty()) {
+        check(keystorePresent) {
             "Release signing config missing: keystore/keystore.properties not found. " +
                 "Create it with a generated keystore (keytool -genkeypair), see the release notes."
         }
