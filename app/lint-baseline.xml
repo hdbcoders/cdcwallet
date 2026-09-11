@@ -667,8 +667,8 @@
         errorLine1="    modifier: Modifier = Modifier,"
         errorLine2="    ~~~~~~~~">
         <location
-            file="src/main/java/com/hdbcoders/cdcwallet/ui/components/BalanceHero.kt"
-            line="506"
+            file="src/main/java/com/hdbcoders/cdcwallet/ui/components/BalanceHeroCategories.kt"
+            line="58"
             column="5"/>
     </issue>
 
