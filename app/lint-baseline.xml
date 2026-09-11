@@ -1120,7 +1120,7 @@
         errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/hdbcoders/cdcwallet/MainActivity.kt"
-            line="214"
+            line="170"
             column="50"/>
     </issue>
 
