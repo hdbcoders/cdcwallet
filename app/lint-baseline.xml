@@ -531,17 +531,6 @@
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of org.jetbrains.kotlin.android than 2.3.0 is available: 2.4.20"
-        errorLine1="kotlin = &quot;2.3.0&quot;"
-        errorLine2="         ~~~~~~~">
-        <location
-            file="../gradle/libs.versions.toml"
-            line="3"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="NewerVersionAvailable"
         message="A newer version of org.jetbrains.kotlin.plugin.compose than 2.3.0 is available: 2.4.20"
         errorLine1="kotlin = &quot;2.3.0&quot;"
         errorLine2="         ~~~~~~~">
