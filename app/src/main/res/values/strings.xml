@@ -12,9 +12,10 @@
     <string name="about_app">About App</string>
     <string name="about_description">This CDC voucher (on Redeem.gov.sg) storing app is developed for anyone who keeps losing their voucher links or prefers an app based interface. Internet access is only for loading the RedeemSG site and checking the Play Store for app updates. No data or analytics is collected at all by this app. All non English translations are done by AI.</string>
     <string name="about_credits_label">This project is built by:</string>
-    <string name="about_credit_architecture">Claude Sonnet 5 (max) : Architecture</string>
+    <string name="about_credit_architecture">Claude Opus 5 (max) : Architecture</string>
     <string name="about_credit_design">ChatGPT 5.6 Luna (high) : Design and Image generation</string>
     <string name="about_credit_code">DeepSeek v4 Flash-0731 : Code Implementation</string>
+    <string name="about_code_review">DeepSeek v4.1 Flash : Code Review</string>
     <string name="about_source_label">The source code is available here:</string>
     <string name="about_source_link">https://github.com/hdbcoders/cdcwallet</string>
     <string name="about_privacy_policy">Privacy Policy</string>

@@ -106,6 +106,10 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         text = stringResource(R.string.about_credit_code),
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    Text(
+                        text = stringResource(R.string.about_code_review),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
