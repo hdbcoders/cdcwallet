@@ -42,8 +42,13 @@ android {
         // v12 = 1.0.10-beta: swatch theme picker (3-per-row cells, ring + check
         //     badge, names in contentDescription) + Aubergine Purple (visible)
         //     and Moss Green (hidden) dark palettes via hiddenInPicker.
-        versionCode = 12
-        versionName = "1.0.10-beta"
+        // v13 = 1.0.11-beta: tooling + structure release - lint gate (baseline +
+        //     fail-on-new), AGP built-in Kotlin, build/configuration cache,
+        //     Gradle wrapper 9.6.1, v2 Compose test-rule migration, four large
+        //     refactors (MainActivity/BalanceHero/SettingsScreen/TicketCard
+        //     split), dead-asset cleanup, About credits update.
+        versionCode = 13
+        versionName = "1.0.11-beta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
