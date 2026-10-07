@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -41,6 +42,16 @@ import com.hdbcoders.cdcwallet.R
  * it, and a repo rename or a move of PRIVACY.md breaks the link silently.
  */
 private const val PRIVACY_POLICY_URL = "https://github.com/hdbcoders/cdcwallet/blob/main/PRIVACY.md"
+
+/**
+ * Public source repository, shown as the About page's source link.
+ *
+ * A Kotlin constant next to [PRIVACY_POLICY_URL], not a string resource like
+ * the prose around it: it is a URL, byte-identical in all four locales, and
+ * living in the per-locale strings.xml files invited a translator to localise
+ * it. Both URLs are now declared the same way, in the same place.
+ */
+private const val SOURCE_CODE_URL = "https://github.com/hdbcoders/cdcwallet"
 
 /**
  * About App page (drawer → About App): a short description of the app
@@ -116,36 +127,14 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         text = stringResource(R.string.about_source_label),
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    // Resolved in composable scope (not inside the click
-                    // lambda, which is not a composable context) and captured
-                    // for the URL open.
-                    val sourceLink = stringResource(R.string.about_source_link)
-                    Text(
-                        text = stringResource(R.string.about_source_link),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable {
-                            // The click lambda is not a composable context, so
-                            // the URL is resolved once at composition time and
-                            // captured here - lint LocalContextGetResourceValueCall
-                            // forbids context.getString reads in composables.
-                            openUrl(context, sourceLink)
-                        },
-                    )
+                    LinkText(url = SOURCE_CODE_URL) { openUrl(context, SOURCE_CODE_URL) }
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = stringResource(R.string.about_privacy_policy),
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    Text(
-                        text = PRIVACY_POLICY_URL,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable {
-                            openUrl(context, PRIVACY_POLICY_URL)
-                        },
-                    )
+                    LinkText(url = PRIVACY_POLICY_URL) { openUrl(context, PRIVACY_POLICY_URL) }
                 }
             }
             Text(
@@ -160,7 +149,54 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
-/** Opens a URL in the device browser (privacy policy / source code links). */
+/**
+ * A tappable URL line on the About page.
+ *
+ * Names the action via onClickLabel: without it TalkBack offers the bare
+ * "double tap to activate" and reads out only the raw URL, with no hint of
+ * what tapping does.
+ *
+ * NOTE - no link *role*. androidx.compose.ui.semantics.Role in the resolved
+ * Compose UI (1.12.0) exposes Button, Checkbox, Switch, RadioButton, Tab,
+ * Image, DropdownList, ValuePicker and Carousel, and no `Link`, so a link
+ * cannot be declared as one here and `role = Role.Button` would actively
+ * mislabel it. Announcing a real link needs an inline link annotation
+ * (`buildAnnotatedString { withLink(...) }`), which also restyles the text -
+ * a visual change that wants a device check, so it is deliberately left out.
+ *
+ * Extracted rather than repeated: the two links differed only in their URL,
+ * and this semantics fix would otherwise have had to be applied - and kept -
+ * in two places.
+ */
+@Composable
+private fun LinkText(url: String, onClick: () -> Unit) {
+    Text(
+        text = url,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.clickable(
+            onClickLabel = stringResource(R.string.about_open_link),
+            onClick = onClick,
+        ),
+    )
+}
+
+/**
+ * Opens a URL in the device browser (privacy policy / source code links).
+ *
+ * Fail-soft, matching [com.hdbcoders.cdcwallet.update.openPlayStore]: on a
+ * device with no `ACTION_VIEW` handler (no browser installed - e.g. a
+ * debloated ROM) the tap degrades to a no-op. Letting the
+ * `ActivityNotFoundException` escape would crash the app out of a settings
+ * link, which is the loudest possible way to break the fail-soft rule.
+ *
+ * Unlike `openPlayStore` the caller passes an Activity context, so no
+ * `FLAG_ACTIVITY_NEW_TASK` is required here.
+ */
 private fun openUrl(context: Context, url: String) {
-    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    } catch (e: ActivityNotFoundException) {
+        // No browser installed - degrade silently (AGENTS.md: fail soft).
+    }
 }

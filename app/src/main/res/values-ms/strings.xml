@@ -14,7 +14,7 @@
     <string name="about_credit_code">DeepSeek v4 Flash-0731 : Pelaksanaan Kod</string>
     <string name="about_code_review">DeepSeek v4.1 Flash : Semakan Kod</string>
     <string name="about_source_label">Kod sumber boleh dilihat di sini:</string>
-    <string name="about_source_link">https://github.com/hdbcoders/cdcwallet</string>
+    <string name="about_open_link">Buka pautan</string>
     <string name="about_privacy_policy">Dasar Privasi</string>
     <string name="about_version">Versi %1$s</string>
     <string name="cancel">Batal</string>

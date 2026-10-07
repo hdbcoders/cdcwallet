@@ -14,7 +14,7 @@
     <string name="about_credit_code">DeepSeek v4 Flash-0731 : 代码实现</string>
     <string name="about_code_review">DeepSeek v4.1 Flash : 代码审查</string>
     <string name="about_source_label">源代码可在此查看：</string>
-    <string name="about_source_link">https://github.com/hdbcoders/cdcwallet</string>
+    <string name="about_open_link">打开链接</string>
     <string name="about_privacy_policy">隐私政策</string>
     <string name="about_version">版本 %1$s</string>
     <string name="cancel">取消</string>
