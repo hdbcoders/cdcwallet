@@ -47,8 +47,17 @@ android {
         //     Gradle wrapper 9.6.1, v2 Compose test-rule migration, four large
         //     refactors (MainActivity/BalanceHero/SettingsScreen/TicketCard
         //     split), dead-asset cleanup, About credits update.
-        versionCode = 13
-        versionName = "1.0.11-beta"
+        // v14 = 1.0.12-beta: the licences actually ship - five SIL OFL 1.1 font
+        //     texts plus the app's GPLv3 notice are now packaged at
+        //     assets/licenses/ (previously neither reached the APK, while
+        //     ~2.2 MB of OFL fonts did); About-page link taps fail soft
+        //     instead of crashing when no browser is installed, the links
+        //     carry an action label for TalkBack, and both URLs are
+        //     single-sourced as Kotlin constants; lint gate narrowed so
+        //     version-availability findings report as hints rather than
+        //     errors; dead summaryHeadline/currentPinName removed.
+        versionCode = 14
+        versionName = "1.0.12-beta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
