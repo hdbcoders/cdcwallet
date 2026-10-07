@@ -12,7 +12,6 @@ import com.hdbcoders.cdcwallet.ui.list.badgeState
 import com.hdbcoders.cdcwallet.ui.list.formatSgd
 import com.hdbcoders.cdcwallet.ui.list.sortActive
 import com.hdbcoders.cdcwallet.ui.list.summarizeActive
-import com.hdbcoders.cdcwallet.ui.list.summaryHeadline
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -565,30 +564,6 @@ class VoucherListLogicTest {
         val summary = summarizeActive(emptyList())
         assertEquals(BigDecimal.ZERO, summary.total)
         assertEquals(0, summary.linkCount)
-    }
-
-    @Test
-    fun headlineUsesLinkCountGrammarAndFormatting() {
-        assertEquals(
-            "$90.5 remaining across 1 link",
-            summaryHeadline(
-                summarizeActive(
-                    listOf(
-                        voucher(
-                            "a",
-                            ValidityStatus.ACTIVE,
-                            today.plusDays(1),
-                            listOf(CategoryBalance("heartland", BigDecimal("90.5"))),
-                        ),
-                        voucher("u", ValidityStatus.UNVERIFIED),
-                    ),
-                ),
-            ),
-        )
-        val single = summarizeActive(
-            listOf(voucher("a", ValidityStatus.ACTIVE, null, listOf(CategoryBalance("x", BigDecimal("1"))))),
-        )
-        assertEquals("$1 remaining across 1 link", summaryHeadline(single))
     }
 
     @Test

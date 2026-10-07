@@ -102,10 +102,6 @@ class VoucherListViewModel(
         viewModelScope.launch { repository.setPinned(id, false) }
     }
 
-    /** True while any OTHER row is pinned - used by the swap gate copy. */
-    fun currentPinName(excludingId: String): String? =
-        vouchers.value.firstOrNull { it.isPinned && it.id != excludingId }?.campaignName
-
     fun archive(voucher: VoucherGroup) {
         viewModelScope.launch {
             repository.archive(voucher.id)

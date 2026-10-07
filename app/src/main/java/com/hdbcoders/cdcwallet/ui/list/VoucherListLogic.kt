@@ -217,7 +217,3 @@ fun formatSgd(value: BigDecimal): String {
     val groupedInt = parts[0].replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")
     return "$" + if (parts.size == 2) "$groupedInt.${parts[1]}" else groupedInt
 }
-
-fun summaryHeadline(summary: ListSummary): String =
-    "${formatSgd(summary.total)} remaining across ${summary.linkCount} " +
-        if (summary.linkCount == 1) "link" else "links"
