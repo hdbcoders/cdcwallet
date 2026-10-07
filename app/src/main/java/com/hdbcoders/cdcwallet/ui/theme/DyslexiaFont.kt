@@ -6,8 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 /**
- * The two dyslexia-friendly typefaces the app bundles (both SIL OFL 1.1,
- * see `licenses/`). Both are Latin-script fonts: non-Latin glyphs (中文 /
+ * The two dyslexia-friendly typefaces the app bundles (both SIL OFL 1.1;
+ * licences ship in the APK at `assets/licenses/`). Both are Latin-script
+ * fonts: non-Latin glyphs (中文 /
  * தமிழ் UI text) fall back to the system font per-glyph automatically.
  */
 enum class AppDyslexiaFont {

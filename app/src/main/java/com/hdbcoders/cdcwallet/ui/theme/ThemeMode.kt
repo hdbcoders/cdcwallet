@@ -294,7 +294,7 @@ internal val PlexMonoFontFamily = FontFamily(
 
 /**
  * OpenDyslexic - the classic dyslexia typeface (heavy weighted bottoms).
- * Static Regular/Bold weights bundled; OFL 1.1 (licenses/OFL-OpenDyslexic.txt).
+ * Static Regular/Bold weights bundled; OFL 1.1 (assets/licenses/OFL-OpenDyslexic.txt).
  * Latin-script only - non-Latin glyphs fall back to the system font.
  */
 internal val OpenDyslexicFontFamily = FontFamily(
@@ -304,7 +304,7 @@ internal val OpenDyslexicFontFamily = FontFamily(
 
 /**
  * Atkinson Hyperlegible - Braille Institute's legibility typeface. Static
- * Regular/Bold weights bundled; OFL 1.1 (licenses/OFL-AtkinsonHyperlegible.txt).
+ * Regular/Bold weights bundled; OFL 1.1 (assets/licenses/OFL-AtkinsonHyperlegible.txt).
  * Latin-script only - non-Latin glyphs fall back to the system font.
  */
 internal val AtkinsonFontFamily = FontFamily(
