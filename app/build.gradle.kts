@@ -137,6 +137,27 @@ android {
         warningsAsErrors = true
         // The androidTest set is where most of the avoidable warnings live.
         checkTestSources = true
+        // "A newer version of X is available" is information, not a defect. It
+        // is the one family of checks guaranteed to go stale on its own: it
+        // compares the pinned versions against whatever upstream has published
+        // since, so the moment someone else ships a release it reports findings
+        // that no code change can fix - and warningsAsErrors above turns those
+        // into a red gate. That is exactly how the 1.0.11-beta baseline went
+        // bad: all seven errors on 2026-10-08 were version bumps (Gradle
+        // 9.8.1, AGP 9.4.1, ksp 2.3.11, core-ktx 1.19.1, navigation 2.10.2,
+        // webkit 1.17.1, sqlcipher 4.19.1), on a tree that compiled and passed
+        // every test.
+        //
+        // These three detectors report as informational instead: the heads-up
+        // still appears in the lint report, but it cannot fail the build. Real
+        // findings - unused resources, accessibility, deprecations - keep
+        // failing it, so upgrading a dependency stays a deliberate decision
+        // rather than something the gate forces on its own schedule.
+        informational += setOf(
+            "GradleDependency",
+            "NewerVersionAvailable",
+            "AndroidGradlePluginVersion",
+        )
     }
     sourceSets {
         // Test-fixture consolidation (instrumented-test audit B9): the single
@@ -337,7 +358,6 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.material.icons.extended)
