@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.os.Build
 import android.os.Environment
+import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import java.io.File
 import androidx.compose.material3.MaterialTheme
@@ -104,6 +105,11 @@ class VoucherBackupFlowInstrumentedTest {
      *  physical path is derived from the display name (the DATA column is
      *  rejected by this MediaStore). */
     private fun deleteAllBackupArtifacts() {
+        // Set by the API 33+ sweep below. Reported AFTER the runCatching that
+        // wraps the best-effort cleanup, which catches Throwable and would
+        // otherwise swallow the failure - the same silent-skip shape this
+        // precondition exists to prevent.
+        var sweepFailure: String? = null
         runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val resolver = appContext.contentResolver
@@ -137,22 +143,65 @@ class VoucherBackupFlowInstrumentedTest {
                 // name/path. uiAutomation executes as shell, which sees and can
                 // remove them. The P7 fixture is re-pushed by its own test.
                 if (Build.VERSION.SDK_INT >= 33) {
-                    val parcelFile = InstrumentationRegistry.getInstrumentation().uiAutomation
-                        .executeShellCommand(
-                            "content delete --uri content://media/external/downloads " +
-                                "--where \"_display_name LIKE 'cdcvoucher%'\"",
-                        )
-                    // Consume the stream fully so the command completes, then close.
-                    @Suppress("UsePropertyAccessSyntax")
-                    runCatching { parcelFile.getFileDescriptor().sync() }
-                    runCatching { parcelFile.close() }
-                    File(downloadsDir, BackupFileStore.FILE_NAME).delete()
+                    val ui = InstrumentationRegistry.getInstrumentation().uiAutomation
+                    // NOTE (measured, not assumed): executeShellCommand does NOT
+                    // run this string through a shell on this platform - it is
+                    // whitespace-split into argv and quote characters are passed
+                    // through literally. (Appending "2>&1" is rejected as a stray
+                    // argument, which is how this was established.) A clause like
+                    // "_display_name LIKE 'cdcvoucher%'" therefore arrives as
+                    // extra tokens, `content` answers with its usage text, and
+                    // NOTHING is deleted. So the clause must contain no spaces and
+                    // no quotes: SQLite's function form of LIKE matches the same
+                    // rows that way.
+                    fun runShellCommand(command: String): String = ui.executeShellCommand(command)
+                        .use { pfd ->
+                            ParcelFileDescriptor.AutoCloseInputStream(pfd)
+                                .use { input -> input.readBytes().decodeToString() }
+                        }
+
+                    // A successful delete prints NOTHING, so any output at all is
+                    // the failure path (usage text or a provider error). The old
+                    // code never read the stream, so a failed sweep was
+                    // indistinguishable from a successful one - that silence is
+                    // what let a dead sweep look like a working one until a stale
+                    // artifact broke the export assertions.
+                    val deleteRows =
+                        "content delete --uri content://media/external/downloads " +
+                            "--where like('cdcvoucher%',_display_name)"
+                    val deleteOutput = runShellCommand(deleteRows)
+                    if (deleteOutput.isNotBlank()) {
+                        sweepFailure =
+                            "stale-artifact sweep failed, so the canonical Downloads name may " +
+                                "still be blocked (the exactly-one/canonical-name assertions " +
+                                "in this class would then fail on numbered copies): " +
+                                deleteOutput.trim()
+                    }
+
+                    // Removing the row does not reliably remove the file behind
+                    // it, and the FILE is what blocks the next insert under the
+                    // canonical name. This app can only delete its OWN files, so
+                    // remove the canonical path as the shell too, then assert the
+                    // precondition the export tests actually depend on.
+                    val canonical = File(downloadsDir, BackupFileStore.FILE_NAME)
+                    runShellCommand("rm -f ${canonical.absolutePath}")
+                    if (sweepFailure == null && canonical.exists()) {
+                        sweepFailure =
+                            "stale artifact survived the sweep at ${canonical.absolutePath} - " +
+                                "MediaStore would mint a numbered copy instead of the " +
+                                "canonical name"
+                    }
                 }
             } else {
                 val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 dir.listFiles { it.name.startsWith("cdcvoucher") }?.forEach { it.delete() }
             }
         }
+        // Deliberately outside the runCatching above, and deliberately allowed
+        // to fail the test: a silently-skipped sweep is what made this class's
+        // export assertions fail on numbered files ("cdcvoucher (1).backup")
+        // with no hint that the cleanup was the cause.
+        sweepFailure?.let { throw IllegalStateException(it) }
     }
 
     @After
