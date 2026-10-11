@@ -56,8 +56,11 @@ android {
         //     single-sourced as Kotlin constants; lint gate narrowed so
         //     version-availability findings report as hints rather than
         //     errors; dead summaryHeadline/currentPinName removed.
-        versionCode = 14
-        versionName = "1.0.12-beta"
+        // v15 = 1.0.13: out of beta - version bump from beta to release. No
+        //     feature change beyond 1.0.12-beta; this is that same verified
+        //     code promoted, so the versionName simply drops the -beta tag.
+        versionCode = 15
+        versionName = "1.0.13"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
